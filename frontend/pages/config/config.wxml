@@ -1,0 +1,49 @@
+<!-- pages/config/config.wxml -->
+<view class="container">
+  <view class="card" wx:if="{{!loading}}">
+    <view class="title">学习配置</view>
+    
+    <view class="config-section">
+      <view class="subtitle">每周学习天数</view>
+      <view class="days-selector">
+        <view 
+          wx:for="{{daysOfWeek}}" 
+          wx:key="value"
+          class="day-item {{config.weekly_new_words_days.includes(item.value) ? 'selected' : ''}}"
+          data-day="{{item.value}}"
+          bindtap="toggleDay">
+          {{item.name}}
+        </view>
+      </view>
+    </view>
+    
+    <view class="config-section">
+      <view class="subtitle">每日新词数量</view>
+      <slider 
+        min="1" 
+        max="100" 
+        step="1" 
+        value="{{config.daily_new_words_count}}" 
+        bindchange="updateDailyCount"
+        show-value />
+      <view class="text">建议：20-50个单词/天</view>
+    </view>
+    
+    <view class="config-section">
+      <view class="subtitle">复习提醒时间</view>
+      <picker mode="time" value="{{config.review_time}}" bindchange="updateReviewTime">
+        <view class="time-picker">
+          {{config.review_time}}
+        </view>
+      </picker>
+      <view class="text">系统会在指定时间提醒你进行复习</view>
+    </view>
+    
+    <button class="button" bindtap="saveConfig">保存配置</button>
+    <button class="button" style="background:#666" bindtap="goBackHome">返回首页</button>
+  </view>
+  
+  <view class="card" wx:else>
+    <view class="loading">加载配置中...</view>
+  </view>
+</view>

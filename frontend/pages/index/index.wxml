@@ -1,0 +1,56 @@
+<!-- pages/index/index.wxml -->
+<view class="container">
+  <view class="card">
+    <view wx:if="{{!hasLogin}}" class="login-section">
+      <view class="title">雅思智能背单词</view>
+      <view class="subtitle">高效备考，科学记忆</view>
+      <view class="text">基于艾宾浩斯遗忘曲线的智能复习系统，帮助你高效掌握雅思词汇。</view>
+      <button class="button" bindtap="handleLogin">微信登录开始学习</button>
+    </view>
+    
+    <view wx:else class="dashboard-section">
+      <view class="title">学习概览</view>
+      
+      <view wx:if="{{loading}}" class="loading">
+        <text>加载中...</text>
+      </view>
+      
+      <view wx:else>
+        <view class="stats-grid">
+          <view class="stat-item">
+            <view class="stat-number primary-color">{{stats.total_words}}</view>
+            <view class="stat-label">已学单词</view>
+          </view>
+          <view class="stat-item">
+            <view class="stat-number success-color">{{stats.mastered_words}}</view>
+            <view class="stat-label">已掌握</view>
+          </view>
+          <view class="stat-item">
+            <view class="stat-number warning-color">{{stats.learning_words}}</view>
+            <view class="stat-label">学习中</view>
+          </view>
+          <view class="stat-item">
+            <view class="stat-number">{{Math.round(stats.avg_mastery_score) || 0}}%</view>
+            <view class="stat-label">平均掌握度</view>
+          </view>
+        </view>
+        
+        <view class="action-buttons">
+          <button class="button" bindtap="navigateToLearning">学习新词</button>
+          <button class="button" style="background:#FF9500" bindtap="navigateToReview">复习单词</button>
+          <button class="button" style="background:#4CD964" bindtap="navigateToConfig">学习设置</button>
+        </view>
+      </view>
+    </view>
+  </view>
+  
+  <view class="card">
+    <view class="title">功能特色</view>
+    <view class="feature-list">
+      <view class="feature-item">✅ 剑桥雅思1-18完整词汇库</view>
+      <view class="feature-item">✅ 艾宾浩斯遗忘曲线智能复习</view>
+      <view class="feature-item">✅ 灵活配置学习计划</view>
+      <view class="feature-item">✅ 个性化学习进度跟踪</view>
+    </view>
+  </view>
+</view>

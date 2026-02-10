@@ -1,0 +1,45 @@
+<!-- pages/learning/learning.wxml -->
+<view class="container">
+  <view class="card" wx:if="{{currentWord && !loading}}">
+    <view class="word-section">
+      <view class="word">{{currentWord.word}}</view>
+      <view class="phonetic">{{currentWord.phonetic}}</view>
+    </view>
+    
+    <view class="definition-section">
+      <view class="subtitle">词性与释义</view>
+      <view class="text">{{currentWord.part_of_speech}} - {{currentWord.definition}}</view>
+    </view>
+    
+    <view class="example-section" wx:if="{{currentWord.example_sentences && currentWord.example_sentences.length > 0}}">
+      <view class="subtitle">雅思真题例句</view>
+      <view class="text" wx:for="{{currentWord.example_sentences}}" wx:key="index">
+        {{index + 1}}. {{item}}
+      </view>
+    </view>
+    
+    <view class="source-section">
+      <view class="text">来源：剑桥雅思{{currentWord.cambridge_book}}</view>
+    </view>
+    
+    <view class="action-buttons">
+      <button class="button" style="background:#4CD964" bindtap="handleKnow">认识</button>
+      <button class="button" style="background:#FF9500" bindtap="handleUnsure">不确定</button>
+      <button class="button" style="background:#FF3B30" bindtap="handleDontKnow">不认识</button>
+    </view>
+  </view>
+  
+  <view class="card" wx:elif="{{loading}}">
+    <view class="loading">加载新单词中...</view>
+  </view>
+  
+  <view class="card" wx:else>
+    <view class="title">今日新词已学完</view>
+    <view class="text">你已经完成了今天的新词学习任务！可以去复习已学单词，或者明天再来学习新的词汇。</view>
+    <button class="button" bindtap="goBackHome">返回首页</button>
+  </view>
+  
+  <view class="progress-indicator" wx:if="{{currentWord && !loading}}">
+    <text>{{learnedCount + 1}}/{{totalWordsToday}}</text>
+  </view>
+</view>

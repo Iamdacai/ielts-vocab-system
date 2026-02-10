@@ -1,0 +1,62 @@
+/* pages/review/review.wxss */
+.word-section {
+  text-align: center;
+  margin-bottom: 30rpx;
+}
+
+.word {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10rpx;
+}
+
+.action-section, .answer-section {
+  margin-bottom: 30rpx;
+}
+
+.confidence-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15rpx;
+  margin: 20rpx 0;
+}
+
+.confidence-buttons .button {
+  flex: 1;
+  min-width: 120rpx;
+  padding: 10rpx 5rpx;
+  font-size: 20rpx;
+  height: auto;
+  line-height: 1.4;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+
+.action-buttons .button {
+  flex: 1;
+  padding: 15rpx 10rpx;
+  font-size: 24rpx;
+}
+
+.progress-indicator {
+  position: fixed;
+  bottom: 20rpx;
+  right: 20rpx;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 10rpx 20rpx;
+  border-radius: 50rpx;
+  font-size: 24rpx;
+  z-index: 999;
+}
+
+.loading {
+  padding: 60rpx 0;
+  text-align: center;
+  color: #999;
+}

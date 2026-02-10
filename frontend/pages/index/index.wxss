@@ -1,0 +1,53 @@
+/* pages/index/index.wxss */
+.login-section, .dashboard-section {
+  text-align: center;
+}
+
+.stats-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin: 40rpx 0;
+}
+
+.stat-item {
+  width: 48%;
+  padding: 20rpx 0;
+  margin-bottom: 20rpx;
+}
+
+.stat-number {
+  font-size: 36rpx;
+  font-weight: bold;
+  margin-bottom: 10rpx;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.action-buttons {
+  margin-top: 40rpx;
+}
+
+.action-buttons .button {
+  margin: 15rpx 0;
+  width: 100%;
+}
+
+.feature-list {
+  text-align: left;
+  line-height: 1.8;
+}
+
+.feature-item {
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 15rpx;
+}
+
+.loading {
+  padding: 40rpx 0;
+  color: #999;
+}

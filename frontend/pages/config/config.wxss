@@ -1,0 +1,41 @@
+/* pages/config/config.wxss */
+.config-section {
+  margin-bottom: 40rpx;
+}
+
+.days-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15rpx;
+  margin-top: 20rpx;
+}
+
+.day-item {
+  padding: 15rpx 25rpx;
+  border: 2rpx solid #ddd;
+  border-radius: 50rpx;
+  font-size: 26rpx;
+  color: #666;
+}
+
+.day-item.selected {
+  background: #007AFF;
+  color: white;
+  border-color: #007AFF;
+}
+
+.time-picker {
+  padding: 20rpx;
+  background: #f8f8f8;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  color: #333;
+  text-align: center;
+  margin-top: 15rpx;
+}
+
+.loading {
+  padding: 60rpx 0;
+  text-align: center;
+  color: #999;
+}

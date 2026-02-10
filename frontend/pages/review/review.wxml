@@ -1,0 +1,85 @@
+<!-- pages/review/review.wxml -->
+<view class="container">
+  <view class="card" wx:if="{{currentWord && !loading}}">
+    <view class="word-section">
+      <view class="word">{{currentWord.word}}</view>
+    </view>
+    
+    <view wx:if="{{!showAnswer}}" class="action-section">
+      <view class="text">你记得这个单词的意思吗？</view>
+      <button class="button" style="background:#4CD964" bindtap="showAnswer">显示答案</button>
+    </view>
+    
+    <view wx:else class="answer-section">
+      <view class="subtitle">词性与释义</view>
+      <view class="text">{{currentWord.part_of_speech}} - {{currentWord.definition}}</view>
+      
+      <view class="example-section" wx:if="{{currentWord.example_sentences && currentWord.example_sentences.length > 0}}">
+        <view class="subtitle">雅思真题例句</view>
+        <view class="text" wx:for="{{currentWord.example_sentences}}" wx:key="index">
+          {{index + 1}}. {{item}}
+        </view>
+      </view>
+      
+      <view class="confidence-section">
+        <view class="subtitle">你的自信度</view>
+        <view class="confidence-buttons">
+          <button 
+            class="button" 
+            style="{{confidence === 1 ? 'background:#FF3B30' : 'background:#f0f0f0; color:#333'}}"
+            data-confidence="1"
+            bindtap="setConfidence">
+            很不确定
+          </button>
+          <button 
+            class="button" 
+            style="{{confidence === 2 ? 'background:#FF9500' : 'background:#f0f0f0; color:#333'}}"
+            data-confidence="2"
+            bindtap="setConfidence">
+            不太确定
+          </button>
+          <button 
+            class="button" 
+            style="{{confidence === 3 ? 'background:#007AFF' : 'background:#f0f0f0; color:#333'}}"
+            data-confidence="3"
+            bindtap="setConfidence">
+            一般
+          </button>
+          <button 
+            class="button" 
+            style="{{confidence === 4 ? 'background:#4CD964' : 'background:#f0f0f0; color:#333'}}"
+            data-confidence="4"
+            bindtap="setConfidence">
+            比较确定
+          </button>
+          <button 
+            class="button" 
+            style="{{confidence === 5 ? 'background:#34C759' : 'background:#f0f0f0; color:#333'}}"
+            data-confidence="5"
+            bindtap="setConfidence">
+            非常确定
+          </button>
+        </view>
+      </view>
+      
+      <view class="action-buttons">
+        <button class="button" style="background:#FF3B30" bindtap="handleDontKnow">不认识</button>
+        <button class="button" style="background:#4CD964" bindtap="handleKnow">认识</button>
+      </view>
+    </view>
+  </view>
+  
+  <view class="card" wx:elif="{{loading}}">
+    <view class="loading">加载复习单词中...</view>
+  </view>
+  
+  <view class="card" wx:else>
+    <view class="title">今日复习已完成</view>
+    <view class="text">你已经完成了今天的复习任务！继续保持这样的学习节奏，雅思词汇量会稳步提升。</view>
+    <button class="button" bindtap="goBackHome">返回首页</button>
+  </view>
+  
+  <view class="progress-indicator" wx:if="{{currentWord && !loading}}">
+    <text>{{reviewedCount + 1}}/{{totalWordsToday}}</text>
+  </view>
+</view>

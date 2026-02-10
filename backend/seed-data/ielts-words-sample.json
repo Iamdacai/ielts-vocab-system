@@ -1,0 +1,122 @@
+[
+  {
+    "word": "abandon",
+    "phonetic": "/əˈbændən/",
+    "part_of_speech": "v.",
+    "definition": "放弃；抛弃",
+    "example_sentences": [
+      "The sailors had to abandon the ship during the storm.",
+      "Many projects were abandoned due to lack of funding."
+    ],
+    "frequency_level": "high",
+    "cambridge_book": 10
+  },
+  {
+    "word": "beneficial",
+    "phonetic": "/ˌbenɪˈfɪʃl/",
+    "part_of_speech": "adj.",
+    "definition": "有益的；有利的",
+    "example_sentences": [
+      "Regular exercise is beneficial to your health.",
+      "The new policy proved beneficial for small businesses."
+    ],
+    "frequency_level": "high",
+    "cambridge_book": 8
+  },
+  {
+    "word": "consequence",
+    "phonetic": "/ˈkɒnsɪkwəns/",
+    "part_of_speech": "n.",
+    "definition": "结果；后果",
+    "example_sentences": [
+      "The decision had serious consequences for the company.",
+      "As a consequence of his actions, he lost his job."
+    ],
+    "frequency_level": "high",
+    "cambridge_book": 9
+  },
+  {
+    "word": "demonstrate",
+    "phonetic": "/ˈdemənstreɪt/",
+    "part_of_speech": "v.",
+    "definition": "证明；演示",
+    "example_sentences": [
+      "The experiment demonstrated the theory perfectly.",
+      "She demonstrated great skill in solving the problem."
+    ],
+    "frequency_level": "high",
+    "cambridge_book": 7
+  },
+  {
+    "word": "environmental",
+    "phonetic": "/ɪnˌvaɪrənˈmentl/",
+    "part_of_speech": "adj.",
+    "definition": "环境的；有关环境的",
+    "example_sentences": [
+      "Environmental issues are becoming increasingly important.",
+      "The company has implemented new environmental policies."
+    ],
+    "frequency_level": "high",
+    "cambridge_book": 11
+  },
+  {
+    "word": "flexible",
+    "phonetic": "/ˈfleksəbl/",
+    "part_of_speech": "adj.",
+    "definition": "灵活的；易弯曲的",
+    "example_sentences": [
+      "She has a very flexible approach to problem-solving.",
+      "The material is flexible enough to bend without breaking."
+    ],
+    "frequency_level": "medium",
+    "cambridge_book": 6
+  },
+  {
+    "word": "generate",
+    "phonetic": "/ˈdʒenəreɪt/",
+    "part_of_speech": "v.",
+    "definition": "产生；引起",
+    "example_sentences": [
+      "The new factory will generate hundreds of jobs.",
+      "His comments generated a lot of controversy."
+    ],
+    "frequency_level": "high",
+    "cambridge_book": 5
+  },
+  {
+    "word": "hypothesis",
+    "phonetic": "/haɪˈpɒθəsɪs/",
+    "part_of_speech": "n.",
+    "definition": "假设；假说",
+    "example_sentences": [
+      "The scientist proposed a new hypothesis to explain the phenomenon.",
+      "Their hypothesis was supported by the experimental results."
+    ],
+    "frequency_level": "medium",
+    "cambridge_book": 12
+  },
+  {
+    "word": "implement",
+    "phonetic": "/ˈɪmplɪment/",
+    "part_of_speech": "v.",
+    "definition": "实施；执行",
+    "example_sentences": [
+      "The government plans to implement new education reforms.",
+      "It's difficult to implement these changes without proper planning."
+    ],
+    "frequency_level": "high",
+    "cambridge_book": 4
+  },
+  {
+    "word": "journal",
+    "phonetic": "/ˈdʒɜːnl/",
+    "part_of_speech": "n.",
+    "definition": "期刊；日记",
+    "example_sentences": [
+      "He published his research in a scientific journal.",
+      "She kept a daily journal during her travels."
+    ],
+    "frequency_level": "medium",
+    "cambridge_book": 3
+  }
+]
