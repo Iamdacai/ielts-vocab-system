@@ -70,4 +70,15 @@ class SpacedRepetitionAlgorithm {
   }
 }
 
-module.exports = SpacedRepetitionAlgorithm;
+// 创建单例实例
+const algorithm = new SpacedRepetitionAlgorithm();
+
+// 导出函数
+module.exports = {
+  calculateNextReview: (reviewCount, masteryScore, currentTime) => 
+    algorithm.calculateNextReview(reviewCount, masteryScore, currentTime),
+  updateMasteryScore: (currentMastery, isCorrect, confidence) => 
+    algorithm.updateMasteryScore(currentMastery, isCorrect, confidence),
+  getReviewWindow: (today, reviewTime) => 
+    algorithm.getReviewWindow(today, reviewTime)
+};

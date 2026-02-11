@@ -6,6 +6,7 @@ const authRoutes = require('./auth');
 const configRoutes = require('./config');
 const wordsRoutes = require('./words');
 const statsRoutes = require('./stats');
+const audioRoutes = require('./audio');
 
 // 挂载路由
 router.use('/auth', authRoutes);

@@ -1,4 +1,4 @@
-const { initializeDatabase } = require('../database');
+const { initializeDatabase } = require('../database-sqlite');
 
 /**
  * 获取学习统计信息

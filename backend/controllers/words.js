@@ -116,7 +116,7 @@ const recordProgress = async (req, res) => {
     }
     
     // 计算下次复习时间
-    const nextReviewAt = calculateNextReview(masteryScore, currentProgress.review_count);
+    const nextReviewAt = calculateNextReview(currentProgress.review_count, masteryScore);
     
     // 更新进度
     await db.run(

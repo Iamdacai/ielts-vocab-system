@@ -8,11 +8,37 @@ Page({
     loading: true,
     showAnswer: false,
     progress: 0,
-    totalWords: 0
+    totalWords: 0,
+    audioContext: null,
+    isPlaying: false
   },
 
   onLoad() {
     this.checkLoginAndLoad();
+    // 初始化音频上下文
+    this.initAudio();
+  },
+
+  initAudio() {
+    const audioContext = wx.createInnerAudioContext();
+    audioContext.onPlay(() => {
+      this.setData({ isPlaying: true });
+    });
+    audioContext.onStop(() => {
+      this.setData({ isPlaying: false });
+    });
+    audioContext.onEnded(() => {
+      this.setData({ isPlaying: false });
+    });
+    audioContext.onError((res) => {
+      console.error('音频播放错误:', res.errMsg);
+      this.setData({ isPlaying: false });
+      wx.showToast({
+        title: '发音播放失败',
+        icon: 'error'
+      });
+    });
+    this.setData({ audioContext });
   },
 
   async checkLoginAndLoad() {
@@ -142,29 +168,80 @@ Page({
     }
   },
 
+  showPreviousWord() {
+    const { currentWordIndex } = this.data;
+    
+    if (currentWordIndex > 0) {
+      this.setData({
+        currentWordIndex: currentWordIndex - 1
+      });
+      this.showNextWord(); // This will show the previous word since we decremented the index
+    } else {
+      wx.showToast({
+        title: '已经是第一个单词',
+        icon: 'none'
+      });
+    }
+  },
+
+  showNextWordDirect() {
+    const { currentWordIndex, totalWords } = this.data;
+    
+    if (currentWordIndex < totalWords - 1) {
+      this.setData({
+        currentWordIndex: currentWordIndex + 1
+      });
+      this.showNextWord();
+    } else {
+      wx.showToast({
+        title: '已经是最后一个单词',
+        icon: 'none'
+      });
+    }
+  },
+
   toggleAnswer() {
     this.setData({
       showAnswer: !this.data.showAnswer
     });
   },
 
-  handleMastered() {
-    this.recordProgress(true, 5, 'mastered');
+  // 播放单词发音
+  playWordPronunciation() {
+    const { currentWord } = this.data;
+    if (!currentWord) return;
+
+    // 提取单词部分（去除音标）
+    let word = currentWord.word;
+    if (word.includes('/')) {
+      word = word.split('/')[0].trim();
+    } else {
+      word = word.split(' ')[0].trim();
+    }
+    
+    // 构建音频URL
+    const audioUrl = `${app.globalData.apiUrl}/audio/${encodeURIComponent(word)}.mp3`;
+    
+    this.data.audioContext.src = audioUrl;
+    this.data.audioContext.play();
   },
 
   handleKnow() {
-    this.recordProgress(true, 3, 'test');
+    // 认识：masteryScore = 75
+    this.recordProgress('know', 75);
   },
 
   handleHard() {
-    this.recordProgress(false, 2, 'test');
+    // 不确定：masteryScore = 50
+    this.recordProgress('hard', 50);
   },
 
   handleForgot() {
-    this.recordProgress(false, 1, 'test');
+    // 不认识：masteryScore = 25
+    this.recordProgress('forgot', 25);
   },
 
-  recordProgress(isCorrect, confidence, actionType) {
+  recordProgress(result, masteryScore) {
     const { currentWord, currentWordIndex } = this.data;
     
     wx.request({
@@ -176,9 +253,8 @@ Page({
       },
       data: {
         wordId: currentWord.id,
-        isCorrect: isCorrect,
-        confidence: confidence,
-        actionType: actionType
+        result: result,
+        masteryScore: masteryScore
       },
       success: (res) => {
         if (res.statusCode === 200) {
@@ -218,6 +294,9 @@ Page({
 
   onUnload() {
     // 页面卸载时清理数据
+    if (this.data.audioContext) {
+      this.data.audioContext.destroy();
+    }
     this.setData({
       words: [],
       currentWord: null

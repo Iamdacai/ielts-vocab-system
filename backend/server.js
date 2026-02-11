@@ -20,17 +20,17 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// 健康检查路由
-app.get('/health', (req, res) => {
+// API路由
+app.use('/api', require('./routes'));
+
+// 健康检查路由（兼容前端）
+app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
     service: 'ielts-vocab-backend'
   });
 });
-
-// API路由
-app.use('/api', require('./routes'));
 
 // 错误处理中间件
 app.use((err, req, res, next) => {

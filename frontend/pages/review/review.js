@@ -121,8 +121,24 @@ Page({
     this.setData({ confidence });
   },
 
+  // 根据自信度映射掌握度评分
+  getMasteryScoreFromConfidence(confidence, isCorrect) {
+    if (isCorrect) {
+      // 回答正确：自信度1-5对应掌握度50-95
+      const scores = [50, 65, 75, 85, 95];
+      return scores[confidence - 1] || 75;
+    } else {
+      // 回答错误：自信度1-5对应掌握度10-50
+      const scores = [10, 20, 30, 40, 50];
+      return scores[confidence - 1] || 30;
+    }
+  },
+
   submitReview(isCorrect) {
     if (!this.data.currentWord) return;
+    
+    const masteryScore = this.getMasteryScoreFromConfidence(this.data.confidence, isCorrect);
+    const result = isCorrect ? 'know' : 'dont_know';
     
     wx.request({
       url: `${app.globalData.apiUrl}/words/progress`,
@@ -133,9 +149,8 @@ Page({
       },
       data: {
         wordId: this.data.currentWord.id,
-        isCorrect: isCorrect,
-        confidence: this.data.confidence,
-        actionType: 'review'
+        result: result,
+        masteryScore: masteryScore
       },
       success: (res) => {
         if (res.statusCode === 200) {
