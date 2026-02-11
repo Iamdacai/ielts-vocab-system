@@ -1,0 +1,24 @@
+Starting up http-server, serving ./
+
+http-server version: 14.1.1
+
+http-server settings: 
+CORS: true
+Cache: 3600 seconds
+Connection Timeout: 120 seconds
+Directory Listings: visible
+AutoIndex: visible
+Serve GZIP Files: false
+Serve Brotli Files: false
+Default File Extension: none
+
+Available on:
+  http://127.0.0.1:9999
+  http://172.19.40.235:9999
+Hit CTRL-C to stop the server
+
+[2026-02-11T04:14:53.551Z]  "GET /" "curl/7.61.1"
+[2026-02-11T04:15:12.085Z]  "GET /" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Qaxbrowser"
+[2026-02-11T04:15:13.404Z]  "GET /favicon.ico" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Qaxbrowser"
+[2026-02-11T04:15:13.405Z]  "GET /favicon.ico" Error (404): "Not found"
+[2026-02-11T04:15:21.962Z]  "GET /ielts-vocab-frontend-production.tar.gz" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Qaxbrowser"

@@ -1,0 +1,4 @@
+雅思背单词简化HTTPS后端服务启动成功！端口: 3001
+注意：这是简化版本，仅用于前端测试和演示
+HTTPS证书路径: /home/admin/clawd/ielts-vocab-system/ssl
+SQLite数据库初始化成功!

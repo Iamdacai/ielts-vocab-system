@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { authenticateWechat } = require('../controllers/auth');
+const { authenticateWechat } = require('../controllers/auth-sqlite');
 
 /**
  * 微信小程序登录认证

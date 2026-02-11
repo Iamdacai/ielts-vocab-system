@@ -2,7 +2,7 @@
   "miniprogramRoot": "./",
   "projectname": "ielts-vocab-assistant",
   "description": "雅思智能背单词小程序",
-  "appid": "wx1234567890abcdef", // 需要替换为实际的微信小程序AppID
+  "appid": "wx1234567890abcdef",
   "setting": {
     "urlCheck": true,
     "es6": true,

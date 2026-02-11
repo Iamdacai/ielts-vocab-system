@@ -1,4 +1,4 @@
-const { pool } = require('../database');
+const { initializeDatabase } = require('../database-sqlite');
 
 /**
  * 获取用户学习配置
@@ -7,16 +7,18 @@ const getUserConfig = async (req, res) => {
   try {
     const userId = req.user.userId; // 从JWT token中获取
     
-    const result = await pool.query(
-      'SELECT * FROM user_configs WHERE user_id = $1',
+    const db = await initializeDatabase();
+    
+    const result = await db.get(
+      'SELECT * FROM user_configs WHERE user_id = ?',
       [userId]
     );
     
-    if (result.rows.length === 0) {
+    if (!result) {
       return res.status(404).json({ error: '用户配置不存在' });
     }
     
-    res.json(result.rows[0]);
+    res.json(result);
   } catch (error) {
     console.error('获取用户配置失败:', error);
     res.status(500).json({ error: '获取配置失败' });
@@ -44,23 +46,30 @@ const updateUserConfig = async (req, res) => {
       return res.status(400).json({ error: 'review_time 格式必须为 HH:MM' });
     }
     
+    const db = await initializeDatabase();
+    
     // 更新配置
-    const result = await pool.query(
+    const result = await db.run(
       `UPDATE user_configs 
-       SET weekly_new_words_days = COALESCE($1, weekly_new_words_days),
-           daily_new_words_count = COALESCE($2, daily_new_words_count),
-           review_time = COALESCE($3, review_time),
+       SET weekly_new_words_days = COALESCE(?, weekly_new_words_days),
+           daily_new_words_count = COALESCE(?, daily_new_words_count),
+           review_time = COALESCE(?, review_time),
            updated_at = CURRENT_TIMESTAMP
-       WHERE user_id = $4
-       RETURNING *`,
-      [weekly_new_words_days, daily_new_words_count, review_time, userId]
+       WHERE user_id = ?`,
+      [JSON.stringify(weekly_new_words_days), daily_new_words_count, review_time, userId]
     );
     
-    if (result.rows.length === 0) {
+    if (result.changes === 0) {
       return res.status(404).json({ error: '用户配置不存在' });
     }
     
-    res.json(result.rows[0]);
+    // 返回更新后的配置
+    const updatedConfig = await db.get(
+      'SELECT * FROM user_configs WHERE user_id = ?',
+      [userId]
+    );
+    
+    res.json(updatedConfig);
   } catch (error) {
     console.error('更新用户配置失败:', error);
     res.status(500).json({ error: '更新配置失败' });

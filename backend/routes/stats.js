@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateToken } = require('../middleware/auth');
-const { getUserStats } = require('../controllers/stats');
+const { getStats } = require('../controllers/stats');
 
-// 获取用户学习统计 - 需要认证
-router.get('/', authenticateToken, getUserStats);
+// 获取学习统计 - 需要认证
+router.get('/', authenticateToken, getStats);
 
 module.exports = router;

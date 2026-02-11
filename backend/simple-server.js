@@ -1,76 +1,45 @@
 const express = require('express');
 const cors = require('cors');
-const fs = require('fs');
+const helmet = require('helmet');
+const jwt = require('jsonwebtoken');
 
 const app = express();
-app.use(cors());
-app.use(express.json());
 
-// 模拟数据
-let mockWords = [];
-let userProgress = {};
+// 安全中间件
+app.use(helmet());
+app.use(cors({
+  origin: ['http://localhost:8080', 'https://your-wechat-appid.wx.qcloud.la'],
+  credentials: true
+}));
 
-try {
-  mockWords = JSON.parse(fs.readFileSync('./backend/seed-data/ielts-words-sample.json', 'utf8'));
-  console.log(`加载了 ${mockWords.length} 个模拟单词`);
-} catch (error) {
-  console.log('使用内置模拟数据');
-  mockWords = [
-    {
-      id: 1,
-      word: "abandon",
-      phonetic: "/əˈbændən/",
-      part_of_speech: "v.",
-      definition: "放弃，抛弃",
-      example_sentences: ["The sailors had to abandon the ship.", "She abandoned her career to raise children."],
-      frequency_level: "high",
-      cambridge_book: 10
-    },
-    {
-      id: 2,
-      word: "benefit",
-      phonetic: "/ˈbenɪfɪt/",
-      part_of_speech: "n./v.",
-      definition: "利益，好处；受益",
-      example_sentences: ["Regular exercise has many health benefits.", "The new policy will benefit all employees."],
-      frequency_level: "high",
-      cambridge_book: 8
-    }
-  ];
-}
+// 解析JSON
+app.use(express.json({ limit: '10mb' }));
 
 // 健康检查
 app.get('/health', (req, res) => {
-  res.json({ status: 'OK', service: 'ielts-vocab-mock-backend' });
-});
-
-// 模拟登录
-app.post('/api/auth/login', (req, res) => {
-  res.json({
-    token: 'mock_token_123',
-    user: { id: 1, openid: 'mock_openid' }
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    service: 'ielts-vocab-backend',
+    database: 'in-memory'
   });
 });
 
-// 获取新词
-app.get('/api/words/new', (req, res) => {
-  const newWords = mockWords.slice(0, 5);
-  res.json(newWords);
+// 简化的认证（开发用）
+app.post('/api/auth/login', (req, res) => {
+  const token = jwt.sign(
+    { userId: 1, openid: 'test_user' },
+    'dev_secret',
+    { expiresIn: '24h' }
+  );
+  
+  res.json({
+    token,
+    user: { id: 1, openid: 'test_user' }
+  });
 });
 
-// 获取复习词
-app.get('/api/words/review', (req, res) => {
-  const reviewWords = mockWords.slice(0, 3);
-  res.json(reviewWords);
-});
-
-// 记录进度
-app.post('/api/words/progress', (req, res) => {
-  console.log('记录学习进度:', req.body);
-  res.json({ success: true, mastery: 85, nextReviewAt: new Date(Date.now() + 86400000) });
-});
-
-// 获取配置
+// 简化的配置
 app.get('/api/config', (req, res) => {
   res.json({
     weekly_new_words_days: [1,2,3,4,5,6,7],
@@ -79,27 +48,61 @@ app.get('/api/config', (req, res) => {
   });
 });
 
-// 更新配置
 app.post('/api/config', (req, res) => {
-  console.log('更新配置:', req.body);
   res.json(req.body);
 });
 
-// 获取统计
+// 简化的单词数据
+const sampleWords = [
+  {
+    id: 1,
+    word: "abandon",
+    phonetic: "/əˈbændən/",
+    part_of_speech: "v.",
+    definition: "放弃，抛弃",
+    example_sentences: ["The baby was abandoned by its mother.", "He abandoned his car on the side of the road."],
+    frequency_level: "high",
+    cambridge_book: 10
+  },
+  {
+    id: 2,
+    word: "benefit",
+    phonetic: "/ˈbenɪfɪt/",
+    part_of_speech: "n./v.",
+    definition: "利益，好处；受益",
+    example_sentences: ["Regular exercise has many health benefits.", "The new policy will benefit all employees."],
+    frequency_level: "high",
+    cambridge_book: 8
+  }
+];
+
+app.get('/api/words/new', (req, res) => {
+  res.json(sampleWords);
+});
+
+app.get('/api/words/review', (req, res) => {
+  res.json(sampleWords);
+});
+
+app.post('/api/words/progress', (req, res) => {
+  res.json({ success: true, mastery: 85, nextReviewAt: new Date(Date.now() + 86400000) });
+});
+
 app.get('/api/stats', (req, res) => {
   res.json({
-    total_words: 150,
-    mastered_words: 45,
-    learning_words: 105,
-    avg_mastery_score: 68.5,
-    today_learning_count: 12
+    total_words: 2,
+    mastered_words: 1,
+    learning_words: 1,
+    avg_mastery_score: 85,
+    today_learning_count: 2
   });
 });
 
-const PORT = 3000;
+// 使用端口3001避免冲突
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`雅思背单词模拟后端服务启动成功！端口: ${PORT}`);
-  console.log('注意：这是模拟服务，仅用于前端测试');
+  console.log(`雅思背单词简化后端服务启动成功！端口: ${PORT}`);
+  console.log('注意：这是简化版本，仅用于前端测试和演示');
 });
 
 module.exports = app;

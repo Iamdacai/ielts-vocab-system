@@ -24,16 +24,51 @@ Page({
     }
   },
 
-  checkLoginStatus() {
-    const hasLogin = app.globalData.hasLogin;
-    this.setData({ hasLogin });
+  async checkLoginStatus() {
+    const token = wx.getStorageSync('token');
+    const userInfo = wx.getStorageSync('userInfo');
     
-    if (hasLogin) {
-      this.setData({ userInfo: app.globalData.userInfo });
-      this.loadStats();
-    } else {
-      this.setData({ loading: false });
+    if (token && userInfo) {
+      // 验证token是否有效
+      try {
+        const res = await new Promise((resolve, reject) => {
+          wx.request({
+            url: `${app.globalData.apiUrl}/health`,
+            header: {
+              'Authorization': `Bearer ${token}`
+            },
+            success: resolve,
+            fail: reject
+          });
+        });
+        
+        if (res.statusCode === 200) {
+          // token有效
+          app.globalData.token = token;
+          app.globalData.userInfo = userInfo;
+          app.globalData.hasLogin = true;
+          this.setData({ 
+            hasLogin: true,
+            userInfo: userInfo
+          });
+          this.loadStats();
+          return;
+        }
+      } catch (err) {
+        console.log('Token验证失败:', err);
+      }
     }
+    
+    // token无效或不存在，需要重新登录
+    app.globalData.hasLogin = false;
+    app.globalData.token = null;
+    app.globalData.userInfo = null;
+    wx.removeStorageSync('token');
+    wx.removeStorageSync('userInfo');
+    this.setData({ 
+      hasLogin: false,
+      loading: false
+    });
   },
 
   loadStats() {
@@ -52,6 +87,10 @@ Page({
         } else {
           console.error('加载统计失败:', res);
           this.setData({ loading: false });
+          // 如果是403错误，重新触发登录检查
+          if (res.statusCode === 403) {
+            this.checkLoginStatus();
+          }
         }
       },
       fail: (err) => {

@@ -1,66 +1,51 @@
-const { pool } = require('../database');
+const { initializeDatabase } = require('../database');
 
 /**
- * 获取用户学习统计
+ * 获取学习统计信息
  */
-const getUserStats = async (req, res) => {
+const getStats = async (req, res) => {
   try {
     const userId = req.user.userId;
+    const db = await initializeDatabase();
     
-    // 获取总体统计
-    const statsResult = await pool.query(
+    // 获取总词汇数
+    const totalWordsResult = await db.get('SELECT COUNT(*) as count FROM ielts_words');
+    const totalWords = totalWordsResult.count;
+    
+    // 获取用户学习统计
+    const userStats = await db.get(
       `SELECT 
-         COUNT(*) as total_words,
          COUNT(CASE WHEN status = 'mastered' THEN 1 END) as mastered_words,
-         COUNT(CASE WHEN status = 'learning' THEN 1 END) as learning_words,
-         COUNT(CASE WHEN status = 'forgotten' THEN 1 END) as forgotten_words,
-         AVG(mastery_score) as avg_mastery_score
-       FROM user_word_progress
-       WHERE user_id = $1`,
+         COUNT(CASE WHEN status IN ('learning', 'new') THEN 1 END) as learning_words,
+         AVG(mastery_score) as avg_mastery_score,
+         COUNT(*) as total_user_words
+       FROM user_word_progress 
+       WHERE user_id = ?`,
       [userId]
     );
     
-    const stats = statsResult.rows[0];
-    
-    // 获取今日学习记录
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
-    
-    const todayRecords = await pool.query(
-      `SELECT COUNT(*) as today_learning_count
-       FROM learning_records
-       WHERE user_id = $1
-         AND created_at BETWEEN $2 AND $3`,
-      [userId, todayStart, todayEnd]
+    // 获取今日学习数量
+    const todayLearning = await db.get(
+      `SELECT COUNT(*) as count 
+       FROM learning_records 
+       WHERE user_id = ? 
+       AND date(created_at) = date('now')`,
+      [userId]
     );
     
-    // 获取本周学习趋势
-    const weekStart = new Date();
-    weekStart.setDate(weekStart.getDate() - 7);
-    const weekRecords = await pool.query(
-      `SELECT 
-         DATE(created_at) as date,
-         COUNT(*) as count
-       FROM learning_records
-       WHERE user_id = $1
-         AND created_at >= $2
-       GROUP BY DATE(created_at)
-       ORDER BY date ASC`,
-      [userId, weekStart]
-    );
-    
-    const response = {
-      ...stats,
-      today_learning_count: todayRecords.rows[0].today_learning_count,
-      weekly_trend: weekRecords.rows
+    const stats = {
+      total_words: totalWords,
+      mastered_words: userStats.mastered_words || 0,
+      learning_words: userStats.learning_words || 0,
+      avg_mastery_score: userStats.avg_mastery_score ? parseFloat(userStats.avg_mastery_score.toFixed(2)) : 0,
+      today_learning_count: todayLearning.count || 0
     };
     
-    res.json(response);
+    res.json(stats);
   } catch (error) {
     console.error('获取学习统计失败:', error);
     res.status(500).json({ error: '获取学习统计失败' });
   }
 };
 
-module.exports = { getUserStats };
+module.exports = { getStats };

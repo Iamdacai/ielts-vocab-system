@@ -1,4 +1,3 @@
-// pages/config/config.js
 const app = getApp();
 
 Page({
@@ -20,8 +19,53 @@ Page({
     ]
   },
 
-  onLoad() {
-    this.loadConfig();
+  async onLoad() {
+    await this.checkLoginStatus();
+  },
+
+  // 改进的登录状态检查
+  async checkLoginStatus() {
+    const token = wx.getStorageSync('token');
+    const userInfo = wx.getStorageSync('userInfo');
+    
+    if (token && userInfo) {
+      // 验证token是否有效
+      try {
+        const res = await new Promise((resolve, reject) => {
+          wx.request({
+            url: `${app.globalData.apiUrl}/health`,
+            header: {
+              'Authorization': `Bearer ${token}`
+            },
+            success: resolve,
+            fail: reject
+          });
+        });
+        
+        if (res.statusCode === 200) {
+          // token有效
+          app.globalData.token = token;
+          app.globalData.userInfo = userInfo;
+          app.globalData.hasLogin = true;
+          this.loadConfig();
+          return;
+        }
+      } catch (err) {
+        console.log('Token验证失败:', err);
+      }
+    }
+    
+    // token无效或不存在，需要重新登录
+    app.globalData.hasLogin = false;
+    app.globalData.token = null;
+    app.globalData.userInfo = null;
+    wx.removeStorageSync('token');
+    wx.removeStorageSync('userInfo');
+    
+    // 跳转到首页进行登录
+    wx.redirectTo({
+      url: '/pages/index/index'
+    });
   },
 
   loadConfig() {

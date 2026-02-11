@@ -13,7 +13,50 @@ Page({
   },
 
   onLoad() {
-    this.loadReviewWord();
+    this.checkLoginAndLoadReview();
+  },
+
+  async checkLoginAndLoadReview() {
+    const token = wx.getStorageSync('token');
+    const userInfo = wx.getStorageSync('userInfo');
+    
+    if (token && userInfo) {
+      // 验证token是否有效
+      try {
+        const res = await new Promise((resolve, reject) => {
+          wx.request({
+            url: `${app.globalData.apiUrl}/health`,
+            header: {
+              'Authorization': `Bearer ${token}`
+            },
+            success: resolve,
+            fail: reject
+          });
+        });
+        
+        if (res.statusCode === 200) {
+          // token有效
+          app.globalData.token = token;
+          app.globalData.userInfo = userInfo;
+          app.globalData.hasLogin = true;
+          this.loadReviewWord();
+          return;
+        }
+      } catch (err) {
+        console.log('Token验证失败:', err);
+      }
+    }
+    
+    // token无效或不存在，跳转到首页
+    wx.showToast({
+      title: '请先登录',
+      icon: 'none'
+    });
+    setTimeout(() => {
+      wx.redirectTo({
+        url: '/pages/index/index'
+      });
+    }, 1500);
   },
 
   loadReviewWord() {
@@ -42,6 +85,17 @@ Page({
               hasMoreWords: false
             });
           }
+        } else if (res.statusCode === 403) {
+          // token无效，重新登录
+          wx.showToast({
+            title: '请重新登录',
+            icon: 'none'
+          });
+          setTimeout(() => {
+            wx.redirectTo({
+              url: '/pages/index/index'
+            });
+          }, 1500);
         } else {
           console.error('加载复习单词失败:', res);
           this.setData({ loading: false, hasMoreWords: false });
@@ -94,6 +148,17 @@ Page({
           setTimeout(() => {
             this.loadReviewWord();
           }, 500);
+        } else if (res.statusCode === 403) {
+          // token无效，重新登录
+          wx.showToast({
+            title: '请重新登录',
+            icon: 'none'
+          });
+          setTimeout(() => {
+            wx.redirectTo({
+              url: '/pages/index/index'
+            });
+          }, 1500);
         } else {
           wx.showToast({
             title: '提交失败',

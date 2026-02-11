@@ -1,11 +1,9 @@
 {
   "pages": [
     "pages/index/index",
-    "pages/learn/new-words",
-    "pages/learn/review",
-    "pages/config/config",
-    "pages/stats/stats",
-    "pages/profile/profile"
+    "pages/learning/learning",
+    "pages/review/review",
+    "pages/config/config"
   ],
   "window": {
     "backgroundTextStyle": "light",
@@ -21,39 +19,20 @@
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "首页",
-        "iconPath": "assets/icons/home.png",
-        "selectedIconPath": "assets/icons/home-active.png"
+        "text": "首页"
       },
       {
-        "pagePath": "pages/learn/new-words",
-        "text": "新词学习",
-        "iconPath": "assets/icons/book.png",
-        "selectedIconPath": "assets/icons/book-active.png"
+        "pagePath": "pages/learning/learning",
+        "text": "新词学习"
       },
       {
-        "pagePath": "pages/learn/review",
-        "text": "复习",
-        "iconPath": "assets/icons/review.png",
-        "selectedIconPath": "assets/icons/review-active.png"
+        "pagePath": "pages/review/review",
+        "text": "复习"
       },
       {
-        "pagePath": "pages/stats/stats",
-        "text": "统计",
-        "iconPath": "assets/icons/stats.png",
-        "selectedIconPath": "assets/icons/stats-active.png"
-      },
-      {
-        "pagePath": "pages/profile/profile",
-        "text": "我的",
-        "iconPath": "assets/icons/profile.png",
-        "selectedIconPath": "assets/icons/profile-active.png"
+        "pagePath": "pages/config/config",
+        "text": "设置"
       }
     ]
-  },
-  "permission": {
-    "scope.userLocation": {
-      "desc": "你的位置信息将用于获取本地天气信息（可选）"
-    }
   }
 }
