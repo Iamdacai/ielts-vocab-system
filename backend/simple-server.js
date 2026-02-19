@@ -2,8 +2,41 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const jwt = require('jsonwebtoken');
+const multer = require('multer');
+const path = require('path');
 
 const app = express();
+
+// 配置文件上传
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'temp/');
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'recording-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('audio/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only audio files are allowed!'), false);
+    }
+  }
+});
+
+// 创建临时目录
+const fs = require('fs');
+if (!fs.existsSync('temp')) {
+  fs.mkdirSync('temp');
+}
 
 // 安全中间件
 app.use(helmet());
@@ -98,11 +131,82 @@ app.get('/api/stats', (req, res) => {
   });
 });
 
+// === 发音功能 API ===
+
+// 获取单词发音音频
+app.get('/api/pronunciation/word-audio/:word', (req, res) => {
+  const { word } = req.params;
+  // 模拟返回音频URL或直接提供音频
+  res.json({
+    audioUrl: `/api/audio/${encodeURIComponent(word)}.mp3`,
+    word: word
+  });
+});
+
+// 分析用户发音并评分
+app.post('/api/pronunciation/analyze', upload.single('audio'), (req, res) => {
+  try {
+    const { word } = req.body;
+    
+    if (!word) {
+      return res.status(400).json({ error: 'Target word is required' });
+    }
+    
+    // 模拟发音评分（实际项目中应调用真实的语音识别API）
+    const randomScore = Math.floor(Math.random() * 40) + 60; // 60-100分
+    
+    let feedback = '';
+    if (randomScore >= 90) {
+      feedback = '发音非常标准！继续保持！';
+    } else if (randomScore >= 80) {
+      feedback = '发音很好，注意个别音节的重音位置。';
+    } else if (randomScore >= 70) {
+      feedback = '发音基本正确，但某些音素需要改进。';
+    } else {
+      feedback = '发音需要更多练习，建议多听标准发音并跟读。';
+    }
+    
+    res.json({
+      score: randomScore,
+      feedback: feedback,
+      word: word,
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('Pronunciation analysis error:', error);
+    res.status(500).json({ error: 'Pronunciation analysis failed' });
+  }
+});
+
+// 获取发音练习历史
+app.get('/api/pronunciation/history', (req, res) => {
+  // 模拟返回发音练习历史
+  res.json({
+    history: [
+      { word: 'abandon', score: 85, timestamp: new Date(Date.now() - 86400000).toISOString() },
+      { word: 'benefit', score: 92, timestamp: new Date().toISOString() }
+    ]
+  });
+});
+
+// 获取发音统计
+app.get('/api/pronunciation/stats', (req, res) => {
+  // 模拟返回发音统计
+  res.json({
+    total_practices: 2,
+    average_score: 88.5,
+    best_word: 'benefit',
+    best_score: 92
+  });
+});
+
 // 使用端口3001避免冲突
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`雅思背单词简化后端服务启动成功！端口: ${PORT}`);
   console.log('注意：这是简化版本，仅用于前端测试和演示');
+  console.log('已集成发音评分功能！');
 });
 
 module.exports = app;

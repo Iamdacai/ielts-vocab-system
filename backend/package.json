@@ -13,6 +13,7 @@
     "express": "^4.22.1",
     "helmet": "^7.2.0",
     "jsonwebtoken": "^9.0.3",
+    "multer": "^2.0.2",
     "sqlite": "^5.0.1",
     "sqlite3": "^5.1.7",
     "xlsx": "^0.18.5"

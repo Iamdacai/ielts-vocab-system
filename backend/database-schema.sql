@@ -56,8 +56,22 @@ CREATE TABLE learning_records (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- 发音练习记录表
+CREATE TABLE pronunciation_records (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    word_id INTEGER REFERENCES ielts_words(id) ON DELETE CASCADE,
+    audio_file_path VARCHAR(255),
+    pronunciation_score DECIMAL(3,2) CHECK (pronunciation_score BETWEEN 0.00 AND 100.00),
+    feedback TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- 创建索引
 CREATE INDEX idx_user_word_progress_next_review ON user_word_progress(next_review_at);
 CREATE INDEX idx_user_word_progress_status ON user_word_progress(status);
 CREATE INDEX idx_ielts_words_frequency ON ielts_words(frequency_level);
 CREATE INDEX idx_ielts_words_book ON ielts_words(cambridge_book);
+CREATE INDEX idx_pronunciation_records_user ON pronunciation_records(user_id);
+CREATE INDEX idx_pronunciation_records_word ON pronunciation_records(word_id);
+CREATE INDEX idx_pronunciation_records_score ON pronunciation_records(pronunciation_score);

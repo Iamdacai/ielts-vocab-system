@@ -1,0 +1,123 @@
+<!-- pages/learning/learning.wxml -->
+<view class="container">
+  <!-- 加载状态 -->
+  <view wx:if="{{loading}}" class="loading-container">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 学习界面 -->
+  <view wx:else class="learning-container">
+    <!-- 进度条 -->
+    <view class="progress-section">
+      <progress 
+        percent="{{progress}}" 
+        stroke-width="4" 
+        active-color="#4a6cf7"
+        backgroundColor="#e0e0e0"
+        class="progress-bar"
+      />
+      <view class="progress-text">
+        <text>{{currentWordIndex + 1}}/{{totalWords}}</text>
+      </view>
+    </view>
+
+    <!-- 单词显示区域 -->
+    <view class="word-section">
+      <!-- 英文单词 + 发音按钮组合 -->
+      <view class="english-section">
+        <text class="english-word">{{currentWord ? currentWord.word : '---'}}</text>
+        <!-- 紧凑的发音按钮 -->
+        <button 
+          class="pronunciation-btn-mini" 
+          bindtap="playWordPronunciation"
+          disabled="{{isPlaying}}"
+        >
+          <image 
+            src="{{isPlaying ? '/assets/icons/playing-small.gif' : '/assets/icons/speaker-small.png'}}" 
+            class="icon-mini"
+          />
+        </button>
+      </view>
+
+      <!-- 中文释义（可折叠） -->
+      <view wx:if="{{showAnswer && currentWord}}" class="chinese-section">
+        <text class="chinese-meaning">{{currentWord.meaning ? currentWord.meaning : '---'}}</text>
+        <!-- 音标显示 -->
+        <view wx:if="{{currentWord.phonetic}}" class="phonetic-section">
+          <text class="phonetic">{{currentWord.phonetic}}</text>
+        </view>
+      </view>
+
+      <!-- 紧凑的发音练习区域 -->
+      <view wx:if="{{currentWord}}" class="pronunciation-practice-section">
+        <view class="practice-buttons">
+          <!-- 跟读按钮 - 更小的尺寸 -->
+          <button 
+            class="record-btn-mini {{isRecording ? 'recording' : ''}}" 
+            bindtap="startPronunciationPractice"
+            disabled="{{isRecording}}"
+          >
+            <image 
+              src="{{isRecording ? '/assets/icons/recording-small.gif' : '/assets/icons/mic-small.png'}}" 
+              class="icon-mini"
+            />
+          </button>
+          
+          <!-- 评分结果显示 - 紧凑布局 -->
+          <view wx:if="{{pronunciationScore !== null}}" class="score-display-mini">
+            <text class="score-text-mini">🎯 {{pronunciationScore}}</text>
+          </view>
+        </view>
+        
+        <!-- 反馈信息 - 小字体 -->
+        <view wx:if="{{pronunciationFeedback}}" class="feedback-mini">
+          <text>{{pronunciationFeedback}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 答案切换按钮 -->
+    <view class="answer-toggle-section">
+      <button 
+        class="toggle-btn" 
+        bindtap="toggleAnswer"
+      >
+        {{showAnswer ? '隐藏答案' : '显示答案'}}
+      </button>
+    </view>
+
+    <!-- 操作按钮区域 - 优化布局 -->
+    <view class="action-section">
+      <!-- 掌握程度选择 - 横向排列，更紧凑 -->
+      <view class="mastery-section-compact">
+        <button class="mastery-btn-compact know-btn" bindtap="handleKnow">
+          ✓
+        </button>
+        <button class="mastery-btn-compact hard-btn" bindtap="handleHard">
+          ?
+        </button>
+        <button class="mastery-btn-compact forgot-btn" bindtap="handleForgot">
+          ✗
+        </button>
+      </view>
+
+      <!-- 导航按钮 - 底部固定 -->
+      <view class="nav-section">
+        <button 
+          class="nav-btn prev-btn" 
+          bindtap="showPreviousWord"
+          disabled="{{currentWordIndex === 0}}"
+        >
+          上一词
+        </button>
+        <button 
+          class="nav-btn next-btn" 
+          bindtap="showNextWordDirect"
+          disabled="{{currentWordIndex >= totalWords - 1}}"
+        >
+          下一词
+        </button>
+      </view>
+    </view>
+  </view>
+</view>
