@@ -1,55 +1,124 @@
 <!-- pages/learning/learning.wxml -->
 <view class="container">
-  <view class="card" wx:if="{{currentWord && !loading}}">
-    <view class="progress-bar">
-      <progress percent="{{progress}}" stroke-width="4" color="#007AFF" />
-      <text class="progress-text">{{currentWordIndex + 1}}/{{totalWords}}</text>
-    </view>
-    
-    <view class="word-section">
-      <view class="word">{{currentWord.word}}</view>
-      <view class="phonetic">{{currentWord.phonetic}}</view>
-    </view>
-    
-    <view class="definition-section" wx:if="{{showAnswer}}">
-      <view class="subtitle">词性与释义</view>
-      <view class="text">{{currentWord.part_of_speech}} - {{currentWord.definition}}</view>
-    </view>
-    
-    <view class="example-section" wx:if="{{showAnswer && currentWord.example_sentences && currentWord.example_sentences.length > 0}}">
-      <view class="subtitle">雅思真题例句</view>
-      <view class="text" wx:for="{{currentWord.example_sentences}}" wx:key="index">
-        {{index + 1}}. {{item}}
+  <!-- 加载状态 -->
+  <view wx:if="{{loading}}" class="loading-container">
+    <text class="loading-text">加载中...</text>
+  </view>
+
+  <!-- 学习界面 -->
+  <view wx:else class="learning-container">
+    <!-- 进度条 -->
+    <view class="progress-section">
+      <progress 
+        percent="{{progress}}" 
+        stroke-width="4" 
+        active-color="#4a6cf7"
+        backgroundColor="#e0e0e0"
+        class="progress-bar"
+      />
+      <view class="progress-text">
+        <text>{{currentWordIndex + 1}}/{{totalWords}}</text>
       </view>
     </view>
-    
-    <view class="source-section" wx:if="{{showAnswer}}">
-      <view class="text">来源：剑桥雅思{{currentWord.cambridge_book}}</view>
+
+    <!-- 单词显示区域 -->
+    <view class="word-section">
+      <!-- 英文单词 -->
+      <view class="english-section">
+        <text class="english-word">{{currentWord ? currentWord.word : '---'}}</text>
+        <!-- 发音按钮 -->
+        <button 
+          class="pronunciation-btn" 
+          bindtap="playWordPronunciation"
+          disabled="{{isPlaying}}"
+        >
+          <image 
+            src="{{isPlaying ? '/assets/icons/playing.gif' : '/assets/icons/speaker.png'}}" 
+            class="icon"
+          />
+        </button>
+      </view>
+
+      <!-- 中文释义（可折叠） -->
+      <view wx:if="{{showAnswer && currentWord}}" class="chinese-section">
+        <text class="chinese-meaning">{{currentWord.meaning ? currentWord.meaning : '---'}}</text>
+        <!-- 音标显示 -->
+        <view wx:if="{{currentWord.phonetic}}" class="phonetic-section">
+          <text class="phonetic">{{currentWord.phonetic}}</text>
+        </view>
+      </view>
+
+      <!-- 跟读练习区域 -->
+      <view class="pronunciation-practice-section">
+        <view class="practice-title">发音练习</view>
+        
+        <!-- 跟读按钮 -->
+        <button 
+          class="record-btn {{isRecording ? 'recording' : ''}}" 
+          bindtap="startPronunciationPractice"
+          disabled="{{isRecording || !currentWord}}"
+        >
+          <image 
+            src="{{isRecording ? '/assets/icons/recording.gif' : '/assets/icons/mic.png'}}" 
+            class="icon"
+          />
+          <text>{{isRecording ? '录音中...' : '跟读练习'}}</text>
+        </button>
+        
+        <!-- 评分结果显示 -->
+        <view wx:if="{{pronunciationScore !== null}}" class="score-section">
+          <view class="score-display">
+            <text class="score-text">发音得分: {{pronunciationScore}}/100</text>
+          </view>
+          <view class="feedback">
+            <text>{{feedback}}</text>
+          </view>
+        </view>
+      </view>
     </view>
-    
-    <view class="action-buttons" wx:if="!showAnswer">
-      <button class="button" style="background:#007AFF" bindtap="toggleAnswer">显示答案</button>
+
+    <!-- 答案切换按钮 -->
+    <view class="answer-toggle-section">
+      <button 
+        class="toggle-btn" 
+        bindtap="toggleAnswer"
+      >
+        {{showAnswer ? '隐藏答案' : '显示答案'}}
+      </button>
     </view>
-    
-    <view class="action-buttons" wx:if="{{showAnswer}}">
-      <button class="button" style="background:#4CD964" bindtap="handleKnow">认识</button>
-      <button class="button" style="background:#FF9500" bindtap="handleUnsure">不确定</button>
-      <button class="button" style="background:#FF3B30" bindtap="handleDontKnow">不认识</button>
+
+    <!-- 操作按钮区域 -->
+    <view class="action-section">
+      <!-- 上一个单词 -->
+      <button 
+        class="nav-btn prev-btn" 
+        bindtap="showPreviousWord"
+        disabled="{{currentWordIndex === 0}}"
+      >
+        上一个
+      </button>
+
+      <!-- 掌握程度选择 -->
+      <view class="mastery-section">
+        <button class="mastery-btn know-btn" bindtap="handleKnow">
+          认识 ✓
+        </button>
+        <button class="mastery-btn hard-btn" bindtap="handleHard">
+          不确定 ?
+        </button>
+        <button class="mastery-btn forgot-btn" bindtap="handleForgot">
+          不认识 ✗
+        </button>
+      </view>
+
+      <!-- 下一个单词 -->
+      <button 
+        class="nav-btn next-btn" 
+        bindtap="showNextWordDirect"
+        disabled="{{currentWordIndex >= totalWords - 1}}"
+      >
+        下一个
+      </button>
     </view>
-    
-    <view class="navigation-buttons" wx:if="{{showAnswer && totalWords > 1}}">
-      <button class="nav-button" wx:if="{{currentWordIndex > 0}}" bindtap="showPreviousWord">上一个</button>
-      <button class="nav-button" wx:if="{{currentWordIndex < totalWords - 1}}" bindtap="showNextWordDirect">下一个</button>
-    </view>
-  </view>
-  
-  <view class="card" wx:elif="{{loading}}">
-    <view class="loading">加载新单词中...</view>
-  </view>
-  
-  <view class="card" wx:else>
-    <view class="title">今日新词已学完</view>
-    <view class="text">你已经完成了今天的新词学习任务！可以去复习已学单词，或者明天再来学习新的词汇。</view>
-    <button class="button" bindtap="goBackHome">返回首页</button>
   </view>
 </view>

@@ -10,7 +10,12 @@ Page({
     progress: 0,
     totalWords: 0,
     audioContext: null,
-    isPlaying: false
+    isPlaying: false,
+    // 发音评分相关状态
+    isRecording: false,
+    pronunciationScore: null,
+    pronunciationFeedback: '',
+    recordingTempFilePath: null
   },
 
   onLoad() {
@@ -154,6 +159,8 @@ Page({
       this.setData({
         currentWord: currentWord,
         showAnswer: false,
+        pronunciationScore: null,
+        pronunciationFeedback: '',
         progress: ((currentWordIndex + 1) / words.length) * 100
       });
     } else {
@@ -206,8 +213,8 @@ Page({
     });
   },
 
-  // 播放单词发音
-  playWordPronunciation() {
+  // 播放单词发音 - 修复版本
+  async playWordPronunciation() {
     const { currentWord } = this.data;
     if (!currentWord) return;
 
@@ -219,11 +226,204 @@ Page({
       word = word.split(' ')[0].trim();
     }
     
-    // 构建音频URL
-    const audioUrl = `${app.globalData.apiUrl}/audio/${encodeURIComponent(word)}.mp3`;
+    // 先检查音频文件是否存在
+    try {
+      const checkResponse = await new Promise((resolve, reject) => {
+        wx.request({
+          url: `${app.globalData.apiUrl}/audio/${encodeURIComponent(word)}.mp3`,
+          method: 'HEAD',
+          success: resolve,
+          fail: reject
+        });
+      });
+      
+      if (checkResponse.statusCode === 200) {
+        // 音频文件存在，直接播放
+        const audioUrl = `${app.globalData.apiUrl}/audio/${encodeURIComponent(word)}.mp3`;
+        this.data.audioContext.src = audioUrl;
+        this.data.audioContext.play();
+      } else {
+        // 音频文件不存在，使用TTS服务生成
+        await this.playWordPronunciationWithTTS(word);
+      }
+    } catch (error) {
+      console.error('检查音频文件失败:', error);
+      // 直接使用TTS服务作为备用方案
+      await this.playWordPronunciationWithTTS(word);
+    }
+  },
+
+  // 使用TTS服务播放单词发音
+  async playWordPronunciationWithTTS(word) {
+    wx.showLoading({ title: '生成发音...' });
     
-    this.data.audioContext.src = audioUrl;
-    this.data.audioContext.play();
+    try {
+      const ttsResponse = await new Promise((resolve, reject) => {
+        wx.request({
+          url: `${app.globalData.apiUrl}/pronunciation/word-audio/${encodeURIComponent(word)}`,
+          method: 'GET',
+          responseType: 'arraybuffer',
+          success: resolve,
+          fail: reject
+        });
+      });
+      
+      if (ttsResponse.statusCode === 200) {
+        // 将音频数据转换为临时文件
+        const audioData = ttsResponse.data;
+        const tempFilePath = wx.env.USER_DATA_PATH + '/' + word + '.mp3';
+        
+        wx.getFileSystemManager().writeFile({
+          filePath: tempFilePath,
+          data: audioData,
+          encoding: 'binary',
+          success: () => {
+            this.data.audioContext.src = tempFilePath;
+            this.data.audioContext.play();
+          },
+          fail: (err) => {
+            console.error('保存TTS音频失败:', err);
+            wx.showToast({
+              title: '发音生成失败',
+              icon: 'error'
+            });
+            this.setData({ isPlaying: false });
+          }
+        });
+      } else {
+        throw new Error('TTS服务返回错误');
+      }
+    } catch (error) {
+      console.error('TTS发音失败:', error);
+      wx.showToast({
+        title: '发音服务不可用',
+        icon: 'error'
+      });
+      this.setData({ isPlaying: false });
+    } finally {
+      wx.hideLoading();
+    }
+  },
+
+  // 开始跟读录音
+  async startPronunciationPractice() {
+    if (this.data.isRecording) return;
+    
+    const { currentWord } = this.data;
+    if (!currentWord) return;
+
+    this.setData({ 
+      isRecording: true, 
+      pronunciationScore: null, 
+      pronunciationFeedback: '' 
+    });
+    
+    try {
+      // 请求录音权限
+      const authResult = await wx.getSetting();
+      if (!authResult.authSetting['scope.record']) {
+        await wx.authorize({ scope: 'scope.record' });
+      }
+      
+      // 开始录音
+      wx.startRecord({
+        success: (res) => {
+          wx.showToast({ title: '开始录音，请跟读单词' });
+          
+          // 设置5秒自动停止
+          setTimeout(() => {
+            this.stopRecordingAndAnalyze();
+          }, 5000);
+        },
+        fail: (err) => {
+          console.error('录音启动失败:', err);
+          wx.showToast({ title: '录音启动失败', icon: 'error' });
+          this.setData({ isRecording: false });
+        }
+      });
+    } catch (error) {
+      console.error('录音权限或启动失败:', error);
+      wx.showToast({ title: '录音失败', icon: 'error' });
+      this.setData({ isRecording: false });
+    }
+  },
+
+  // 停止录音并分析
+  stopRecordingAndAnalyze() {
+    wx.stopRecord({
+      success: (res) => {
+        const tempFilePath = res.tempFilePath;
+        this.setData({ recordingTempFilePath: tempFilePath });
+        this.analyzePronunciation(tempFilePath);
+      },
+      fail: (err) => {
+        console.error('停止录音失败:', err);
+        wx.showToast({ title: '录音处理失败', icon: 'error' });
+        this.setData({ isRecording: false });
+      }
+    });
+  },
+
+  // 分析发音并获取评分
+  analyzePronunciation(tempFilePath) {
+    const { currentWord } = this.data;
+    if (!currentWord) return;
+
+    // 提取单词
+    let word = currentWord.word;
+    if (word.includes('/')) {
+      word = word.split('/')[0].trim();
+    } else {
+      word = word.split(' ')[0].trim();
+    }
+
+    wx.showLoading({ title: '分析发音...' });
+    
+    // 上传录音文件进行分析
+    const uploadTask = wx.uploadFile({
+      url: `${app.globalData.apiUrl}/pronunciation/analyze`,
+      filePath: tempFilePath,
+      name: 'audio',
+      formData: {
+        word: word
+      },
+      header: {
+        'Authorization': `Bearer ${app.globalData.token}`
+      },
+      success: (res) => {
+        try {
+          const result = JSON.parse(res.data);
+          if (res.statusCode === 200) {
+            this.setData({
+              pronunciationScore: result.score,
+              pronunciationFeedback: result.feedback
+            });
+            wx.showToast({ 
+              title: `得分: ${result.score}/100`, 
+              icon: 'none' 
+            });
+          } else {
+            throw new Error(result.message || '分析失败');
+          }
+        } catch (error) {
+          console.error('解析分析结果失败:', error);
+          wx.showToast({ title: '分析结果解析失败', icon: 'error' });
+        }
+      },
+      fail: (err) => {
+        console.error('上传分析失败:', err);
+        wx.showToast({ title: '发音分析失败', icon: 'error' });
+      },
+      complete: () => {
+        wx.hideLoading();
+        this.setData({ isRecording: false });
+      }
+    });
+
+    // 监听上传进度
+    uploadTask.onProgressUpdate((res) => {
+      console.log('上传进度', res.progress);
+    });
   },
 
   handleKnow() {
@@ -297,9 +497,14 @@ Page({
     if (this.data.audioContext) {
       this.data.audioContext.destroy();
     }
+    // 停止录音（如果还在进行）
+    if (this.data.isRecording) {
+      wx.stopRecord();
+    }
     this.setData({
       words: [],
-      currentWord: null
+      currentWord: null,
+      recordingTempFilePath: null
     });
   }
 });
