@@ -293,3 +293,36 @@ exports.getWordAudioList = async (req, res) => {
     res.status(500).json({ error: 'Audio list service error' });
   }
 };
+
+/**
+ * 获取发音练习历史（占位实现）
+ */
+exports.getPronunciationHistory = async (req, res) => {
+  try {
+    // TODO: 从数据库获取用户发音历史
+    res.json({
+      history: [],
+      message: '功能开发中'
+    });
+  } catch (error) {
+    console.error('Get pronunciation history error:', error);
+    res.status(500).json({ error: 'Failed to get history' });
+  }
+};
+
+/**
+ * 获取发音统计（占位实现）
+ */
+exports.getPronunciationStats = async (req, res) => {
+  try {
+    // TODO: 从数据库获取用户发音统计
+    res.json({
+      totalPractice: 0,
+      averageScore: 0,
+      message: '功能开发中'
+    });
+  } catch (error) {
+    console.error('Get pronunciation stats error:', error);
+    res.status(500).json({ error: 'Failed to get stats' });
+  }
+};

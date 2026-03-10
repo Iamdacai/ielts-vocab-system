@@ -1,17 +1,20 @@
 // app.js
 App({
   onLaunch() {
-    // 正式部署 - 固定使用正式域名
+    // 本地开发环境配置
+    const isLocal = true; // 本地开发时设为 true，部署时设为 false
+    
     // 初始化全局状态
     this.globalData = {
       userInfo: null,
       hasLogin: false,
-      // 正式部署使用HTTPS域名
-      apiUrl: 'https://ielts.caiyuyang.cn/api',
+      // 本地开发使用 localhost，正式部署使用 HTTPS 域名
+      apiUrl: isLocal ? 'http://localhost:3001/api' : 'https://ielts.caiyuyang.cn/api',
       token: null
     };
     
-    console.log('API地址:', this.globalData.apiUrl);
+    console.log('API 地址:', this.globalData.apiUrl);
+    console.log('运行环境:', isLocal ? '本地开发' : '正式环境');
     
     // 尝试从本地存储恢复登录状态
     const token = wx.getStorageSync('token');
