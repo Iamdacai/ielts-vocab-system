@@ -75,3 +75,42 @@ CREATE INDEX idx_ielts_words_book ON ielts_words(cambridge_book);
 CREATE INDEX idx_pronunciation_records_user ON pronunciation_records(user_id);
 CREATE INDEX idx_pronunciation_records_word ON pronunciation_records(word_id);
 CREATE INDEX idx_pronunciation_records_score ON pronunciation_records(pronunciation_score);
+
+-- 学习会话表 (新增)
+CREATE TABLE learning_sessions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    session_id VARCHAR(100) UNIQUE NOT NULL,
+    duration INTEGER DEFAULT 0, -- 学习时长 (秒)
+    new_words INTEGER DEFAULT 0, -- 新学单词数
+    reviewed_words INTEGER DEFAULT 0, -- 复习单词数
+    mastered_words INTEGER DEFAULT 0, -- 掌握单词数
+    confirmed_duration BOOLEAN DEFAULT FALSE, -- 是否确认时长
+    start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    end_time TIMESTAMP
+);
+
+-- 用户成就表 (新增)
+CREATE TABLE user_achievements (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    achievement_id VARCHAR(50) NOT NULL,
+    unlocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, achievement_id)
+);
+
+-- 提醒记录表 (新增)
+CREATE TABLE reminder_records (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    reminder_type VARCHAR(20) DEFAULT 'review',
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    message TEXT,
+    due_count INTEGER DEFAULT 0
+);
+
+-- 创建索引
+CREATE INDEX idx_learning_sessions_user ON learning_sessions(user_id);
+CREATE INDEX idx_learning_sessions_time ON learning_sessions(end_time);
+CREATE INDEX idx_user_achievements_user ON user_achievements(user_id);
+CREATE INDEX idx_reminder_records_user ON reminder_records(user_id);
