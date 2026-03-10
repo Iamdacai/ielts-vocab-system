@@ -28,14 +28,11 @@
         <text class="english-word">{{currentWord ? currentWord.word : '---'}}</text>
         <!-- 发音按钮 -->
         <button 
-          class="pronunciation-btn" 
+          class="pronunciation-btn {{isPlaying ? 'playing' : ''}}" 
           bindtap="playWordPronunciation"
           disabled="{{isPlaying}}"
         >
-          <image 
-            src="{{isPlaying ? '/assets/icons/playing.gif' : '/assets/icons/speaker.png'}}" 
-            class="icon"
-          />
+          <text class="btn-icon">{{isPlaying ? '🔊' : '🔇'}}</text>
         </button>
       </view>
 
@@ -56,22 +53,35 @@
         <button 
           class="record-btn {{isRecording ? 'recording' : ''}}" 
           bindtap="startPronunciationPractice"
-          disabled="{{isRecording || !currentWord}}"
+          disabled="{{isRecording || !currentWord || !hasRecordPermission}}"
         >
-          <image 
-            src="{{isRecording ? '/assets/icons/recording.gif' : '/assets/icons/mic.png'}}" 
-            class="icon"
-          />
-          <text>{{isRecording ? '录音中...' : '跟读练习'}}</text>
+          <text class="btn-icon-large">{{isRecording ? '🔴' : '🎤'}}</text>
+          <text class="btn-text">
+            {{isRecording ? '录音中 ' + recordingDuration + 's' : '跟读练习'}}
+          </text>
         </button>
+        
+        <!-- 停止录音按钮（录音时显示） -->
+        <button 
+          wx:if="{{isRecording}}"
+          class="stop-record-btn"
+          bindtap="stopRecording"
+        >
+          <text>停止录音</text>
+        </button>
+        
+        <!-- 权限提示 -->
+        <view wx:if="{{!hasRecordPermission}}" class="permission-tip">
+          <text>⚠️ 需要录音权限才能使用发音练习</text>
+        </view>
         
         <!-- 评分结果显示 -->
         <view wx:if="{{pronunciationScore !== null}}" class="score-section">
           <view class="score-display">
-            <text class="score-text">发音得分: {{pronunciationScore}}/100</text>
+            <text class="score-text">发音得分：{{pronunciationScore}}/100</text>
           </view>
           <view class="feedback">
-            <text>{{feedback}}</text>
+            <text>{{pronunciationFeedback}}</text>
           </view>
         </view>
       </view>

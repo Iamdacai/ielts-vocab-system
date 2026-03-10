@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const pronunciationController = require('../controllers/pronunciation-real');
+const pronunciationController = require('../controllers/pronunciation');
 
 // 配置文件上传（与server.js保持一致）
 const storage = multer.diskStorage({

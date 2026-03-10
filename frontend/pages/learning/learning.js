@@ -15,50 +15,151 @@ Page({
     isRecording: false,
     pronunciationScore: null,
     pronunciationFeedback: '',
-    recordingTempFilePath: null
+    recordingTempFilePath: null,
+    recordingDuration: 0,
+    hasRecordPermission: false
   },
 
   onLoad() {
     this.checkLoginAndLoad();
-    // 初始化音频上下文
     this.initAudio();
+    this.initRecorder();
+    this.checkRecordPermission();
   },
 
+  /**
+   * 检查录音权限
+   */
+  checkRecordPermission() {
+    wx.getSetting({
+      success: (res) => {
+        const hasPermission = res.authSetting['scope.record'] === true || 
+                              res.authSetting['scope.record'] === undefined;
+        this.setData({ hasRecordPermission: hasPermission });
+      },
+      fail: (err) => {
+        console.error('检查权限失败:', err);
+        this.setData({ hasRecordPermission: false });
+      }
+    });
+  },
+
+  /**
+   * 初始化录音管理器（使用新版 API）
+   */
+  initRecorder() {
+    const recorderManager = wx.getRecorderManager();
+    
+    recorderManager.onStart(() => {
+      console.log('录音开始');
+      this.setData({ 
+        isRecording: true, 
+        pronunciationScore: null, 
+        pronunciationFeedback: '',
+        recordingDuration: 0
+      });
+      
+      const timer = setInterval(() => {
+        if (this.data.isRecording) {
+          this.setData({ recordingDuration: this.data.recordingDuration + 1 });
+        } else {
+          clearInterval(timer);
+        }
+      }, 1000);
+      this.recordingTimer = timer;
+    });
+
+    recorderManager.onStop((res) => {
+      console.log('录音停止', res);
+      if (this.recordingTimer) {
+        clearInterval(this.recordingTimer);
+        this.recordingTimer = null;
+      }
+      
+      this.setData({ 
+        isRecording: false,
+        recordingTempFilePath: res.tempFilePath,
+        recordingDuration: 0
+      });
+      
+      if (res.tempFilePath) {
+        this.analyzePronunciation(res.tempFilePath);
+      }
+    });
+
+    recorderManager.onError((err) => {
+      console.error('录音错误:', err);
+      if (this.recordingTimer) {
+        clearInterval(this.recordingTimer);
+        this.recordingTimer = null;
+      }
+      this.setData({ isRecording: false });
+      
+      let errorMsg = '录音失败';
+      if (err.errMsg.includes('auth deny')) {
+        errorMsg = '请授权录音权限';
+        this.showPermissionDialog();
+      } else if (err.errMsg.includes('not available')) {
+        errorMsg = '录音功能不可用';
+      }
+      
+      wx.showToast({ title: errorMsg, icon: 'error' });
+    });
+
+    this.recorderManager = recorderManager;
+  },
+
+  /**
+   * 显示权限请求对话框
+   */
+  showPermissionDialog() {
+    wx.showModal({
+      title: '需要录音权限',
+      content: '请允许录音权限以使用发音练习功能',
+      confirmText: '去设置',
+      success: (res) => {
+        if (res.confirm) {
+          wx.openSetting({
+            success: (settingRes) => {
+              if (settingRes.authSetting['scope.record']) {
+                this.setData({ hasRecordPermission: true });
+                wx.showToast({ title: '权限已开启', icon: 'success' });
+              }
+            }
+          });
+        }
+      }
+    });
+  },
+
+  /**
+   * 初始化音频播放器
+   */
   initAudio() {
     const audioContext = wx.createInnerAudioContext();
-    audioContext.onPlay(() => {
-      this.setData({ isPlaying: true });
-    });
-    audioContext.onStop(() => {
-      this.setData({ isPlaying: false });
-    });
-    audioContext.onEnded(() => {
-      this.setData({ isPlaying: false });
-    });
+    audioContext.autoplay = false;
+    
+    audioContext.onPlay(() => this.setData({ isPlaying: true }));
+    audioContext.onPause(() => this.setData({ isPlaying: false }));
+    audioContext.onStop(() => this.setData({ isPlaying: false }));
+    audioContext.onEnded(() => this.setData({ isPlaying: false }));
+    
     audioContext.onError((res) => {
       console.error('音频播放错误:', res.errMsg);
       this.setData({ isPlaying: false });
-      wx.showToast({
-        title: '发音播放失败',
-        icon: 'error'
-      });
+      wx.showToast({ title: '发音播放失败', icon: 'error', duration: 1500 });
     });
+    
     this.setData({ audioContext });
   },
 
   async checkLoginAndLoad() {
-    // 验证登录状态
     const isValid = await this.validateLoginStatus();
     if (isValid) {
       this.loadNewWords();
     } else {
-      wx.showToast({
-        title: '请先登录',
-        icon: 'none'
-      });
-      setTimeout(() => {
-        wx.navigateBack();
-      }, 1500);
+      wx.showToast({ title: '请先登录', icon: 'none' });
+      setTimeout(() => wx.navigateBack(), 1500);
     }
   },
 
@@ -67,32 +168,27 @@ Page({
     const userInfo = wx.getStorageSync('userInfo');
     
     if (token && userInfo) {
-      // 验证token是否有效
       try {
         const res = await new Promise((resolve, reject) => {
           wx.request({
             url: `${app.globalData.apiUrl}/health`,
-            header: {
-              'Authorization': `Bearer ${token}`
-            },
+            header: { 'Authorization': `Bearer ${token}` },
             success: resolve,
             fail: reject
           });
         });
         
         if (res.statusCode === 200) {
-          // token有效，更新全局数据
           app.globalData.token = token;
           app.globalData.userInfo = userInfo;
           app.globalData.hasLogin = true;
           return true;
         }
       } catch (err) {
-        console.log('Token验证失败:', err);
+        console.log('Token 验证失败:', err);
       }
     }
     
-    // token无效或不存在
     app.globalData.hasLogin = false;
     app.globalData.token = null;
     app.globalData.userInfo = null;
@@ -105,9 +201,7 @@ Page({
     wx.request({
       url: `${app.globalData.apiUrl}/words/new`,
       method: 'GET',
-      header: {
-        'Authorization': `Bearer ${app.globalData.token}`
-      },
+      header: { 'Authorization': `Bearer ${app.globalData.token}` },
       success: (res) => {
         if (res.statusCode === 200) {
           const words = res.data;
@@ -121,32 +215,17 @@ Page({
             this.showNextWord();
           }
         } else if (res.statusCode === 403) {
-          // token过期，重新登录
-          wx.showToast({
-            title: '登录已过期，请重新登录',
-            icon: 'none'
-          });
-          setTimeout(() => {
-            wx.redirectTo({
-              url: '/pages/index/index'
-            });
-          }, 1500);
+          wx.showToast({ title: '登录已过期，请重新登录', icon: 'none' });
+          setTimeout(() => wx.redirectTo({ url: '/pages/index/index' }), 1500);
         } else {
-          console.error('加载新词失败:', res);
           this.setData({ loading: false });
-          wx.showToast({
-            title: '加载失败',
-            icon: 'error'
-          });
+          wx.showToast({ title: '加载失败', icon: 'error' });
         }
       },
       fail: (err) => {
         console.error('网络请求失败:', err);
         this.setData({ loading: false });
-        wx.showToast({
-          title: '网络错误',
-          icon: 'error'
-        });
+        wx.showToast({ title: '网络错误', icon: 'error' });
       }
     });
   },
@@ -164,14 +243,8 @@ Page({
         progress: ((currentWordIndex + 1) / words.length) * 100
       });
     } else {
-      // 所有单词学习完成
-      wx.showToast({
-        title: '今日新词学习完成！',
-        icon: 'success'
-      });
-      setTimeout(() => {
-        wx.navigateBack();
-      }, 2000);
+      wx.showToast({ title: '今日新词学习完成！', icon: 'success' });
+      setTimeout(() => wx.navigateBack(), 2000);
     }
   },
 
@@ -179,15 +252,10 @@ Page({
     const { currentWordIndex } = this.data;
     
     if (currentWordIndex > 0) {
-      this.setData({
-        currentWordIndex: currentWordIndex - 1
-      });
-      this.showNextWord(); // This will show the previous word since we decremented the index
+      this.setData({ currentWordIndex: currentWordIndex - 1 });
+      this.showNextWord();
     } else {
-      wx.showToast({
-        title: '已经是第一个单词',
-        icon: 'none'
-      });
+      wx.showToast({ title: '已经是第一个单词', icon: 'none' });
     }
   },
 
@@ -195,30 +263,24 @@ Page({
     const { currentWordIndex, totalWords } = this.data;
     
     if (currentWordIndex < totalWords - 1) {
-      this.setData({
-        currentWordIndex: currentWordIndex + 1
-      });
+      this.setData({ currentWordIndex: currentWordIndex + 1 });
       this.showNextWord();
     } else {
-      wx.showToast({
-        title: '已经是最后一个单词',
-        icon: 'none'
-      });
+      wx.showToast({ title: '已经是最后一个单词', icon: 'none' });
     }
   },
 
   toggleAnswer() {
-    this.setData({
-      showAnswer: !this.data.showAnswer
-    });
+    this.setData({ showAnswer: !this.data.showAnswer });
   },
 
-  // 播放单词发音 - 修复版本
+  /**
+   * 播放单词发音 - 优化版本
+   */
   async playWordPronunciation() {
-    const { currentWord } = this.data;
-    if (!currentWord) return;
+    const { currentWord, audioContext } = this.data;
+    if (!currentWord || !audioContext) return;
 
-    // 提取单词部分（去除音标）
     let word = currentWord.word;
     if (word.includes('/')) {
       word = word.split('/')[0].trim();
@@ -226,91 +288,31 @@ Page({
       word = word.split(' ')[0].trim();
     }
     
-    // 先检查音频文件是否存在
-    try {
-      const checkResponse = await new Promise((resolve, reject) => {
-        wx.request({
-          url: `${app.globalData.apiUrl}/audio/${encodeURIComponent(word)}.mp3`,
-          method: 'HEAD',
-          success: resolve,
-          fail: reject
-        });
-      });
-      
-      if (checkResponse.statusCode === 200) {
-        // 音频文件存在，直接播放
-        const audioUrl = `${app.globalData.apiUrl}/audio/${encodeURIComponent(word)}.mp3`;
-        this.data.audioContext.src = audioUrl;
-        this.data.audioContext.play();
-      } else {
-        // 音频文件不存在，使用TTS服务生成
-        await this.playWordPronunciationWithTTS(word);
-      }
-    } catch (error) {
-      console.error('检查音频文件失败:', error);
-      // 直接使用TTS服务作为备用方案
-      await this.playWordPronunciationWithTTS(word);
+    if (this.data.isPlaying) {
+      audioContext.stop();
     }
-  },
 
-  // 使用TTS服务播放单词发音
-  async playWordPronunciationWithTTS(word) {
-    wx.showLoading({ title: '生成发音...' });
-    
     try {
-      const ttsResponse = await new Promise((resolve, reject) => {
-        wx.request({
-          url: `${app.globalData.apiUrl}/pronunciation/word-audio/${encodeURIComponent(word)}`,
-          method: 'GET',
-          responseType: 'arraybuffer',
-          success: resolve,
-          fail: reject
-        });
-      });
-      
-      if (ttsResponse.statusCode === 200) {
-        // 将音频数据转换为临时文件
-        const audioData = ttsResponse.data;
-        const tempFilePath = wx.env.USER_DATA_PATH + '/' + word + '.mp3';
-        
-        wx.getFileSystemManager().writeFile({
-          filePath: tempFilePath,
-          data: audioData,
-          encoding: 'binary',
-          success: () => {
-            this.data.audioContext.src = tempFilePath;
-            this.data.audioContext.play();
-          },
-          fail: (err) => {
-            console.error('保存TTS音频失败:', err);
-            wx.showToast({
-              title: '发音生成失败',
-              icon: 'error'
-            });
-            this.setData({ isPlaying: false });
-          }
-        });
-      } else {
-        throw new Error('TTS服务返回错误');
-      }
+      const audioUrl = `${app.globalData.apiUrl}/pronunciation/word-audio/${encodeURIComponent(word)}`;
+      audioContext.src = audioUrl;
     } catch (error) {
-      console.error('TTS发音失败:', error);
-      wx.showToast({
-        title: '发音服务不可用',
-        icon: 'error'
-      });
+      console.error('播放发音失败:', error);
+      wx.showToast({ title: '发音播放失败', icon: 'error', duration: 1500 });
       this.setData({ isPlaying: false });
-    } finally {
-      wx.hideLoading();
     }
   },
 
-  // 开始跟读录音
+  /**
+   * 开始跟读录音 - 使用 RecorderManager
+   */
   async startPronunciationPractice() {
-    if (this.data.isRecording) return;
+    if (this.data.isRecording || !this.data.currentWord) return;
     
-    const { currentWord } = this.data;
-    if (!currentWord) return;
+    // 检查权限
+    if (!this.data.hasRecordPermission) {
+      this.showPermissionDialog();
+      return;
+    }
 
     this.setData({ 
       isRecording: true, 
@@ -319,57 +321,41 @@ Page({
     });
     
     try {
-      // 请求录音权限
-      const authResult = await wx.getSetting();
-      if (!authResult.authSetting['scope.record']) {
-        await wx.authorize({ scope: 'scope.record' });
-      }
+      // 配置录音参数
+      const options = {
+        duration: 10000, // 最长录音 10 秒
+        sampleRate: 16000,
+        numberOfChannels: 1,
+        encodeBitRate: 48000,
+        format: 'wav'
+      };
       
-      // 开始录音
-      wx.startRecord({
-        success: (res) => {
-          wx.showToast({ title: '开始录音，请跟读单词' });
-          
-          // 设置5秒自动停止
-          setTimeout(() => {
-            this.stopRecordingAndAnalyze();
-          }, 5000);
-        },
-        fail: (err) => {
-          console.error('录音启动失败:', err);
-          wx.showToast({ title: '录音启动失败', icon: 'error' });
-          this.setData({ isRecording: false });
-        }
-      });
+      this.recorderManager.start(options);
+      wx.showToast({ title: '请开始跟读', icon: 'none', duration: 2000 });
+      
     } catch (error) {
-      console.error('录音权限或启动失败:', error);
-      wx.showToast({ title: '录音失败', icon: 'error' });
+      console.error('录音启动失败:', error);
+      wx.showToast({ title: '录音启动失败', icon: 'error' });
       this.setData({ isRecording: false });
     }
   },
 
-  // 停止录音并分析
-  stopRecordingAndAnalyze() {
-    wx.stopRecord({
-      success: (res) => {
-        const tempFilePath = res.tempFilePath;
-        this.setData({ recordingTempFilePath: tempFilePath });
-        this.analyzePronunciation(tempFilePath);
-      },
-      fail: (err) => {
-        console.error('停止录音失败:', err);
-        wx.showToast({ title: '录音处理失败', icon: 'error' });
-        this.setData({ isRecording: false });
-      }
-    });
+  /**
+   * 停止录音
+   */
+  stopRecording() {
+    if (this.data.isRecording && this.recorderManager) {
+      this.recorderManager.stop();
+    }
   },
 
-  // 分析发音并获取评分
+  /**
+   * 分析发音并获取评分
+   */
   analyzePronunciation(tempFilePath) {
     const { currentWord } = this.data;
     if (!currentWord) return;
 
-    // 提取单词
     let word = currentWord.word;
     if (word.includes('/')) {
       word = word.split('/')[0].trim();
@@ -379,17 +365,12 @@ Page({
 
     wx.showLoading({ title: '分析发音...' });
     
-    // 上传录音文件进行分析
-    const uploadTask = wx.uploadFile({
+    wx.uploadFile({
       url: `${app.globalData.apiUrl}/pronunciation/analyze`,
       filePath: tempFilePath,
       name: 'audio',
-      formData: {
-        word: word
-      },
-      header: {
-        'Authorization': `Bearer ${app.globalData.token}`
-      },
+      formData: { word: word },
+      header: { 'Authorization': `Bearer ${app.globalData.token}` },
       success: (res) => {
         try {
           const result = JSON.parse(res.data);
@@ -398,10 +379,7 @@ Page({
               pronunciationScore: result.score,
               pronunciationFeedback: result.feedback
             });
-            wx.showToast({ 
-              title: `得分: ${result.score}/100`, 
-              icon: 'none' 
-            });
+            wx.showToast({ title: `得分：${result.score}/100`, icon: 'none', duration: 2000 });
           } else {
             throw new Error(result.message || '分析失败');
           }
@@ -419,25 +397,17 @@ Page({
         this.setData({ isRecording: false });
       }
     });
-
-    // 监听上传进度
-    uploadTask.onProgressUpdate((res) => {
-      console.log('上传进度', res.progress);
-    });
   },
 
   handleKnow() {
-    // 认识：masteryScore = 75
     this.recordProgress('know', 75);
   },
 
   handleHard() {
-    // 不确定：masteryScore = 50
     this.recordProgress('hard', 50);
   },
 
   handleForgot() {
-    // 不认识：masteryScore = 25
     this.recordProgress('forgot', 25);
   },
 
@@ -458,48 +428,31 @@ Page({
       },
       success: (res) => {
         if (res.statusCode === 200) {
-          // 移动到下一个单词
-          this.setData({
-            currentWordIndex: currentWordIndex + 1
-          });
+          this.setData({ currentWordIndex: currentWordIndex + 1 });
           this.showNextWord();
         } else if (res.statusCode === 403) {
-          // token过期
-          wx.showToast({
-            title: '登录已过期，请重新登录',
-            icon: 'none'
-          });
-          setTimeout(() => {
-            wx.redirectTo({
-              url: '/pages/index/index'
-            });
-          }, 1500);
+          wx.showToast({ title: '登录已过期，请重新登录', icon: 'none' });
+          setTimeout(() => wx.redirectTo({ url: '/pages/index/index' }), 1500);
         } else {
-          console.error('记录进度失败:', res);
-          wx.showToast({
-            title: '记录失败',
-            icon: 'error'
-          });
+          wx.showToast({ title: '记录失败', icon: 'error' });
         }
       },
       fail: (err) => {
         console.error('网络请求失败:', err);
-        wx.showToast({
-          title: '网络错误',
-          icon: 'error'
-        });
+        wx.showToast({ title: '网络错误', icon: 'error' });
       }
     });
   },
 
   onUnload() {
-    // 页面卸载时清理数据
     if (this.data.audioContext) {
       this.data.audioContext.destroy();
     }
-    // 停止录音（如果还在进行）
-    if (this.data.isRecording) {
-      wx.stopRecord();
+    if (this.data.isRecording && this.recorderManager) {
+      this.recorderManager.stop();
+    }
+    if (this.recordingTimer) {
+      clearInterval(this.recordingTimer);
     }
     this.setData({
       words: [],
