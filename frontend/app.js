@@ -9,8 +9,8 @@ App({
     this.globalData = {
       userInfo: null,
       hasLogin: false,
-      // ⚠️ 使用公网域名，可以从任何网络访问
-      apiUrl: `http://${serverDomain}:${serverPort}/api`,
+      // ⚠️ 使用 HTTPS 公网域名，可以从任何网络访问
+      apiUrl: `https://${serverDomain}/api`,  // HTTPS 默认 443 端口，省略端口号
       token: null
     };
     
