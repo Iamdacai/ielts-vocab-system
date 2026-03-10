@@ -1,85 +1,119 @@
-<!-- pages/review/review.wxml -->
+<!--pages/review/review.wxml - 剪纸盒风格-->
 <view class="container">
-  <view class="card" wx:if="{{currentWord && !loading}}">
-    <view class="word-section">
-      <view class="word">{{currentWord.word}}</view>
+  <!-- 顶部进度 -->
+  <view class="header">
+    <view class="progress-info">
+      <text class="progress-text">剪纸盒复习</text>
+      <text class="progress-count">{{currentIndex + 1}} / {{totalWords}}</text>
+    </view>
+    <view class="progress-bar">
+      <view class="progress-fill" style="width: {{progress}}%"></view>
+    </view>
+  </view>
+
+  <!-- 单词卡片 -->
+  <view wx:if="{{currentWord}}" class="word-card">
+    <view class="word-header">
+      <view class="word-text">{{currentWord.word}}</view>
+      <view class="word-phonetic">{{currentWord.phonetic}}</view>
+    </view>
+
+    <!-- 短语标记 -->
+    <view wx:if="{{currentWord.is_phrase}}" class="phrase-badge">
+      📝 短语
+    </view>
+
+    <!-- 释义 -->
+    <view class="translation-section">
+      <view class="translation-title">释义</view>
+      <view class="translation-text">{{currentWord.translation}}</view>
+    </view>
+
+    <!-- 例句 -->
+    <view wx:if="{{currentWord.example}}" class="example-section">
+      <view class="example-title">例句</view>
+      <view class="example-text">{{currentWord.example}}</view>
+      <view class="example-translation">{{currentWord.example_translation}}</view>
+      
+      <!-- 发音按钮 -->
+      <view class="audio-buttons">
+        <button class="audio-button" bindtap="playWordAudio">
+          🔈 单词发音
+        </button>
+        <button class="audio-button" bindtap="playExampleAudio">
+          🔈 例句发音
+        </button>
+      </view>
+    </view>
+
+    <!-- 同义替换 -->
+    <view wx:if="{{currentWord.synonyms && currentWord.synonyms.length > 0}}" class="synonyms-section">
+      <view class="synonyms-title">📚 同义替换</view>
+      <view class="synonyms-list">
+        <block wx:for="{{currentWord.synonyms}}" wx:key="*this">
+          <view class="synonym-item">{{item}}</view>
+        </block>
+      </view>
+    </view>
+  </view>
+
+  <!-- 剪纸盒判断按钮 -->
+  <view class="paper-cut-actions">
+    <view class="action-buttons">
+      <button class="action-button unknown" bindtap="handleUnknown">
+        ✗ 不认识
+      </button>
+      <button class="action-button known" bindtap="handleKnown">
+        ✓ 认识
+      </button>
     </view>
     
-    <view wx:if="{{!showAnswer}}" class="action-section">
-      <view class="text">你记得这个单词的意思吗？</view>
-      <button class="button" style="background:#4CD964" bindtap="showAnswer">显示答案</button>
-    </view>
-    
-    <view wx:else class="answer-section">
-      <view class="subtitle">词性与释义</view>
-      <view class="text">{{currentWord.part_of_speech}} - {{currentWord.definition}}</view>
-      
-      <view class="example-section" wx:if="{{currentWord.example_sentences && currentWord.example_sentences.length > 0}}">
-        <view class="subtitle">雅思真题例句</view>
-        <view class="text" wx:for="{{currentWord.example_sentences}}" wx:key="index">
-          {{index + 1}}. {{item}}
-        </view>
-      </view>
-      
-      <view class="confidence-section">
-        <view class="subtitle">你的自信度</view>
-        <view class="confidence-buttons">
-          <button 
-            class="button" 
-            style="{{confidence === 1 ? 'background:#FF3B30' : 'background:#f0f0f0; color:#333'}}"
-            data-confidence="1"
-            bindtap="setConfidence">
-            很不确定
-          </button>
-          <button 
-            class="button" 
-            style="{{confidence === 2 ? 'background:#FF9500' : 'background:#f0f0f0; color:#333'}}"
-            data-confidence="2"
-            bindtap="setConfidence">
-            不太确定
-          </button>
-          <button 
-            class="button" 
-            style="{{confidence === 3 ? 'background:#007AFF' : 'background:#f0f0f0; color:#333'}}"
-            data-confidence="3"
-            bindtap="setConfidence">
-            一般
-          </button>
-          <button 
-            class="button" 
-            style="{{confidence === 4 ? 'background:#4CD964' : 'background:#f0f0f0; color:#333'}}"
-            data-confidence="4"
-            bindtap="setConfidence">
-            比较确定
-          </button>
-          <button 
-            class="button" 
-            style="{{confidence === 5 ? 'background:#34C759' : 'background:#f0f0f0; color:#333'}}"
-            data-confidence="5"
-            bindtap="setConfidence">
-            非常确定
-          </button>
-        </view>
-      </view>
-      
-      <view class="action-buttons">
-        <button class="button" style="background:#FF3B30" bindtap="handleDontKnow">不认识</button>
-        <button class="button" style="background:#4CD964" bindtap="handleKnow">认识</button>
-      </view>
+    <view class="hint-text">
+      💡 认识选✓，不认识选✗，系统会自动安排复习
     </view>
   </view>
-  
-  <view class="card" wx:elif="{{loading}}">
-    <view class="loading">加载复习单词中...</view>
+
+  <!-- 三箱统计 -->
+  <view class="three-boxes">
+    <view class="box mastered">
+      <view class="box-icon">✅</view>
+      <view class="box-count">{{counts.mastered}}</view>
+      <view class="box-label">已掌握</view>
+    </view>
+    <view class="box pending">
+      <view class="box-icon">⏳</view>
+      <view class="box-count">{{counts.pending}}</view>
+      <view class="box-label">待定</view>
+    </view>
+    <view class="box unknown">
+      <view class="box-icon">❌</view>
+      <view class="box-count">{{counts.unknown}}</view>
+      <view class="box-label">生词</view>
+    </view>
   </view>
-  
-  <view class="card" wx:else>
-    <view class="title">今日复习已完成</view>
-    <view class="text">你已经完成了今天的复习任务！继续保持这样的学习节奏，雅思词汇量会稳步提升。</view>
-    <button class="button" bindtap="goBackHome">返回首页</button>
-  </view>
-  
-  <view class="progress-indicator" wx:if="{{currentWord && !loading}}">
-    <text>{{reviewedCount + 1}}/{{totalWordsToday}}</text>
+
+  <!-- 完成提示 -->
+  <view wx:if="{{showComplete}}" class="complete-modal">
+    <view class="complete-content">
+      <view class="complete-icon">🎉</view>
+      <view class="complete-title">完成！</view>
+      <view class="complete-stats">
+        <view class="complete-stat">
+          <view class="stat-value">{{totalWords}}</view>
+          <view class="stat-label">复习单词</view>
+        </view>
+        <view class="complete-stat">
+          <view class="stat-value success-color">{{counts.mastered}}</view>
+          <view class="stat-label">已掌握</view>
+        </view>
+        <view class="complete-stat">
+          <view class="stat-value warning-color">{{counts.unknown}}</view>
+          <view class="stat-label">需强化</view>
+        </view>
+      </view>
+      <button class="complete-button" bindtap="finishReview">
+        完成本次复习
+      </button>
+    </view>
   </view>
 </view>

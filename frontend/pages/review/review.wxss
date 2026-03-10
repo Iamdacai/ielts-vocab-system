@@ -1,62 +1,324 @@
-/* pages/review/review.wxss */
-.word-section {
+/* pages/review/review.wxss - 剪纸盒风格 */
+.container {
+  padding: 20rpx;
+  background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+  min-height: 100vh;
+}
+
+/* 头部进度 */
+.header {
+  margin-bottom: 30rpx;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10rpx;
+}
+
+.progress-text {
+  font-size: 28rpx;
+  color: #22c55e;
+  font-weight: bold;
+}
+
+.progress-count {
+  font-size: 24rpx;
+  color: #9ca3af;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 12rpx;
+  background: #374151;
+  border-radius: 6rpx;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
+  transition: width 0.3s ease;
+}
+
+/* 单词卡片 */
+.word-card {
+  background: #1f2937;
+  border-radius: 20rpx;
+  padding: 40rpx;
+  margin-bottom: 30rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.3);
+}
+
+.word-header {
   text-align: center;
   margin-bottom: 30rpx;
 }
 
-.word {
+.word-text {
   font-size: 48rpx;
   font-weight: bold;
-  color: #333;
+  color: #ffffff;
   margin-bottom: 10rpx;
 }
 
-.action-section, .answer-section {
-  margin-bottom: 30rpx;
+.word-phonetic {
+  font-size: 28rpx;
+  color: #9ca3af;
+  font-family: monospace;
 }
 
-.confidence-buttons {
+.phrase-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  padding: 8rpx 24rpx;
+  border-radius: 50rpx;
+  font-size: 24rpx;
+  margin-bottom: 20rpx;
+}
+
+/* 释义区域 */
+.translation-section {
+  background: #111827;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+}
+
+.translation-title {
+  font-size: 24rpx;
+  color: #9ca3af;
+  margin-bottom: 10rpx;
+}
+
+.translation-text {
+  font-size: 32rpx;
+  color: #22c55e;
+  font-weight: bold;
+}
+
+/* 例句区域 */
+.example-section {
+  background: #111827;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+}
+
+.example-title {
+  font-size: 24rpx;
+  color: #9ca3af;
+  margin-bottom: 10rpx;
+}
+
+.example-text {
+  font-size: 28rpx;
+  color: #ffffff;
+  line-height: 1.6;
+  margin-bottom: 10rpx;
+}
+
+.example-translation {
+  font-size: 26rpx;
+  color: #9ca3af;
+  line-height: 1.5;
+}
+
+.audio-buttons {
+  display: flex;
+  gap: 20rpx;
+  margin-top: 20rpx;
+}
+
+.audio-button {
+  flex: 1;
+  background: #374151;
+  color: white;
+  border: none;
+  border-radius: 12rpx;
+  padding: 16rpx;
+  font-size: 24rpx;
+}
+
+/* 同义替换 */
+.synonyms-section {
+  background: #111827;
+  border-radius: 16rpx;
+  padding: 24rpx;
+}
+
+.synonyms-title {
+  font-size: 24rpx;
+  color: #9ca3af;
+  margin-bottom: 15rpx;
+}
+
+.synonyms-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 15rpx;
-  margin: 20rpx 0;
+  gap: 12rpx;
 }
 
-.confidence-buttons .button {
-  flex: 1;
-  min-width: 120rpx;
-  padding: 10rpx 5rpx;
-  font-size: 20rpx;
-  height: auto;
-  line-height: 1.4;
+.synonym-item {
+  background: #374151;
+  color: #60a5fa;
+  padding: 10rpx 20rpx;
+  border-radius: 50rpx;
+  font-size: 24rpx;
+}
+
+/* 剪纸盒操作按钮 */
+.paper-cut-actions {
+  margin-bottom: 30rpx;
 }
 
 .action-buttons {
   display: flex;
-  justify-content: space-between;
   gap: 20rpx;
+  margin-bottom: 20rpx;
 }
 
-.action-buttons .button {
+.action-button {
   flex: 1;
-  padding: 15rpx 10rpx;
-  font-size: 24rpx;
+  border: none;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  font-size: 32rpx;
+  font-weight: bold;
 }
 
-.progress-indicator {
-  position: fixed;
-  bottom: 20rpx;
-  right: 20rpx;
-  background: rgba(0, 0, 0, 0.7);
+.action-button.unknown {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
   color: white;
-  padding: 10rpx 20rpx;
-  border-radius: 50rpx;
-  font-size: 24rpx;
-  z-index: 999;
 }
 
-.loading {
-  padding: 60rpx 0;
+.action-button.known {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: white;
+}
+
+.hint-text {
   text-align: center;
-  color: #999;
+  font-size: 24rpx;
+  color: #9ca3af;
+}
+
+/* 三箱统计 */
+.three-boxes {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 30rpx;
+}
+
+.box {
+  text-align: center;
+  padding: 20rpx;
+  border-radius: 16rpx;
+  min-width: 120rpx;
+}
+
+.box.mastered {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+}
+
+.box.pending {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+}
+
+.box.unknown {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.box-icon {
+  font-size: 32rpx;
+  margin-bottom: 8rpx;
+}
+
+.box-count {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: white;
+  margin-bottom: 4rpx;
+}
+
+.box-label {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 完成模态框 */
+.complete-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.complete-content {
+  background: #1f2937;
+  border-radius: 24rpx;
+  padding: 60rpx 40rpx;
+  width: 80%;
+  max-width: 600rpx;
+  text-align: center;
+}
+
+.complete-icon {
+  font-size: 100rpx;
+  margin-bottom: 20rpx;
+}
+
+.complete-title {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #ffffff;
+  margin-bottom: 40rpx;
+}
+
+.complete-stats {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 40rpx;
+}
+
+.complete-stat {
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #ffffff;
+  margin-bottom: 8rpx;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: #9ca3af;
+}
+
+.success-color {
+  color: #22c55e !important;
+}
+
+.warning-color {
+  color: #f59e0b !important;
+}
+
+.complete-button {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border: none;
+  border-radius: 50rpx;
+  padding: 24rpx 60rpx;
+  font-size: 32rpx;
+  font-weight: bold;
 }

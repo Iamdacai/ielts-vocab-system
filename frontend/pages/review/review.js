@@ -1,67 +1,58 @@
-// pages/review/review.js
+// pages/review/review.js - 剪纸盒风格复习
 const app = getApp();
+import { calculateNextStage, calculateNextReviewDate } from '../../utils/memoryWheel';
 
 Page({
   data: {
+    words: [],
     currentWord: null,
+    currentIndex: 0,
+    totalWords: 0,
+    progress: 0,
     loading: true,
-    hasMoreWords: true,
-    reviewedCount: 0,
-    totalWordsToday: 0,
-    showAnswer: false,
-    confidence: 3 // 默认自信度
+    audioContext: null,
+    isPlaying: false,
+    
+    // 剪纸盒统计
+    counts: {
+      mastered: 0,
+      pending: 0,
+      unknown: 0
+    },
+    
+    showComplete: false,
+    reviewResults: []
   },
 
   onLoad() {
-    this.checkLoginAndLoadReview();
+    this.initAudio();
+    this.loadReviewWords();
   },
 
-  async checkLoginAndLoadReview() {
-    const token = wx.getStorageSync('token');
-    const userInfo = wx.getStorageSync('userInfo');
+  /**
+   * 初始化音频播放器
+   */
+  initAudio() {
+    const audioContext = wx.createInnerAudioContext();
+    audioContext.autoplay = false;
     
-    if (token && userInfo) {
-      // 验证token是否有效
-      try {
-        const res = await new Promise((resolve, reject) => {
-          wx.request({
-            url: `${app.globalData.apiUrl}/health`,
-            header: {
-              'Authorization': `Bearer ${token}`
-            },
-            success: resolve,
-            fail: reject
-          });
-        });
-        
-        if (res.statusCode === 200) {
-          // token有效
-          app.globalData.token = token;
-          app.globalData.userInfo = userInfo;
-          app.globalData.hasLogin = true;
-          this.loadReviewWord();
-          return;
-        }
-      } catch (err) {
-        console.log('Token验证失败:', err);
-      }
-    }
+    audioContext.onPlay(() => this.setData({ isPlaying: true }));
+    audioContext.onPause(() => this.setData({ isPlaying: false }));
+    audioContext.onStop(() => this.setData({ isPlaying: false }));
+    audioContext.onEnded(() => this.setData({ isPlaying: false }));
     
-    // token无效或不存在，跳转到首页
-    wx.showToast({
-      title: '请先登录',
-      icon: 'none'
+    audioContext.onError((res) => {
+      console.error('音频播放错误:', res.errMsg);
+      this.setData({ isPlaying: false });
     });
-    setTimeout(() => {
-      wx.redirectTo({
-        url: '/pages/index/index'
-      });
-    }, 1500);
+    
+    this.setData({ audioContext });
   },
 
-  loadReviewWord() {
-    this.setData({ loading: true, showAnswer: false });
-    
+  /**
+   * 加载待复习单词
+   */
+  loadReviewWords() {
     wx.request({
       url: `${app.globalData.apiUrl}/words/review`,
       method: 'GET',
@@ -71,39 +62,32 @@ Page({
       success: (res) => {
         if (res.statusCode === 200) {
           const words = res.data;
-          if (words.length > 0) {
-            this.setData({ 
-              currentWord: words[0],
-              loading: false,
-              hasMoreWords: true,
-              totalWordsToday: words.length
-            });
-          } else {
-            this.setData({ 
-              currentWord: null,
-              loading: false,
-              hasMoreWords: false
-            });
-          }
-        } else if (res.statusCode === 403) {
-          // token无效，重新登录
-          wx.showToast({
-            title: '请重新登录',
-            icon: 'none'
+          this.setData({
+            words: words,
+            totalWords: words.length,
+            loading: false
           });
-          setTimeout(() => {
-            wx.redirectTo({
-              url: '/pages/index/index'
+          
+          if (words.length > 0) {
+            this.showNextWord();
+          } else {
+            wx.showToast({
+              title: '没有待复习的单词',
+              icon: 'success'
             });
-          }, 1500);
+            setTimeout(() => wx.navigateBack(), 1500);
+          }
         } else {
-          console.error('加载复习单词失败:', res);
-          this.setData({ loading: false, hasMoreWords: false });
+          this.setData({ loading: false });
+          wx.showToast({
+            title: '加载失败',
+            icon: 'error'
+          });
         }
       },
       fail: (err) => {
-        console.error('网络请求失败:', err);
-        this.setData({ loading: false, hasMoreWords: false });
+        console.error('加载失败:', err);
+        this.setData({ loading: false });
         wx.showToast({
           title: '网络错误',
           icon: 'error'
@@ -112,33 +96,127 @@ Page({
     });
   },
 
-  showAnswer() {
-    this.setData({ showAnswer: true });
-  },
-
-  setConfidence(e) {
-    const confidence = parseInt(e.currentTarget.dataset.confidence);
-    this.setData({ confidence });
-  },
-
-  // 根据自信度映射掌握度评分
-  getMasteryScoreFromConfidence(confidence, isCorrect) {
-    if (isCorrect) {
-      // 回答正确：自信度1-5对应掌握度50-95
-      const scores = [50, 65, 75, 85, 95];
-      return scores[confidence - 1] || 75;
+  /**
+   * 显示下一个单词
+   */
+  showNextWord() {
+    const { words, currentIndex, totalWords } = this.data;
+    
+    if (currentIndex < totalWords) {
+      const currentWord = words[currentIndex];
+      this.setData({
+        currentWord: currentWord,
+        progress: ((currentIndex + 1) / totalWords) * 100
+      });
     } else {
-      // 回答错误：自信度1-5对应掌握度10-50
-      const scores = [10, 20, 30, 40, 50];
-      return scores[confidence - 1] || 30;
+      // 完成所有单词
+      this.showComplete();
     }
   },
 
-  submitReview(isCorrect) {
-    if (!this.data.currentWord) return;
+  /**
+   * 播放单词发音
+   */
+  playWordAudio() {
+    const { currentWord, audioContext } = this.data;
+    if (!currentWord || !audioContext) return;
+
+    let word = currentWord.word;
+    if (word.includes('/')) {
+      word = word.split('/')[0].trim();
+    }
     
-    const masteryScore = this.getMasteryScoreFromConfidence(this.data.confidence, isCorrect);
-    const result = isCorrect ? 'know' : 'dont_know';
+    if (this.data.isPlaying) {
+      audioContext.stop();
+    }
+
+    try {
+      audioContext.src = `${app.globalData.apiUrl}/pronunciation/word-audio/${encodeURIComponent(word)}`;
+    } catch (error) {
+      console.error('播放失败:', error);
+      wx.showToast({ title: '播放失败', icon: 'error' });
+    }
+  },
+
+  /**
+   * 播放例句发音
+   */
+  playExampleAudio() {
+    const { currentWord, audioContext } = this.data;
+    if (!currentWord || !currentWord.example || !audioContext) return;
+
+    if (this.data.isPlaying) {
+      audioContext.stop();
+    }
+
+    try {
+      audioContext.src = `${app.globalData.apiUrl}/pronunciation/sentence-audio/${encodeURIComponent(currentWord.example)}`;
+    } catch (error) {
+      console.error('播放失败:', error);
+      wx.showToast({ title: '播放失败', icon: 'error' });
+    }
+  },
+
+  /**
+   * 处理认识
+   */
+  handleKnown() {
+    this.recordResult('known');
+  },
+
+  /**
+   * 处理不认识
+   */
+  handleUnknown() {
+    this.recordResult('unknown');
+  },
+
+  /**
+   * 记录学习结果
+   */
+  recordResult(result) {
+    const { currentWord, currentIndex, words, counts } = this.data;
+    
+    // 更新统计
+    const newCounts = { ...counts };
+    if (result === 'known') {
+      newCounts.mastered++;
+    } else {
+      newCounts.unknown++;
+    }
+    
+    // 保存结果
+    const results = this.data.reviewResults;
+    results.push({
+      wordId: currentWord.id,
+      result: result,
+      stage: currentWord.stage || 0
+    });
+    
+    this.setData({
+      counts: newCounts,
+      reviewResults: results
+    });
+    
+    // 记录到后端
+    this.saveProgress(result);
+    
+    // 下一个单词
+    this.setData({ currentIndex: currentIndex + 1 });
+    this.showNextWord();
+  },
+
+  /**
+   * 保存学习进度
+   */
+  saveProgress(result) {
+    const { currentWord } = this.data;
+    
+    // 计算下一阶段
+    const currentStage = currentWord.stage || 0;
+    const isCorrect = result === 'known';
+    const nextStage = calculateNextStage(currentStage, isCorrect);
+    const nextReviewDate = calculateNextReviewDate(new Date(), nextStage);
     
     wx.request({
       url: `${app.globalData.apiUrl}/words/progress`,
@@ -148,60 +226,47 @@ Page({
         'Content-Type': 'application/json'
       },
       data: {
-        wordId: this.data.currentWord.id,
+        wordId: currentWord.id,
         result: result,
-        masteryScore: masteryScore
+        stage: nextStage,
+        nextReviewDate: nextReviewDate.toISOString(),
+        masteryScore: isCorrect ? 75 : 25
       },
       success: (res) => {
-        if (res.statusCode === 200) {
-          this.setData({ 
-            reviewedCount: this.data.reviewedCount + 1,
-            showAnswer: false,
-            confidence: 3 // 重置自信度
-          });
-          // 加载下一个复习单词
-          setTimeout(() => {
-            this.loadReviewWord();
-          }, 500);
-        } else if (res.statusCode === 403) {
-          // token无效，重新登录
-          wx.showToast({
-            title: '请重新登录',
-            icon: 'none'
-          });
-          setTimeout(() => {
-            wx.redirectTo({
-              url: '/pages/index/index'
-            });
-          }, 1500);
-        } else {
-          wx.showToast({
-            title: '提交失败',
-            icon: 'error'
-          });
+        if (res.statusCode !== 200) {
+          console.error('保存进度失败:', res);
         }
       },
       fail: (err) => {
-        console.error('提交复习结果失败:', err);
-        wx.showToast({
-          title: '网络错误',
-          icon: 'error'
-        });
+        console.error('保存失败:', err);
       }
     });
   },
 
-  handleKnow() {
-    this.submitReview(true);
+  /**
+   * 显示完成界面
+   */
+  showComplete() {
+    this.setData({ showComplete: true });
   },
 
-  handleDontKnow() {
-    this.submitReview(false);
-  },
-
-  goBackHome() {
-    wx.navigateBack({
-      delta: 1
+  /**
+   * 完成复习
+   */
+  finishReview() {
+    wx.showToast({
+      title: '复习完成！',
+      icon: 'success'
     });
+    
+    setTimeout(() => {
+      wx.navigateBack();
+    }, 1500);
+  },
+
+  onUnload() {
+    if (this.data.audioContext) {
+      this.data.audioContext.destroy();
+    }
   }
 });
