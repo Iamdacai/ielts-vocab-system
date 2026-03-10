@@ -1,0 +1,83 @@
+<!--pages/achievements/achievements.wxml - 成就页面-->
+<view class="container">
+  <view class="header">
+    <view class="title">🏆 成就系统</view>
+    <view class="subtitle">见证你的每一点进步</view>
+  </view>
+
+  <!-- 总进度 -->
+  <view class="card progress-card">
+    <view class="progress-title">成就进度</view>
+    <view class="progress-total">
+      <text class="progress-number">{{progress.total.unlocked}}</text>
+      <text class="progress-separator"> / </text>
+      <text class="progress-number-secondary">{{progress.total.total}}</text>
+    </view>
+    <view class="progress-percentage">{{progress.total.percentage}}%</view>
+    
+    <view class="progress-bar">
+      <view class="progress-fill" style="width: {{progress.total.percentage}}%"></view>
+    </view>
+    
+    <!-- 分类进度 -->
+    <view class="category-progress">
+      <view class="category-item" wx:for="{{categories}}" wx:key="id">
+        <view class="category-icon">{{item.icon}}</view>
+        <view class="category-info">
+          <view class="category-name">{{item.name}}</view>
+          <view class="category-stats">{{item.unlocked}}/{{item.total}}</view>
+        </view>
+        <view class="category-bar">
+          <view class="category-bar-fill" style="width: {{item.percentage}}%"></view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 筛选器 -->
+  <view class="filter-section">
+    <scroll-view scroll-x class="filter-scroll">
+      <view class="filter-buttons">
+        <button 
+          class="filter-button {{currentFilter === 'all' ? 'active' : ''}}" 
+          bindtap="setFilter" 
+          data-filter="all">全部</button>
+        <button 
+          class="filter-button {{currentFilter === 'unlocked' ? 'active' : ''}}" 
+          bindtap="setFilter" 
+          data-filter="unlocked">已解锁</button>
+        <button 
+          class="filter-button {{currentFilter === 'locked' ? 'active' : ''}}" 
+          bindtap="setFilter" 
+          data-filter="locked">未解锁</button>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 成就列表 -->
+  <view class="achievements-list">
+    <view wx:for="{{displayAchievements}}" wx:key="id" class="achievement-item">
+      <view class="achievement-card {{item.unlocked ? 'unlocked' : 'locked'}}">
+        <view class="achievement-icon" style="background: {{item.color}}">
+          <text>{{item.unlocked ? item.icon : '🔒'}}</text>
+        </view>
+        <view class="achievement-info">
+          <view class="achievement-name">{{item.name}}</view>
+          <view class="achievement-description">{{item.description}}</view>
+          <view class="achievement-rarity" style="color: {{item.rarityColor}}">
+            {{item.rarityName}}
+          </view>
+        </view>
+        <view wx:if="{{item.unlocked && item.unlockedAt}}" class="achievement-date">
+          {{item.unlockedAt}}
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view wx:if="{{displayAchievements.length === 0}}" class="empty-state">
+    <text class="empty-icon">🏆</text>
+    <text class="empty-text">暂无成就</text>
+  </view>
+</view>

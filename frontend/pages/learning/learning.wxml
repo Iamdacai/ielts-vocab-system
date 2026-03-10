@@ -1,134 +1,162 @@
-<!-- pages/learning/learning.wxml -->
+<!--pages/learning/learning.wxml - 学时确认优化版-->
 <view class="container">
-  <!-- 加载状态 -->
-  <view wx:if="{{loading}}" class="loading-container">
-    <text class="loading-text">加载中...</text>
+  <!-- 顶部进度 -->
+  <view class="header">
+    <view class="progress-info">
+      <text class="progress-text">🟢 学习新词</text>
+      <text class="progress-count">{{currentIndex + 1}} / {{totalWords}}</text>
+    </view>
+    <view class="progress-bar">
+      <view class="progress-fill" style="width: {{progress}}%"></view>
+    </view>
   </view>
 
-  <!-- 学习界面 -->
-  <view wx:else class="learning-container">
-    <!-- 进度条 -->
-    <view class="progress-section">
-      <progress 
-        percent="{{progress}}" 
-        stroke-width="4" 
-        active-color="#4a6cf7"
-        backgroundColor="#e0e0e0"
-        class="progress-bar"
-      />
-      <view class="progress-text">
-        <text>{{currentWordIndex + 1}}/{{totalWords}}</text>
+  <!-- 单词卡片 -->
+  <view wx:if="{{currentWord}}" class="word-card">
+    <view class="word-header">
+      <view class="word-text">{{currentWord.word}}</view>
+      <view class="word-phonetic">{{currentWord.phonetic}}</view>
+    </view>
+
+    <!-- 短语标记 -->
+    <view wx:if="{{currentWord.is_phrase}}" class="phrase-badge">
+      📝 短语
+    </view>
+
+    <!-- 释义 -->
+    <view class="translation-section">
+      <view class="translation-title">释义</view>
+      <view class="translation-text">{{currentWord.translation}}</view>
+    </view>
+
+    <!-- 例句 -->
+    <view wx:if="{{currentWord.example}}" class="example-section">
+      <view class="example-title">例句</view>
+      <view class="example-text">{{currentWord.example}}</view>
+      <view class="example-translation">{{currentWord.example_translation}}</view>
+      
+      <!-- 发音按钮 -->
+      <view class="audio-buttons">
+        <button class="audio-button" bindtap="playWordAudio">
+          🔈 单词发音
+        </button>
+        <button class="audio-button" bindtap="playExampleAudio">
+          🔈 例句发音
+        </button>
       </view>
     </view>
 
-    <!-- 单词显示区域 -->
-    <view class="word-section">
-      <!-- 英文单词 -->
-      <view class="english-section">
-        <text class="english-word">{{currentWord ? currentWord.word : '---'}}</text>
-        <!-- 发音按钮 -->
-        <button 
-          class="pronunciation-btn {{isPlaying ? 'playing' : ''}}" 
-          bindtap="playWordPronunciation"
-          disabled="{{isPlaying}}"
-        >
-          <text class="btn-icon">{{isPlaying ? '🔊' : '🔇'}}</text>
-        </button>
-      </view>
-
-      <!-- 中文释义（可折叠） -->
-      <view wx:if="{{showAnswer && currentWord}}" class="chinese-section">
-        <text class="chinese-meaning">{{currentWord.meaning ? currentWord.meaning : '---'}}</text>
-        <!-- 音标显示 -->
-        <view wx:if="{{currentWord.phonetic}}" class="phonetic-section">
-          <text class="phonetic">{{currentWord.phonetic}}</text>
-        </view>
-      </view>
-
-      <!-- 跟读练习区域 -->
-      <view class="pronunciation-practice-section">
-        <view class="practice-title">发音练习</view>
-        
-        <!-- 跟读按钮 -->
-        <button 
-          class="record-btn {{isRecording ? 'recording' : ''}}" 
-          bindtap="startPronunciationPractice"
-          disabled="{{isRecording || !currentWord || !hasRecordPermission}}"
-        >
-          <text class="btn-icon-large">{{isRecording ? '🔴' : '🎤'}}</text>
-          <text class="btn-text">
-            {{isRecording ? '录音中 ' + recordingDuration + 's' : '跟读练习'}}
-          </text>
-        </button>
-        
-        <!-- 停止录音按钮（录音时显示） -->
-        <button 
-          wx:if="{{isRecording}}"
-          class="stop-record-btn"
-          bindtap="stopRecording"
-        >
-          <text>停止录音</text>
-        </button>
-        
-        <!-- 权限提示 -->
-        <view wx:if="{{!hasRecordPermission}}" class="permission-tip">
-          <text>⚠️ 需要录音权限才能使用发音练习</text>
-        </view>
-        
-        <!-- 评分结果显示 -->
-        <view wx:if="{{pronunciationScore !== null}}" class="score-section">
-          <view class="score-display">
-            <text class="score-text">发音得分：{{pronunciationScore}}/100</text>
-          </view>
-          <view class="feedback">
-            <text>{{pronunciationFeedback}}</text>
-          </view>
-        </view>
+    <!-- 同义替换 -->
+    <view wx:if="{{currentWord.synonyms && currentWord.synonyms.length > 0}}" class="synonyms-section">
+      <view class="synonyms-title">📚 同义替换</view>
+      <view class="synonyms-list">
+        <block wx:for="{{currentWord.synonyms}}" wx:key="*this">
+          <view class="synonym-item">{{item}}</view>
+        </block>
       </view>
     </view>
 
-    <!-- 答案切换按钮 -->
-    <view class="answer-toggle-section">
-      <button 
-        class="toggle-btn" 
-        bindtap="toggleAnswer"
-      >
-        {{showAnswer ? '隐藏答案' : '显示答案'}}
+    <!-- 词根词缀 -->
+    <view wx:if="{{currentWord.etymology}}" class="etymology-section">
+      <view class="etymology-title">🌳 词根词缀</view>
+      <view class="etymology-text">{{currentWord.etymology}}</view>
+    </view>
+  </view>
+
+  <!-- 学习判断按钮 -->
+  <view class="learning-actions">
+    <view class="action-buttons">
+      <button class="action-button forgot" bindtap="handleForgot">
+        ✗ 忘记
+      </button>
+      <button class="action-button hard" bindtap="handleHard">
+        😅 困难
+      </button>
+      <button class="action-button know" bindtap="handleKnow">
+        ✓ 认识
       </button>
     </view>
+    
+    <view class="hint-text">
+      💡 根据掌握程度选择，系统会智能安排复习
+    </view>
+  </view>
 
-    <!-- 操作按钮区域 -->
-    <view class="action-section">
-      <!-- 上一个单词 -->
-      <button 
-        class="nav-btn prev-btn" 
-        bindtap="showPreviousWord"
-        disabled="{{currentWordIndex === 0}}"
-      >
-        上一个
-      </button>
-
-      <!-- 掌握程度选择 -->
-      <view class="mastery-section">
-        <button class="mastery-btn know-btn" bindtap="handleKnow">
-          认识 ✓
+  <!-- 学时确认弹窗 -->
+  <view wx:if="{{showDurationModal}}" class="modal-overlay">
+    <view class="modal-content">
+      <view class="modal-icon">⏰</view>
+      <view class="modal-title">学习时间确认</view>
+      <view class="modal-subtitle">培养时间意识，累积成就感</view>
+      
+      <!-- 时间显示 -->
+      <view class="duration-display">
+        <view class="duration-label">本次学习时长</view>
+        <view class="duration-time">{{formattedDuration}}</view>
+        <view class="duration-words">
+          <text>新学：{{sessionStats.newWords}}词</text>
+          <text class="divider">|</text>
+          <text>复习：{{sessionStats.reviewWords}}词</text>
+        </view>
+      </view>
+      
+      <!-- 快捷选项 -->
+      <view class="quick-options">
+        <view class="quick-options-title">快速选择</view>
+        <view class="quick-buttons">
+          <button 
+            class="quick-button {{confirmedDuration === 15 ? 'active' : ''}}" 
+            bindtap="setDuration" 
+            data-minutes="15">15 分钟</button>
+          <button 
+            class="quick-button {{confirmedDuration === 30 ? 'active' : ''}}" 
+            bindtap="setDuration" 
+            data-minutes="30">30 分钟</button>
+          <button 
+            class="quick-button {{confirmedDuration === 45 ? 'active' : ''}}" 
+            bindtap="setDuration" 
+            data-minutes="45">45 分钟</button>
+          <button 
+            class="quick-button {{confirmedDuration === 60 ? 'active' : ''}}" 
+            bindtap="setDuration" 
+            data-minutes="60">60 分钟</button>
+        </view>
+      </view>
+      
+      <!-- 操作按钮 -->
+      <view class="modal-actions">
+        <button class="confirm-button" bindtap="confirmDuration">
+          ✓ 确认提交
         </button>
-        <button class="mastery-btn hard-btn" bindtap="handleHard">
-          不确定 ?
-        </button>
-        <button class="mastery-btn forgot-btn" bindtap="handleForgot">
-          不认识 ✗
+        <button class="skip-button" bindtap="skipDuration">
+          跳过
         </button>
       </view>
+      
+      <view class="modal-hint">
+        💡 准确记录学习时长有助于生成精准的学习报告
+      </view>
+    </view>
+  </view>
 
-      <!-- 下一个单词 -->
-      <button 
-        class="nav-btn next-btn" 
-        bindtap="showNextWordDirect"
-        disabled="{{currentWordIndex >= totalWords - 1}}"
-      >
-        下一个
-      </button>
+  <!-- 完成提示 -->
+  <view wx:if="{{showComplete}}" class="complete-modal">
+    <view class="complete-content">
+      <view class="complete-icon">🎉</view>
+      <view class="complete-title">学习完成！</view>
+      <view class="complete-stats">
+        <view class="complete-stat">
+          <view class="stat-value">{{sessionStats.newWords}}</view>
+          <view class="stat-label">新学单词</view>
+        </view>
+        <view class="complete-stat">
+          <view class="stat-value success-color">{{sessionStats.masteredWords}}</view>
+          <view class="stat-label">已掌握</view>
+        </view>
+      </view>
+      <view class="complete-time">
+        学习时长：{{formattedDuration}}
+      </view>
     </view>
   </view>
 </view>
