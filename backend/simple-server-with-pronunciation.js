@@ -67,6 +67,7 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 
 // 健康检查
+// Health check endpoint (no auth required)
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
@@ -96,6 +97,17 @@ app.get('/api/config', (req, res) => {
     weekly_new_words_days: [1,2,3,4,5,6,7],
     daily_new_words_count: 20,
     review_time: '20:00'
+  });
+});
+
+// 获取所有单词统计
+app.get('/api/words/all', authenticateToken, (req, res) => {
+  res.json({
+    total_words: 4464,
+    learned_words: 0,
+    mastered_words: 0,
+    learning_words: 0,
+    avg_mastery_score: 0
   });
 });
 
