@@ -255,6 +255,12 @@ Page({
   recordResult(result, masteryScore) {
     const { currentWord, currentIndex, sessionStats } = this.data;
     
+    // 添加 null 检查
+    if (!currentWord) {
+      console.error('currentWord is null');
+      return;
+    }
+    
     // 更新统计
     const newStats = { ...sessionStats };
     if (result === 'know') {
@@ -277,6 +283,12 @@ Page({
    */
   saveProgress(result, masteryScore) {
     const { currentWord } = this.data;
+    
+    // 添加 null 检查
+    if (!currentWord) {
+      console.error('保存进度失败：currentWord is null');
+      return;
+    }
     
     wx.request({
       url: `${app.globalData.apiUrl}/words/progress`,

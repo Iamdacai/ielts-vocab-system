@@ -2,6 +2,54 @@ const { initializeDatabase } = require('../database-sqlite');
 const { calculateNextReview } = require('../spaced-repetition-algorithm');
 
 /**
+ * 获取所有单词（用于统计）
+ */
+const getAllWords = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const db = await initializeDatabase();
+    
+    // 获取所有单词总数
+    const totalWords = await db.get('SELECT COUNT(*) as count FROM ielts_words');
+    
+    // 获取用户已学习单词数
+    const learnedWords = await db.get(
+      'SELECT COUNT(*) as count FROM user_word_progress WHERE user_id = ?',
+      [userId]
+    );
+    
+    // 获取掌握单词数
+    const masteredWords = await db.get(
+      'SELECT COUNT(*) as count FROM user_word_progress WHERE user_id = ? AND mastery_score >= 90',
+      [userId]
+    );
+    
+    // 获取学习中单词数
+    const learningWords = await db.get(
+      'SELECT COUNT(*) as count FROM user_word_progress WHERE user_id = ? AND status = "learning"',
+      [userId]
+    );
+    
+    // 计算平均掌握率
+    const avgMastery = await db.get(
+      'SELECT AVG(mastery_score) as avg FROM user_word_progress WHERE user_id = ?',
+      [userId]
+    );
+    
+    res.json({
+      total_words: totalWords.count || 0,
+      learned_words: learnedWords.count || 0,
+      mastered_words: masteredWords.count || 0,
+      learning_words: learningWords.count || 0,
+      avg_mastery_score: avgMastery.avg ? Math.round(avgMastery.avg) : 0,
+    });
+  } catch (error) {
+    console.error('获取单词统计失败:', error);
+    res.status(500).json({ error: '获取单词统计失败' });
+  }
+};
+
+/**
  * 获取今日新词
  */
 const getNewWords = async (req, res) => {
@@ -154,4 +202,4 @@ const recordProgress = async (req, res) => {
   }
 };
 
-module.exports = { getNewWords, getReviewWords, recordProgress };
+module.exports = { getAllWords, getNewWords, getReviewWords, recordProgress };

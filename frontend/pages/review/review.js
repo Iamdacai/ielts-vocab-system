@@ -177,6 +177,12 @@ Page({
   recordResult(result) {
     const { currentWord, currentIndex, words, counts } = this.data;
     
+    // 添加 null 检查
+    if (!currentWord) {
+      console.error('currentWord is null');
+      return;
+    }
+    
     // 更新统计
     const newCounts = { ...counts };
     if (result === 'known') {
@@ -211,6 +217,12 @@ Page({
    */
   saveProgress(result) {
     const { currentWord } = this.data;
+    
+    // 添加 null 检查
+    if (!currentWord) {
+      console.error('保存进度失败：currentWord is null');
+      return;
+    }
     
     // 计算下一阶段
     const currentStage = currentWord.stage || 0;
