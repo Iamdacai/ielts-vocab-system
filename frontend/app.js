@@ -1,16 +1,16 @@
 // app.js
 App({
   onLaunch() {
-    // ⚠️ 本地开发环境 - 使用 HTTP 本地地址
-    const serverDomain = 'localhost';  // 本地开发
+    // ⚠️ 生产环境 - 使用正式域名（小程序在 Windows 上运行）
+    const serverDomain = 'caiyuyang.cn';  // 正式域名
     const serverPort = '3001';
     
     // 初始化全局状态
     this.globalData = {
       userInfo: null,
       hasLogin: false,
-      // ⚠️ 使用 HTTP 本地地址进行开发测试
-      apiUrl: `http://${serverDomain}:${serverPort}/api`,
+      // ⚠️ 使用 HTTPS 正式域名
+      apiUrl: `https://${serverDomain}:${serverPort}/api`,
       token: null
     };
     
@@ -18,7 +18,7 @@ App({
     console.log('API 地址:', this.globalData.apiUrl);
     console.log('服务器域名:', serverDomain);
     console.log('服务器端口:', serverPort);
-    console.log('运行环境：本地开发（HTTP 本地地址）');
+    console.log('运行环境：生产环境（HTTPS 域名）');
     console.log('========================================');
     
     // 尝试从本地存储恢复登录状态
