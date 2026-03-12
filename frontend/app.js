@@ -2,7 +2,7 @@
 App({
   onLaunch() {
     // ⚠️ 本地开发环境 - 使用 HTTP 本地地址
-    const serverDomain = 'localhost';  // 本地开发
+    const serverDomain = 'caiyuyang.cn';  // 本地开发
     const serverPort = '3001';
     
     // 初始化全局状态
