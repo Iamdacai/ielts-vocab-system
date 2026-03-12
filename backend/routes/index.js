@@ -11,6 +11,7 @@ const pronunciationRoutes = require('./pronunciation');
 const sessionsRoutes = require('./sessions');
 const achievementsRoutes = require('./achievements');
 const remindersRoutes = require('./reminders');
+const mistakesRoutes = require('./mistakes');       // 新增：错题本 2.0
 
 // 挂载路由
 router.use('/auth', authRoutes);
@@ -19,8 +20,9 @@ router.use('/words', wordsRoutes);
 router.use('/stats', statsRoutes);
 router.use('/audio', audioRoutes);
 router.use('/pronunciation', pronunciationRoutes);
-router.use('/sessions', sessionsRoutes);       // 新增：学习会话
-router.use('/achievements', achievementsRoutes); // 新增：成就系统
-router.use('/reminders', remindersRoutes);       // 新增：智能提醒
+router.use('/sessions', sessionsRoutes);       // 学习会话
+router.use('/achievements', achievementsRoutes); // 成就系统
+router.use('/reminders', remindersRoutes);       // 智能提醒
+router.use('/mistakes', mistakesRoutes);         // 错题本 2.0
 
 module.exports = router;

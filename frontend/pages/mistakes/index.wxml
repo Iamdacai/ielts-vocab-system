@@ -1,0 +1,100 @@
+<!--pages/mistakes/index.wxml - 错题本首页-->
+<view class="container">
+  <!-- 顶部统计卡片 -->
+  <view class="stats-card">
+    <view class="stats-header">
+      <text class="title">📚 我的错题本</text>
+      <text class="subtitle">持续进步，错题越来越少！</text>
+    </view>
+    
+    <view class="stats-grid">
+      <view class="stat-item">
+        <text class="stat-value">{{stats.active_mistakes || 0}}</text>
+        <text class="stat-label">待复习</text>
+      </view>
+      <view class="stat-item highlight">
+        <text class="stat-value">{{stats.high_frequency_count || 0}}</text>
+        <text class="stat-label">高频错题</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value">{{stats.today_count || 0}}</text>
+        <text class="stat-label">今日新增</text>
+      </view>
+      <view class="stat-item success">
+        <text class="stat-value">{{stats.eliminated_count || 0}}</text>
+        <text class="stat-label">已掌握</text>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 高频错题提醒 -->
+  <view class="high-freq-section" wx:if="{{highFrequencyMistakes.length > 0}}">
+    <view class="section-header">
+      <text class="section-title">⚠️ 高频错题 TOP5</text>
+      <text class="section-more" bindtap="viewAllHighFreq">查看全部</text>
+    </view>
+    <view class="high-freq-list">
+      <view class="high-freq-item" wx:for="{{highFrequencyMistakes}}" wx:key="id" bindtap="goToWord" data-word="{{item}}">
+        <view class="word-info">
+          <text class="word">{{item.word}}</text>
+          <text class="phonetic">{{item.phonetic}}</text>
+        </view>
+        <view class="error-count">
+          <text class="count">{{item.error_count}}次错误</text>
+        </view>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 筛选标签 -->
+  <view class="filter-bar">
+    <view class="filter-item {{currentFilter === 'all' ? 'active' : ''}}" bindtap="setFilter" data-filter="all">
+      全部
+    </view>
+    <view class="filter-item {{currentFilter === 'high_frequency' ? 'active' : ''}}" bindtap="setFilter" data-filter="high_frequency">
+      高频错题
+    </view>
+    <view class="filter-item {{currentFilter === 'spelling' ? 'active' : ''}}" bindtap="setFilter" data-filter="spelling">
+      拼写错误
+    </view>
+    <view class="filter-item {{currentFilter === 'recognition' ? 'active' : ''}}" bindtap="setFilter" data-filter="recognition">
+      识别错误
+    </view>
+  </view>
+  
+  <!-- 错题列表 -->
+  <view class="mistakes-list">
+    <view class="mistake-item" wx:for="{{mistakes}}" wx:key="id" bindtap="goToPractice" data-mistake="{{item}}">
+      <view class="mistake-left">
+        <view class="word-row">
+          <text class="word">{{item.word}}</text>
+          <text class="phonetic">{{item.phonetic}}</text>
+        </view>
+        <text class="definition">{{item.definition}}</text>
+        <view class="tags-row">
+          <view class="tag error-type">{{errorTypeMap[item.error_type]}}</view>
+          <view class="tag error-count">错误 {{item.error_count}} 次</view>
+          <view class="tag high-freq" wx:if="{{item.is_high_frequency}}">高频</view>
+        </view>
+      </view>
+      <view class="mistake-right">
+        <view class="mastery-level">
+          <text wx:for="{{[1,2,3,4,5]}}" wx:key="*this" class="level-dot {{item.mastery_level >= index ? 'filled' : ''}}"></text>
+        </view>
+        <text class="last-error">上次：{{formatDate(item.last_error_at)}}</text>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{mistakes.length === 0 && !loading}}">
+    <text class="empty-emoji">🎉</text>
+    <text class="empty-text">太棒了！目前没有错题</text>
+    <text class="empty-hint">继续加油，保持下去！</text>
+  </view>
+  
+  <!-- 加载更多 -->
+  <view class="load-more" wx:if="{{hasMore}}" bindtap="loadMore">
+    <text>加载更多</text>
+  </view>
+</view>
