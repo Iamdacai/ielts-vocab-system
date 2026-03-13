@@ -68,6 +68,15 @@ app.get('/api/health', (req, res) => {
 // 音频文件路由
 app.use('/api/audio', express.static('./audio'));
 
+// 🆕 词汇音频文件路由（支持中文路径）
+app.use('/api/audio/vocabulary', express.static('./vocabulary/ielts-materials/audio', {
+  setHeaders: (res, path, stat) => {
+    if (path.endsWith('.mp3')) {
+      res.setHeader('Content-Type', 'audio/mpeg');
+    }
+  }
+}));
+
 // 错误处理中间件
 app.use((err, req, res, next) => {
   console.error('Error:', err);

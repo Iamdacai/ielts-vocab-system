@@ -3,11 +3,16 @@ const app = getApp();
 Page({
   data: {
     config: {
+      vocab_library: 'cambridge',  // 🆕 默认词库
+      vocab_category: '',          // 🆕 词汇分类
       weekly_new_words_days: [1, 2, 3, 4, 5, 6, 7],
       daily_new_words_count: 20,
       review_time: '20:00'
     },
     loading: true,
+    libraries: [],                 // 🆕 词库列表
+    categories: [],                // 🆕 分类列表
+    categoryIndex: 0,              // 🆕 当前选中的分类索引
     daysOfWeek: [
       { value: 1, name: '周一' },
       { value: 2, name: '周二' },
@@ -21,6 +26,7 @@ Page({
 
   async onLoad() {
     await this.checkLoginStatus();
+    await this.loadLibraries();
   },
 
   // 改进的登录状态检查
@@ -68,6 +74,56 @@ Page({
     });
   },
 
+  // 🆕 加载词库列表
+  async loadLibraries() {
+    try {
+      const res = await wx.request({
+        url: `${app.globalData.apiUrl}/words/libraries`,
+        method: 'GET',
+        header: {
+          'Authorization': `Bearer ${app.globalData.token}`
+        }
+      });
+      
+      if (res.statusCode === 200) {
+        this.setData({ 
+          libraries: res.data,
+          'config.vocab_library': res.data[0]?.id || 'cambridge'
+        });
+        
+        // 加载默认词库的分类
+        this.loadCategories();
+      }
+    } catch (err) {
+      console.error('加载词库列表失败:', err);
+    }
+  },
+  
+  // 🆕 加载分类列表
+  async loadCategories() {
+    const library = this.data.config.vocab_library;
+    
+    try {
+      const res = await wx.request({
+        url: `${app.globalData.apiUrl}/words/categories?source=${library === 'zhenjing' ? '真经' : '剑桥'}`,
+        method: 'GET',
+        header: {
+          'Authorization': `Bearer ${app.globalData.token}`
+        }
+      });
+      
+      if (res.statusCode === 200) {
+        const categories = [{ id: '', name: '全部章节', word_count: 0 }, ...res.data];
+        this.setData({ 
+          categories,
+          categoryIndex: 0
+        });
+      }
+    } catch (err) {
+      console.error('加载分类列表失败:', err);
+    }
+  },
+  
   loadConfig() {
     wx.request({
       url: `${app.globalData.apiUrl}/config`,
@@ -78,7 +134,10 @@ Page({
       success: (res) => {
         if (res.statusCode === 200) {
           this.setData({ 
-            config: res.data,
+            config: {
+              ...this.data.config,
+              ...res.data
+            },
             loading: false
           });
         } else {
@@ -97,6 +156,41 @@ Page({
     });
   },
 
+  // 🆕 选择词库
+  selectLibrary(e) {
+    const libraryId = e.currentTarget.dataset.library;
+    this.setData({
+      'config.vocab_library': libraryId,
+      'config.vocab_category': ''  // 重置分类选择
+    });
+    
+    // 重新加载分类列表
+    this.loadCategories();
+    
+    wx.showToast({
+      title: '已切换词库',
+      icon: 'success',
+      duration: 1500
+    });
+  },
+  
+  // 🆕 选择分类
+  selectCategory(e) {
+    const index = e.detail.value;
+    const category = this.data.categories[index];
+    
+    this.setData({
+      categoryIndex: index,
+      'config.vocab_category': category.id
+    });
+    
+    wx.showToast({
+      title: `已选择：${category.name}`,
+      icon: 'success',
+      duration: 1500
+    });
+  },
+  
   toggleDay(e) {
     const dayValue = parseInt(e.currentTarget.dataset.day);
     const currentDays = [...this.data.config.weekly_new_words_days];

@@ -186,7 +186,7 @@ Page({
   },
 
   /**
-   * 播放单词发音
+   * 播放单词发音（🆕 支持词汇音频）
    */
   playWordAudio() {
     const { currentWord, audioContext } = this.data;
@@ -202,7 +202,15 @@ Page({
     }
 
     try {
-      audioContext.src = `${app.globalData.apiUrl}/pronunciation/word-audio/${encodeURIComponent(word)}`;
+      // 🆕 优先使用词汇音频（如果有 category 字段）
+      if (currentWord.category) {
+        audioContext.src = `${app.globalData.apiUrl}/audio/vocabulary/audio/${encodeURIComponent(currentWord.category)}/${encodeURIComponent(word)}.mp3`;
+      } else {
+        // 使用原有发音服务
+        audioContext.src = `${app.globalData.apiUrl}/pronunciation/word-audio/${encodeURIComponent(word)}`;
+      }
+      
+      audioContext.play();
     } catch (error) {
       console.error('播放失败:', error);
       wx.showToast({ title: '播放失败', icon: 'error' });

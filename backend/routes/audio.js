@@ -4,6 +4,65 @@ const path = require('path');
 const fs = require('fs');
 
 /**
+ * 🆕 获取词汇音频（章节音频和单词音频）
+ * 路径：/api/audio/vocabulary/audio/:category/:filename
+ */
+router.get('/vocabulary/audio/:category/:filename?', async (req, res) => {
+  try {
+    const { category, filename } = req.params;
+    
+    // 解码分类名（可能包含中文）
+    const decodedCategory = decodeURIComponent(category);
+    
+    // 构建音频文件路径
+    const audioDir = path.join(__dirname, '../../vocabulary/ielts-materials/audio');
+    
+    let audioPath;
+    
+    if (filename) {
+      // 单词音频：/api/audio/vocabulary/audio/01_自然地理/atmosphere.mp3
+      const decodedFilename = decodeURIComponent(filename);
+      audioPath = path.join(audioDir, decodedCategory, decodedFilename);
+    } else {
+      // 章节音频：/api/audio/vocabulary/audio/01_自然地理.mp3
+      // 检查是否是 category.mp3 格式
+      if (category.endsWith('.mp3')) {
+        const chapterFile = decodeURIComponent(category);
+        audioPath = path.join(audioDir, chapterFile);
+      } else {
+        // 尝试查找章节音频
+        const chapterPath = path.join(audioDir, `${decodedCategory}.mp3`);
+        if (fs.existsSync(chapterPath)) {
+          audioPath = chapterPath;
+        } else {
+          return res.status(404).json({ 
+            error: 'Chapter audio not found',
+            category: decodedCategory
+          });
+        }
+      }
+    }
+    
+    // 检查音频文件是否存在
+    if (fs.existsSync(audioPath)) {
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Content-Length', fs.statSync(audioPath).size);
+      res.sendFile(audioPath);
+    } else {
+      res.status(404).json({ 
+        error: 'Audio file not found',
+        path: audioPath,
+        category: decodedCategory,
+        filename: filename
+      });
+    }
+  } catch (error) {
+    console.error('词汇音频服务错误:', error);
+    res.status(500).json({ error: '音频服务错误', message: error.message });
+  }
+});
+
+/**
  * 获取单词发音音频
  * 支持多种音频格式和备用方案
  */

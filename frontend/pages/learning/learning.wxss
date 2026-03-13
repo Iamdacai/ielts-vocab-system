@@ -54,6 +54,7 @@
 .word-header {
   text-align: center;
   margin-bottom: 30rpx;
+  position: relative;
 }
 
 .word-text {
@@ -67,6 +68,52 @@
   font-size: 28rpx;
   color: #9ca3af;
   font-family: monospace;
+}
+
+/* 🆕 播放按钮 */
+.audio-play-btn {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 40rpx;
+  cursor: pointer;
+  padding: 10rpx;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.audio-play-btn:active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* 🆕 词库和分类标签 */
+.word-source {
+  display: flex;
+  justify-content: center;
+  gap: 15rpx;
+  margin-bottom: 20rpx;
+}
+
+.source-tag {
+  font-size: 22rpx;
+  color: #60a5fa;
+  background: rgba(96, 165, 250, 0.1);
+  padding: 6rpx 16rpx;
+  border-radius: 20rpx;
+}
+
+.category-tag {
+  font-size: 22rpx;
+  color: #34d399;
+  background: rgba(52, 211, 153, 0.1);
+  padding: 6rpx 16rpx;
+  border-radius: 20rpx;
 }
 
 .phrase-badge {

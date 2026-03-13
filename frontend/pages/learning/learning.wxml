@@ -16,6 +16,17 @@
     <view class="word-header">
       <view class="word-text">{{currentWord.word}}</view>
       <view class="word-phonetic">{{currentWord.phonetic}}</view>
+      
+      <!-- 🆕 播放按钮 -->
+      <view class="audio-play-btn" bindtap="playWordAudio">
+        🔊
+      </view>
+    </view>
+
+    <!-- 🆕 词库和分类信息 -->
+    <view wx:if="{{currentWord.source}}" class="word-source">
+      <text class="source-tag">{{currentWord.source}}</text>
+      <text wx:if="{{currentWord.category}}" class="category-tag">{{currentWord.category.replace(/^\d+_/, '')}}</text>
     </view>
 
     <!-- 短语标记 -->

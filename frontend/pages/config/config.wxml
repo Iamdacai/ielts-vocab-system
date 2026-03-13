@@ -3,6 +3,41 @@
   <view class="card" wx:if="{{!loading}}">
     <view class="title">学习配置</view>
     
+    <!-- 🆕 词库选择 -->
+    <view class="config-section">
+      <view class="subtitle">选择词库</view>
+      <view class="library-selector">
+        <view 
+          wx:for="{{libraries}}" 
+          wx:key="id"
+          class="library-item {{config.vocab_library === item.id ? 'selected' : ''}}"
+          data-library="{{item.id}}"
+          bindtap="selectLibrary">
+          <view class="library-name">{{item.name}}</view>
+          <view class="library-desc">{{item.description}}</view>
+          <view class="library-count">{{item.word_count}} 词</view>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 🆕 分类选择（仅当选择雅思词汇真经时显示） -->
+    <view class="config-section" wx:if="{{config.vocab_library === 'zhenjing'}}">
+      <view class="subtitle">选择分类</view>
+      <picker 
+        mode="selector" 
+        range="{{categories}}" 
+        range-key="name"
+        value="{{categoryIndex}}"
+        bindchange="selectCategory">
+        <view class="category-picker">
+          {{categories[categoryIndex]?.name || '全部章节'}}
+        </view>
+      </picker>
+      <view class="text" wx:if="{{categories[categoryIndex]}}">
+        共 {{categories[categoryIndex].word_count}} 个单词
+      </view>
+    </view>
+    
     <view class="config-section">
       <view class="subtitle">每周学习天数</view>
       <view class="days-selector">

@@ -3,6 +3,58 @@
   margin-bottom: 40rpx;
 }
 
+/* 🆕 词库选择器样式 */
+.library-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  margin-top: 20rpx;
+}
+
+.library-item {
+  padding: 30rpx;
+  border: 2rpx solid #ddd;
+  border-radius: 16rpx;
+  background: #fff;
+  transition: all 0.3s;
+}
+
+.library-item.selected {
+  border-color: #007AFF;
+  background: #f0f7ff;
+}
+
+.library-name {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10rpx;
+}
+
+.library-desc {
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 10rpx;
+}
+
+.library-count {
+  font-size: 24rpx;
+  color: #007AFF;
+  font-weight: 500;
+}
+
+/* 🆕 分类选择器样式 */
+.category-picker {
+  padding: 25rpx;
+  background: #f8f8f8;
+  border-radius: 16rpx;
+  font-size: 28rpx;
+  color: #333;
+  text-align: center;
+  margin-top: 15rpx;
+  border: 2rpx solid #eee;
+}
+
 .days-selector {
   display: flex;
   flex-wrap: wrap;
