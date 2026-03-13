@@ -132,16 +132,45 @@ app.post('/api/words/progress', (req, res) => {
   res.json({ success: true, mastery: 85, nextReviewAt: new Date(Date.now() + 86400000) });
 });
 
+// 获取所有单词统计（九宫格用）
+app.get('/api/words/all', async (req, res) => {
+  try {
+    const db = await initializeDatabase();
+    
+    // 获取所有单词（简化版，返回空数组和统计信息）
+    const totalWords = await db.get('SELECT COUNT(*) as count FROM ielts_words');
+    
+    res.json({
+      total_words: totalWords.count || 0,
+      learned_words: 0,
+      mastered_words: 0,
+      learning_words: 0,
+      avg_mastery_score: 0,
+      words: [] // 简化版返回空数组
+    });
+  } catch (error) {
+    console.error('获取单词统计失败:', error);
+    res.json({
+      total_words: 0,
+      learned_words: 0,
+      mastered_words: 0,
+      learning_words: 0,
+      avg_mastery_score: 0,
+      words: []
+    });
+  }
+});
+
 app.get('/api/stats', async (req, res) => {
   try {
     const db = await initializeDatabase();
     const result = await db.get('SELECT COUNT(*) as count FROM ielts_words');
     res.json({
       total_words: result.count,
-      mastered_words: 1,
-      learning_words: 1,
-      avg_mastery_score: 85,
-      today_learning_count: 2
+      mastered_words: 0,
+      learning_words: 0,
+      avg_mastery_score: 0,
+      today_learning_count: 0
     });
   } catch (error) {
     res.json({

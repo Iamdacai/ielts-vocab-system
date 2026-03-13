@@ -120,9 +120,9 @@ Page({
         let masteryRate = 0;
 
         if (wordsRes.statusCode === 200) {
-          const words = wordsRes.data;
+          const words = wordsRes.data.words || wordsRes.data || [];
           
-          // 计算九宫格数据
+          // 计算九宫格数据（即使数据为空也要显示 8 个扇区）
           const stageCounts = countWordsByStage(words);
           wheelData = stageCounts.map((stage, index) => {
             const path = calculateArcPath(index, 8, 100);
@@ -148,6 +148,24 @@ Page({
 
           // 计算掌握率
           masteryRate = calculateMasteryRate(words);
+        } else {
+          // API 请求失败时，初始化空的九宫格数据
+          wheelData = REVIEW_STAGES.map((stage, index) => {
+            const path = calculateArcPath(index, 8, 100);
+            const center = getSectorCenter(index, 8, 100, 40);
+            const labelCenter = getSectorCenter(index, 8, 100, 70);
+            return {
+              id: stage.id,
+              path,
+              color: stage.color,
+              count: 0,
+              label: stage.label,
+              centerX: center.x,
+              centerY: center.y,
+              labelX: labelCenter.x,
+              labelY: labelCenter.y,
+            };
+          });
         }
 
         this.setData({

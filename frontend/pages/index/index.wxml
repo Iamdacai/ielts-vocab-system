@@ -100,7 +100,7 @@
       <view class="card-title">🚀 开始学习</view>
       <view class="action-buttons">
         <button class="action-button primary" bindtap="navigateToLearning">
-          🟢 学习新词
+          🟢 新词学习
         </button>
         <button class="action-button warning" bindtap="navigateToReview">
           🟠 复习单词
