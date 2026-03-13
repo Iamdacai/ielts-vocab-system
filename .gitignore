@@ -1,0 +1,39 @@
+# 依赖
+node_modules/
+package-lock.json
+
+# 数据库
+*.db
+*.db-journal
+
+# 日志
+*.log
+logs/
+
+# 环境变量
+.env
+.env.local
+
+# 音频文件（大文件，不提交）
+vocabulary/ielts-materials/audio/
+
+# 临时文件
+*.tmp
+*.temp
+*.tar
+*.tar.gz
+*.zip
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 测试
+coverage/
+.nyc_output/

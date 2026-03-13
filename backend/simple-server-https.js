@@ -214,6 +214,26 @@ app.post('/api/sessions', async (req, res) => {
   }
 });
 
+// 健康检查 - 兼容 /api/health 路径
+app.get('/api/health', async (req, res) => {
+  try {
+    const db = await initializeDatabase();
+    const result = await db.get('SELECT COUNT(*) as count FROM ielts_words');
+    res.json({ 
+      status: 'OK', 
+      timestamp: new Date().toISOString(),
+      service: 'ielts-vocab-backend-https',
+      database: 'sqlite',
+      total_words: result.count
+    });
+  } catch (error) {
+    res.json({ 
+      status: 'ERROR', 
+      error: error.message 
+    });
+  }
+});
+
 // HTTPS 配置 - 修正路径
 const sslPath = path.join(__dirname, '..', 'ssl');
 const options = {
