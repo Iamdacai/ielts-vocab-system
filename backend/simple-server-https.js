@@ -183,6 +183,37 @@ app.get('/api/stats', async (req, res) => {
   }
 });
 
+// 学习会话路由 - 新增
+app.post('/api/sessions', async (req, res) => {
+  try {
+    const db = await initializeDatabase();
+    const { userId, vocabularySet, mode, plannedDuration } = req.body;
+    
+    const session = {
+      userId: userId || 1,
+      vocabularySet: vocabularySet || 'ielts-core',
+      mode: mode || 'new',
+      startTime: new Date().toISOString(),
+      plannedDuration: plannedDuration || 1800
+    };
+    
+    const sessionId = 'session_' + Date.now();
+    console.log('创建学习会话:', sessionId, session);
+    
+    res.json({
+      success: true,
+      sessionId: sessionId,
+      session: session
+    });
+  } catch (error) {
+    console.error('创建会话失败:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // HTTPS 配置 - 修正路径
 const sslPath = path.join(__dirname, '..', 'ssl');
 const options = {
