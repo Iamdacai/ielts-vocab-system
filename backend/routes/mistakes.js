@@ -2,10 +2,10 @@
 const express = require('express');
 const router = express.Router();
 const mistakesController = require('../controllers/mistakes');
-const authMiddleware = require('../middleware/auth');
+const { authenticateToken } = require('../middleware/auth');
 
 // 所有错题相关路由都需要认证
-router.use(authMiddleware);
+router.use(authenticateToken);
 
 // 添加错题
 router.post('/add', mistakesController.addMistake);
