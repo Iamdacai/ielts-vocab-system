@@ -30,10 +30,15 @@
         value="{{categoryIndex}}"
         bindchange="selectCategory">
         <view class="category-picker">
-          {{categories[categoryIndex]?.name || '全部章节'}}
+          <block wx:if="{{categoryIndex >= 0 && categories.length > categoryIndex}}">
+            {{categories[categoryIndex].name}}
+          </block>
+          <block wx:else>
+            全部章节
+          </block>
         </view>
       </picker>
-      <view class="text" wx:if="{{categories[categoryIndex]}}">
+      <view class="text" wx:if="{{categoryIndex >= 0 && categories.length > categoryIndex && categories[categoryIndex].word_count}}">
         共 {{categories[categoryIndex].word_count}} 个单词
       </view>
     </view>
