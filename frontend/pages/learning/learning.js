@@ -175,8 +175,19 @@ Page({
     
     if (currentIndex < totalWords) {
       const currentWord = words[currentIndex];
+      
+      // 🆕 预处理分类名称（去掉编号前缀）
+      let categoryName = '';
+      if (currentWord.category) {
+        // 去掉 "01_" 这样的编号前缀
+        categoryName = currentWord.category.replace(/^\d+_/, '');
+      }
+      
       this.setData({
-        currentWord: currentWord,
+        currentWord: {
+          ...currentWord,
+          categoryName: categoryName
+        },
         progress: ((currentIndex + 1) / totalWords) * 100
       });
     } else {

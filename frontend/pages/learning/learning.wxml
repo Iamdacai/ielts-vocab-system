@@ -26,7 +26,7 @@
     <!-- 🆕 词库和分类信息 -->
     <view wx:if="{{currentWord.source}}" class="word-source">
       <text class="source-tag">{{currentWord.source}}</text>
-      <text wx:if="{{currentWord.category}}" class="category-tag">{{currentWord.category.replace(/^\d+_/, '')}}</text>
+      <text wx:if="{{currentWord.category}}" class="category-tag">{{currentWord.categoryName}}</text>
     </view>
 
     <!-- 短语标记 -->
