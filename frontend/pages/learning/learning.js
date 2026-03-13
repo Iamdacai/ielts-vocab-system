@@ -400,7 +400,7 @@ Page({
     const { sessionStats } = this.data;
     
     wx.request({
-      url: `${app.globalData.apiUrl}/learning/session`,
+      url: `${app.globalData.apiUrl}/sessions`,
       method: 'POST',
       header: {
         'Authorization': `Bearer ${app.globalData.token}`,
