@@ -7,6 +7,40 @@
 
 ---
 
+## ⚠️ 开发规范
+
+### Git 自动推送
+
+**原则**: 每次代码更新后必须自动推送到 GitHub
+
+**自动推送脚本**:
+```bash
+# 使用自动推送脚本（推荐）
+./git-auto-push.sh "feat: 功能描述"
+# 或
+./git-auto-push.sh "fix: 修复描述"
+```
+
+**手动推送**:
+```bash
+git add -A
+git commit -m "feat/fix/docs: 描述"
+git push origin master
+```
+
+**提交信息规范**:
+- `feat:` 新功能
+- `fix:` Bug 修复
+- `docs:` 文档更新
+- `style:` 代码格式
+- `refactor:` 重构
+- `test:` 测试
+- `chore:` 构建/工具
+
+---
+
+---
+
 ## 🆕 词库更新 (2026-03-14)
 
 ### 新增词库：雅思词汇真经（刘洪波）
