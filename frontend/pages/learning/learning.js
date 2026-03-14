@@ -29,11 +29,19 @@ Page({
     },
     
     showComplete: false,
-    sessionId: null
+    sessionId: null,
+    
+    // 🆕 发音练习
+    isRecording: false,
+    recordingTime: 0,
+    recordingTimer: null,
+    recorderManager: null,
+    pronunciationResult: null
   },
 
   onLoad() {
     this.initAudio();
+    this.initRecorder();
     this.startDurationTimer();
     this.loadNewWords();
   },
@@ -55,6 +63,9 @@ Page({
     if (this.data.audioContext) {
       this.data.audioContext.destroy();
     }
+    if (this.data.recorderManager) {
+      this.data.recorderManager.stop();
+    }
   },
 
   /**
@@ -75,6 +86,70 @@ Page({
     });
     
     this.setData({ audioContext });
+  },
+
+  /**
+   * 🆕 初始化录音管理器
+   */
+  initRecorder() {
+    const recorderManager = wx.getRecorderManager();
+    
+    recorderManager.onStart(() => {
+      console.log('录音开始');
+      this.setData({ isRecording: true, recordingTime: 0 });
+      this.startRecordingTimer();
+    });
+    
+    recorderManager.onStop((res) => {
+      console.log('录音停止', res);
+      this.setData({ isRecording: false });
+      this.stopRecordingTimer();
+      
+      if (res.tempFilePath) {
+        // 上传录音进行评分
+        this.uploadPronunciation(res.tempFilePath);
+      }
+    });
+    
+    recorderManager.onError((err) => {
+      console.error('录音错误:', err);
+      this.setData({ isRecording: false });
+      this.stopRecordingTimer();
+      wx.showToast({
+        title: '录音失败',
+        icon: 'error'
+      });
+    });
+    
+    this.setData({ recorderManager });
+  },
+
+  /**
+   * 🆕 开始录音计时
+   */
+  startRecordingTimer() {
+    const timer = setInterval(() => {
+      this.setData({
+        recordingTime: this.data.recordingTime + 1
+      });
+      
+      // 最长录音 10 秒
+      if (this.data.recordingTime >= 10) {
+        this.stopPronunciationPractice();
+      }
+    }, 1000);
+    
+    this.setData({ recordingTimer: timer });
+  },
+
+  /**
+   * 🆕 停止录音计时
+   */
+  stopRecordingTimer() {
+    if (this.data.recordingTimer) {
+      clearInterval(this.data.recordingTimer);
+      this.setData({ recordingTimer: null });
+    }
   },
 
   /**
@@ -318,6 +393,178 @@ Page({
       console.error('播放失败:', error);
       wx.showToast({ title: '播放失败', icon: 'error' });
     }
+  },
+
+  /**
+   * 🆕 开始发音练习
+   */
+  startPronunciationPractice() {
+    const { currentWord, recorderManager, isRecording } = this.data;
+    
+    if (!currentWord) {
+      wx.showToast({
+        title: '请先加载单词',
+        icon: 'error'
+      });
+      return;
+    }
+    
+    if (isRecording) {
+      // 正在录音，停止录音
+      this.stopPronunciationPractice();
+      return;
+    }
+    
+    // 清除之前的评分结果
+    this.setData({ pronunciationResult: null });
+    
+    // 请求录音权限
+    wx.authorize({
+      scope: 'record',
+      success: () => {
+        // 开始录音
+        recorderManager.start({
+          duration: 10000, // 最长 10 秒
+          sampleRate: 16000,
+          numberOfChannels: 1,
+          encodeBitRate: 48000,
+          format: 'mp3'
+        });
+        
+        wx.showToast({
+          title: '开始录音',
+          icon: 'success'
+        });
+      },
+      fail: () => {
+        wx.showModal({
+          title: '需要录音权限',
+          content: '请在设置中允许录音权限，以便进行发音练习',
+          confirmText: '去设置',
+          success: (res) => {
+            if (res.confirm) {
+              wx.openSetting();
+            }
+          }
+        });
+      }
+    });
+  },
+
+  /**
+   * 🆕 停止发音练习
+   */
+  stopPronunciationPractice() {
+    const { recorderManager } = this.data;
+    
+    if (recorderManager) {
+      recorderManager.stop();
+      wx.showToast({
+        title: '录音完成',
+        icon: 'success'
+      });
+    }
+  },
+
+  /**
+   * 🆕 上传发音进行评分
+   */
+  uploadPronunciation(tempFilePath) {
+    const { currentWord } = this.data;
+    
+    if (!currentWord || !currentWord.word) {
+      wx.showToast({
+        title: '单词信息缺失',
+        icon: 'error'
+      });
+      return;
+    }
+    
+    wx.showLoading({
+      title: '评分中...',
+      mask: true
+    });
+    
+    // 创建 FileSystemManager 读取文件
+    const fs = wx.getFileSystemManager();
+    
+    // 读取文件为 ArrayBuffer
+    fs.readFile({
+      filePath: tempFilePath,
+      success: (fileRes) => {
+        const arrayBuffer = fileRes.data;
+        
+        // 创建 FormData
+        const formData = {
+          word: currentWord.word
+        };
+        
+        // 使用 wx.uploadFile 上传
+        wx.uploadFile({
+          url: `${app.globalData.apiUrl}/pronunciation/analyze`,
+          filePath: tempFilePath,
+          name: 'audio',
+          formData: formData,
+          header: {
+            'Authorization': `Bearer ${app.globalData.token}`
+          },
+          success: (uploadRes) => {
+            wx.hideLoading();
+            
+            if (uploadRes.statusCode === 200) {
+              try {
+                const result = JSON.parse(uploadRes.data);
+                console.log('发音评分结果:', result);
+                
+                this.setData({
+                  pronunciationResult: {
+                    score: result.score || 0,
+                    accuracy: result.accuracy || 0,
+                    fluency: result.fluency || 0,
+                    feedback: result.feedback || '请继续练习'
+                  }
+                });
+                
+                // 显示评分结果
+                wx.showToast({
+                  title: `评分：${result.score}`,
+                  icon: 'success',
+                  duration: 2000
+                });
+              } catch (e) {
+                console.error('解析评分结果失败:', e);
+                wx.showToast({
+                  title: '评分失败',
+                  icon: 'error'
+                });
+              }
+            } else {
+              console.error('评分请求失败:', uploadRes);
+              wx.showToast({
+                title: '评分失败',
+                icon: 'error'
+              });
+            }
+          },
+          fail: (err) => {
+            wx.hideLoading();
+            console.error('上传失败:', err);
+            wx.showToast({
+              title: '网络错误',
+              icon: 'error'
+            });
+          }
+        });
+      },
+      fail: (err) => {
+        wx.hideLoading();
+        console.error('读取文件失败:', err);
+        wx.showToast({
+          title: '录音处理失败',
+          icon: 'error'
+        });
+      }
+    });
   },
 
   /**
