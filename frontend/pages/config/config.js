@@ -158,7 +158,8 @@ Page({
 
   // 🆕 选择词库
   selectLibrary(e) {
-    const libraryId = e.currentTarget.dataset.library;
+    const libraryId = e.currentTarget.dataset.id;
+    console.log('选择词库:', libraryId);
     this.setData({
       'config.vocab_library': libraryId,
       'config.vocab_category': ''  // 重置分类选择
@@ -192,7 +193,8 @@ Page({
   },
   
   toggleDay(e) {
-    const dayValue = parseInt(e.currentTarget.dataset.day);
+    const dayValue = parseInt(e.currentTarget.dataset.value);
+    console.log('切换天数:', dayValue);
     const currentDays = [...this.data.config.weekly_new_words_days];
     const index = currentDays.indexOf(dayValue);
     
@@ -262,8 +264,15 @@ Page({
   },
 
   goBackHome() {
+    // 尝试返回，如果失败则跳转到首页
     wx.navigateBack({
-      delta: 1
+      delta: 1,
+      fail: () => {
+        // 如果没有上一页，跳转到首页（tabBar 页面）
+        wx.switchTab({
+          url: '/pages/index/index'
+        });
+      }
     });
   }
 });

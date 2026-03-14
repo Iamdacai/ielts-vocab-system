@@ -11,7 +11,7 @@
           wx:for="{{libraries}}" 
           wx:key="id"
           class="library-item {{config.vocab_library === item.id ? 'selected' : ''}}"
-          data-library="{{item.id}}"
+          data-id="{{item.id}}"
           bindtap="selectLibrary">
           <view class="library-name">{{item.name}}</view>
           <view class="library-desc">{{item.description}}</view>
@@ -50,7 +50,7 @@
           wx:for="{{daysOfWeek}}" 
           wx:key="value"
           class="day-item {{config.weekly_new_words_days.includes(item.value) ? 'selected' : ''}}"
-          data-day="{{item.value}}"
+          data-value="{{item.value}}"
           bindtap="toggleDay">
           {{item.name}}
         </view>

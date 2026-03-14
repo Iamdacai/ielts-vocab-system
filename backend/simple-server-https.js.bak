@@ -93,34 +93,21 @@ app.get('/api/words/new', async (req, res) => {
     const db = await initializeDatabase();
     const words = await db.all('SELECT * FROM ielts_words ORDER BY RANDOM() LIMIT 10');
     
-    // 处理 example_sentences 字段（安全解析 JSON）
-    const processedWords = words.map(word => {
-      let exampleSentences = [];
-      if (typeof word.example_sentences === 'string' && word.example_sentences.trim()) {
-        try {
-          exampleSentences = JSON.parse(word.example_sentences);
-        } catch (e) {
-          // 如果不是有效 JSON，当作普通字符串处理
-          exampleSentences = [word.example_sentences];
-        }
-      }
-      
-      return {
-        ...word,
-        example_sentences: exampleSentences
-      };
-    });
+    // 处理example_sentences字段
+    const processedWords = words.map(word => ({
+      ...word,
+      example_sentences: typeof word.example_sentences === 'string' 
+        ? (word.example_sentences ? JSON.parse(word.example_sentences) : [])
+        : word.example_sentences || []
+    }));
     
     res.json(processedWords);
   } catch (error) {
     console.error('获取新词失败:', error);
-    console.error('错误堆栈:', error.stack);
-    res.status(500).json({ 
-      error: '获取新词失败',
-      message: error.message 
-    });
+    res.status(500).json({ error: '获取新词失败' });
   }
 });
+
 // 获取真实复习词
 app.get('/api/words/review', async (req, res) => {
   try {

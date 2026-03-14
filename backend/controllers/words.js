@@ -81,7 +81,8 @@ const getNewWords = async (req, res) => {
       params = learnedWordIds;
     }
     
-    query += ' ORDER BY cambridge_book, frequency_level DESC LIMIT ?';
+    // 🆕 修改排序逻辑：优先按来源和分类，再按频率
+    query += ' ORDER BY source DESC, category, frequency_level DESC, id LIMIT ?';
     params.push(dailyCount);
     
     const newWords = await db.all(query, params);
@@ -107,7 +108,13 @@ const getNewWords = async (req, res) => {
     res.json(newWords);
   } catch (error) {
     console.error('获取新词失败:', error);
-    res.status(500).json({ error: '获取新词失败' });
+    console.error('错误堆栈:', error.stack);
+    console.error('SQL 查询:', query, params);
+    res.status(500).json({ 
+      error: '获取新词失败',
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
 
