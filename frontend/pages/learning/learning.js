@@ -215,8 +215,8 @@ Page({
     try {
       // 🆕 优先使用词汇音频（如果有 category 字段）
       if (currentWord.category && currentWord.source && currentWord.source.includes('真经')) {
-        // 真经词库：尝试播放章节音频目录中的单词音频
-        const category = currentWord.category;
+        // 🆕 真经词库：需要添加编号前缀（如"03_动物保护"）
+        const category = this.getCategoryWithPrefix(currentWord.category);
         const audioUrl = `${app.globalData.apiUrl}/audio/vocabulary/audio/${encodeURIComponent(category)}/${encodeURIComponent(word)}.mp3`;
         console.log('尝试播放词汇音频:', audioUrl);
         
@@ -250,6 +250,40 @@ Page({
       console.error('播放失败:', error);
       wx.showToast({ title: '播放失败', icon: 'error' });
     }
+  },
+
+  /**
+   * 获取带编号前缀的分类名（真经词库专用）
+   * 如："动物保护" → "03_动物保护"
+   */
+  getCategoryWithPrefix(categoryName) {
+    // 真经 22 个分类的编号映射
+    const categoryMap = {
+      '自然地理': '01_自然地理',
+      '植物研究': '02_植物研究',
+      '动物保护': '03_动物保护',
+      '太空探索': '04_太空探索',
+      '学校教育': '05_学校教育',
+      '科技发明': '06_科技发明',
+      '文化历史': '07_文化历史',
+      '语言演化': '08_语言演化',
+      '娱乐运动': '09_娱乐运动',
+      '物品材料': '10_物品材料',
+      '时尚潮流': '11_时尚潮流',
+      '饮食健康': '12_饮食健康',
+      '建筑场所': '13_建筑场所',
+      '交通旅行': '14_交通旅行',
+      '国家政府': '15_国家政府',
+      '社会经济': '16_社会经济',
+      '法律法规': '17_法律法规',
+      '沙场争锋': '18_沙场争锋',
+      '社会角色': '19_社会角色',
+      '行为动作': '20_行为动作',
+      '身心健康': '21_身心健康',
+      '时间日期': '22_时间日期'
+    };
+    
+    return categoryMap[categoryName] || categoryName;
   },
 
   /**
