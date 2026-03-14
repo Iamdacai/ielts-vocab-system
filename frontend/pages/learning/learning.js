@@ -217,7 +217,8 @@ Page({
       if (currentWord.category && currentWord.source && currentWord.source.includes('真经')) {
         // 🆕 真经词库：需要添加编号前缀（如"03_动物保护"）
         const category = this.getCategoryWithPrefix(currentWord.category);
-        const audioUrl = `${app.globalData.apiUrl}/audio/vocabulary/audio/${encodeURIComponent(category)}/${encodeURIComponent(word)}.mp3`;
+        // 修复：去掉多余的 /audio 路径
+        const audioUrl = `${app.globalData.apiUrl}/audio/vocabulary/${encodeURIComponent(category)}/${encodeURIComponent(word)}.mp3`;
         console.log('尝试播放词汇音频:', audioUrl);
         
         // 先检查词汇音频是否存在

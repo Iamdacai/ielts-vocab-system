@@ -25,6 +25,22 @@ app.use(helmet({
   }
 }));
 
+// 🆕 音频文件静态服务（真经词库音频）
+app.use('/api/audio/vocabulary', express.static(path.join(__dirname, '../vocabulary/ielts-materials/audio'), {
+  setHeaders: (res, path) => {
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+}));
+
+// 🆕 发音音频静态服务
+app.use('/api/pronunciation/word-audio', express.static(path.join(__dirname, '../audio'), {
+  setHeaders: (res) => {
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+}));
+
 app.use(cors({
   origin: [
     'http://localhost:8080', 
