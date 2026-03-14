@@ -87,6 +87,20 @@ const getNewWords = async (req, res) => {
     
     const newWords = await db.all(query, params);
     
+    // 🆕 字段映射：将 database 字段映射为前端字段
+    const mappedWords = newWords.map(word => ({
+      id: word.id,
+      word: word.word,
+      phonetic: word.phonetic || '',
+      translation: word.definition || '',  // definition → translation
+      example: Array.isArray(word.example_sentences) ? word.example_sentences[0] : (word.example_sentences || ''),
+      example_translation: '',
+      category: word.category,
+      source: word.source,
+      frequency_level: word.frequency_level,
+      cambridge_book: word.cambridge_book
+    }));
+    
     // 为新词创建学习进度记录
     for (const word of newWords) {
       await db.run(
@@ -105,7 +119,7 @@ const getNewWords = async (req, res) => {
       );
     }
     
-    res.json(newWords);
+    res.json(mappedWords);
   } catch (error) {
     console.error('获取新词失败:', error);
     console.error('错误堆栈:', error.stack);

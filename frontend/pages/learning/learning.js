@@ -214,17 +214,55 @@ Page({
 
     try {
       // 🆕 优先使用词汇音频（如果有 category 字段）
-      if (currentWord.category) {
-        audioContext.src = `${app.globalData.apiUrl}/audio/vocabulary/audio/${encodeURIComponent(currentWord.category)}/${encodeURIComponent(word)}.mp3`;
+      if (currentWord.category && currentWord.source && currentWord.source.includes('真经')) {
+        // 真经词库：尝试播放章节音频目录中的单词音频
+        const category = currentWord.category;
+        const audioUrl = `${app.globalData.apiUrl}/audio/vocabulary/audio/${encodeURIComponent(category)}/${encodeURIComponent(word)}.mp3`;
+        console.log('尝试播放词汇音频:', audioUrl);
+        
+        // 先检查词汇音频是否存在
+        wx.request({
+          url: audioUrl,
+          method: 'HEAD',
+          success: (checkRes) => {
+            if (checkRes.statusCode === 200) {
+              // 音频存在，播放
+              audioContext.src = audioUrl;
+              audioContext.play();
+              console.log('✅ 词汇音频播放成功');
+            } else {
+              // 音频不存在，使用备用发音服务
+              console.log('词汇音频不存在，使用备用发音');
+              this.playFallbackAudio(word, audioContext);
+            }
+          },
+          fail: () => {
+            // 请求失败，使用备用发音服务
+            console.log('词汇音频请求失败，使用备用发音');
+            this.playFallbackAudio(word, audioContext);
+          }
+        });
       } else {
         // 使用原有发音服务
-        audioContext.src = `${app.globalData.apiUrl}/pronunciation/word-audio/${encodeURIComponent(word)}`;
+        this.playFallbackAudio(word, audioContext);
       }
-      
-      audioContext.play();
     } catch (error) {
       console.error('播放失败:', error);
       wx.showToast({ title: '播放失败', icon: 'error' });
+    }
+  },
+
+  /**
+   * 备用发音播放（当词汇音频不存在时）
+   */
+  playFallbackAudio(word, audioContext) {
+    try {
+      audioContext.src = `${app.globalData.apiUrl}/pronunciation/word-audio/${encodeURIComponent(word)}`;
+      audioContext.play();
+      console.log('✅ 备用发音播放成功');
+    } catch (error) {
+      console.error('备用发音也失败:', error);
+      wx.showToast({ title: '无法播放', icon: 'error' });
     }
   },
 
