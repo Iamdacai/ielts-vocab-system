@@ -1,0 +1,21 @@
+[Unit]
+Description=IELTS Vocabulary Backend Service (HTTPS)
+After=network.target
+
+[Service]
+Type=simple
+User=admin
+WorkingDirectory=/home/admin/.openclaw/workspace/git-repos/ielts-vocab-system/backend
+Environment=PORT=3001
+ExecStart=/usr/bin/node simple-server-https.js
+Restart=always
+RestartSec=5
+StandardOutput=append:/home/admin/.openclaw/workspace/git-repos/ielts-vocab-system/backend/https-server.log
+StandardError=append:/home/admin/.openclaw/workspace/git-repos/ielts-vocab-system/backend/https-server.log
+
+# 监控配置
+StartLimitBurst=3
+StartLimitInterval=60
+
+[Install]
+WantedBy=multi-user.target
