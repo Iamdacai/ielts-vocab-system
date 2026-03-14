@@ -42,9 +42,14 @@
           <text>准确度：{{pronunciationResult.accuracy}}</text>
           <text wx:if="{{pronunciationResult.fluency}}"> | 流利度：{{pronunciationResult.fluency}}</text>
         </view>
-        <button class="retry-button" bindtap="startPronunciationPractice">
-          🔄 重新练习
-        </button>
+        <view class="result-actions">
+          <button class="retry-button" bindtap="startPronunciationPractice">
+            🔄 重新练习
+          </button>
+          <button class="history-button" bindtap="goToPronunciationHistory">
+            📊 历史记录
+          </button>
+        </view>
       </view>
     </view>
 

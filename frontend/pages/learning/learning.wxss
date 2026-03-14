@@ -594,3 +594,24 @@
 .retry-button:active {
   transform: scale(0.98);
 }
+
+.result-actions {
+  display: flex;
+  gap: 20rpx;
+  justify-content: center;
+  margin-top: 20rpx;
+}
+
+.history-button {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: white;
+  border: none;
+  border-radius: 50rpx;
+  padding: 20rpx 40rpx;
+  font-size: 28rpx;
+  font-weight: bold;
+}
+
+.history-button:active {
+  transform: scale(0.98);
+}

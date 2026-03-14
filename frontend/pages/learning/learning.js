@@ -575,6 +575,15 @@ Page({
   },
 
   /**
+   * 🆕 跳转到发音历史页面
+   */
+  goToPronunciationHistory() {
+    wx.navigateTo({
+      url: '/pages/pronunciation/pronunciation'
+    });
+  },
+
+  /**
    * 处理困难
    */
   handleHard() {

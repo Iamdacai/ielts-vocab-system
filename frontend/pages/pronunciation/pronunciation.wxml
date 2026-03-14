@@ -1,0 +1,89 @@
+<!--pages/pronunciation/pronunciation.wxml-->
+<view class="container">
+  <!-- 顶部统计卡片 -->
+  <view class="stats-card">
+    <view class="card-header">
+      <text class="card-title">📊 发音练习统计</text>
+    </view>
+    
+    <view class="stats-grid">
+      <view class="stat-item">
+        <view class="stat-value primary">{{stats.totalPractice}}</view>
+        <view class="stat-label">总练习次数</view>
+      </view>
+      <view class="stat-item">
+        <view class="stat-value success">{{stats.averageScore}}</view>
+        <view class="stat-label">平均分数</view>
+      </view>
+      <view class="stat-item">
+        <view class="stat-value warning">{{stats.bestScore}}</view>
+        <view class="stat-label">最佳分数</view>
+      </view>
+      <view class="stat-item">
+        <view class="stat-value info">{{stats.uniqueWords}}</view>
+        <view class="stat-label">练习单词数</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 最佳发音单词 -->
+  <view wx:if="{{stats.bestWords.length > 0}}" class="section">
+    <view class="section-header">
+      <text class="section-title">🏆 最佳发音 Top 5</text>
+    </view>
+    <view class="best-words-list">
+      <view wx:for="{{stats.bestWords}}" wx:key="word" class="best-word-item">
+        <view class="word-rank">#{{index + 1}}</view>
+        <view class="word-info">
+          <view class="word-text">{{item.word}}</view>
+          <view class="word-meta">
+            <text>最佳：{{item.bestScore}}分</text>
+            <text> · </text>
+            <text>练习：{{item.practiceCount}}次</text>
+          </view>
+        </view>
+        <view class="word-badge">🎯</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 练习历史 -->
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">📝 练习历史</text>
+      <text class="section-more" bindtap="loadMore">查看更多</text>
+    </view>
+    
+    <view wx:if="{{loading}}" class="loading-state">
+      <text>加载中...</text>
+    </view>
+    
+    <view wx:elif="{{history.length === 0}}" class="empty-state">
+      <text class="empty-icon">📚</text>
+      <text class="empty-text">还没有练习记录哦</text>
+      <text class="empty-hint">快去学习页面开始练习吧！</text>
+    </view>
+    
+    <view wx:else class="history-list">
+      <view wx:for="{{history}}" wx:key="id" class="history-item">
+        <view class="history-left">
+          <view class="history-word">{{item.word}}</view>
+          <view class="history-feedback">{{item.feedback}}</view>
+        </view>
+        <view class="history-right">
+          <view class="history-score {{item.score >= 80 ? 'high' : (item.score >= 60 ? 'medium' : 'low')}}">
+            {{item.score}}
+          </view>
+          <view class="history-time">{{item.timestamp}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 回到学习 -->
+  <view class="back-to-learn">
+    <button class="learn-button" bindtap="goToLearning">
+      🎤 继续练习
+    </button>
+  </view>
+</view>

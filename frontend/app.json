@@ -3,7 +3,8 @@
     "pages/index/index",
     "pages/learning/learning",
     "pages/review/review",
-    "pages/config/config"
+    "pages/config/config",
+    "pages/pronunciation/pronunciation"
   ],
   "window": {
     "backgroundTextStyle": "light",

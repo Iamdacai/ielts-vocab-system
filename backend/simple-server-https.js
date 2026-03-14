@@ -361,7 +361,7 @@ app.post('/api/sessions', async (req, res) => {
   }
 });
 
-// 🆕 发音评分 API - 分析用户发音
+// 🆕 发音评分 API - 分析用户发音并保存记录
 app.post('/api/pronunciation/analyze', upload.single('audio'), async (req, res) => {
   try {
     // 检查是否有上传的文件
@@ -417,6 +417,30 @@ app.post('/api/pronunciation/analyze', upload.single('audio'), async (req, res) 
       feedback = '继续加油！多听多练会进步的！🔥';
     }
     
+    // 🆕 保存到数据库
+    const db = await initializeDatabase();
+    try {
+      // 查找单词 ID
+      const wordRecord = await db.get(
+        'SELECT id FROM ielts_words WHERE word = ? LIMIT 1',
+        [word.split(' ')[0]]
+      );
+      
+      if (wordRecord) {
+        // 保存发音记录
+        await db.run(
+          `INSERT INTO pronunciation_records 
+           (user_id, word_id, pronunciation_score, feedback, created_at) 
+           VALUES (?, ?, ?, ?, datetime('now'))`,
+          [1, wordRecord.id, finalScore, feedback]
+        );
+        console.log(`[Pronunciation] Record saved for word: ${word}`);
+      }
+    } catch (dbError) {
+      console.error('[Pronunciation] Save record error:', dbError.message);
+      // 不阻断主流程，继续返回评分结果
+    }
+    
     // 清理临时文件
     try {
       fs.unlinkSync(audioPath);
@@ -432,13 +456,120 @@ app.post('/api/pronunciation/analyze', upload.single('audio'), async (req, res) 
       fluency: Math.round(finalScore * 0.9),   // 模拟流利度
       feedback: feedback,
       word: word,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      isRecorded: true // 标记已保存记录
     });
     
   } catch (error) {
     console.error('[Pronunciation] Analyze error:', error.message);
     res.status(500).json({ 
       error: 'Pronunciation analysis failed',
+      message: error.message 
+    });
+  }
+});
+
+// 🆕 获取发音练习历史
+app.get('/api/pronunciation/history', async (req, res) => {
+  try {
+    const db = await initializeDatabase();
+    const { limit = 20, offset = 0 } = req.query;
+    
+    // 获取发音历史记录
+    const records = await db.all(`
+      SELECT 
+        p.id,
+        p.word_id,
+        w.word,
+        p.pronunciation_score as score,
+        p.feedback,
+        p.created_at as timestamp
+      FROM pronunciation_records p
+      LEFT JOIN ielts_words w ON p.word_id = w.id
+      WHERE p.user_id = ?
+      ORDER BY p.created_at DESC
+      LIMIT ? OFFSET ?
+    `, [1, parseInt(limit), parseInt(offset)]);
+    
+    // 获取总数
+    const totalResult = await db.get(
+      'SELECT COUNT(*) as total FROM pronunciation_records WHERE user_id = ?',
+      [1]
+    );
+    
+    res.json({
+      records: records || [],
+      total: totalResult?.total || 0,
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
+    
+  } catch (error) {
+    console.error('[Pronunciation] Get history error:', error.message);
+    res.status(500).json({ 
+      error: 'Failed to get pronunciation history',
+      message: error.message 
+    });
+  }
+});
+
+// 🆕 获取发音统计
+app.get('/api/pronunciation/stats', async (req, res) => {
+  try {
+    const db = await initializeDatabase();
+    
+    // 获取统计数据
+    const stats = await db.get(`
+      SELECT 
+        COUNT(*) as totalPractice,
+        AVG(pronunciation_score) as averageScore,
+        MAX(pronunciation_score) as bestScore,
+        COUNT(DISTINCT word_id) as uniqueWords
+      FROM pronunciation_records
+      WHERE user_id = ?
+    `, [1]);
+    
+    // 获取最近 7 天的练习趋势
+    const trend = await db.all(`
+      SELECT 
+        DATE(created_at) as date,
+        COUNT(*) as count,
+        AVG(pronunciation_score) as avgScore
+      FROM pronunciation_records
+      WHERE user_id = ?
+        AND created_at >= datetime('now', '-7 days')
+      GROUP BY DATE(created_at)
+      ORDER BY date DESC
+    `, [1]);
+    
+    // 获取最佳发音单词 Top 5
+    const bestWords = await db.all(`
+      SELECT 
+        w.word,
+        MAX(p.pronunciation_score) as bestScore,
+        COUNT(*) as practiceCount
+      FROM pronunciation_records p
+      LEFT JOIN ielts_words w ON p.word_id = w.id
+      WHERE p.user_id = ?
+      GROUP BY p.word_id
+      HAVING practiceCount >= 2
+      ORDER BY bestScore DESC, practiceCount DESC
+      LIMIT 5
+    `, [1]);
+    
+    res.json({
+      totalPractice: stats?.totalPractice || 0,
+      averageScore: stats?.averageScore ? Math.round(stats.averageScore) : 0,
+      bestScore: stats?.bestScore ? Math.round(stats.bestScore) : 0,
+      uniqueWords: stats?.uniqueWords || 0,
+      trend: trend || [],
+      bestWords: bestWords || []
+    });
+    
+  } catch (error) {
+    console.error('[Pronunciation] Get stats error:', error.message);
+    res.status(500).json({ 
+      error: 'Failed to get pronunciation stats',
       message: error.message 
     });
   }
