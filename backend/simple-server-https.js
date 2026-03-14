@@ -190,6 +190,93 @@ app.get('/api/words/all', async (req, res) => {
   }
 });
 
+// 🆕 获取词库列表
+app.get('/api/words/libraries', async (req, res) => {
+  try {
+    const db = await initializeDatabase();
+    
+    // 查询所有词库来源
+    const libraries = await db.all(`
+      SELECT 
+        source,
+        COUNT(*) as word_count,
+        COUNT(DISTINCT category) as category_count
+      FROM ielts_words
+      WHERE source IS NOT NULL
+      GROUP BY source
+      ORDER BY word_count DESC
+    `);
+    
+    // 添加默认词库信息
+    const result = [
+      {
+        id: 'cambridge',
+        name: '剑桥雅思 1-18',
+        description: '基于剑桥雅思真题 1-18',
+        word_count: libraries.find(l => l.source?.includes('剑桥'))?.word_count || 0
+      },
+      {
+        id: 'zhenjing',
+        name: '雅思词汇真经',
+        description: '刘洪波著，按 22 个场景主题分类',
+        word_count: libraries.find(l => l.source?.includes('真经'))?.word_count || 0,
+        category_count: libraries.find(l => l.source?.includes('真经'))?.category_count || 0
+      }
+    ];
+    
+    res.json(result);
+  } catch (error) {
+    console.error('获取词库列表失败:', error);
+    res.status(500).json({ error: '获取词库列表失败' });
+  }
+});
+
+// 🆕 获取分类列表（按词库）
+app.get('/api/words/categories', async (req, res) => {
+  try {
+    const { source } = req.query;
+    const db = await initializeDatabase();
+    
+    let query = `
+      SELECT 
+        category,
+        COUNT(*) as word_count,
+        MIN(id) as first_word_id
+      FROM ielts_words
+      WHERE category IS NOT NULL AND category != ''
+    `;
+    
+    let params = [];
+    
+    if (source) {
+      query += ' AND source LIKE ?';
+      params.push(`%${source}%`);
+    }
+    
+    query += `
+      GROUP BY category
+      ORDER BY 
+        SUBSTR(category, 1, 2),
+        word_count DESC
+    `;
+    
+    const categories = await db.all(query, params);
+    
+    // 格式化分类名称（去掉编号）
+    const result = categories.map(cat => ({
+      id: cat.category,
+      name: cat.category.replace(/^\d+_/, ''),
+      word_count: cat.word_count,
+      has_audio: true
+    }));
+    
+    res.json(result);
+  } catch (error) {
+    console.error('获取分类列表失败:', error);
+    res.status(500).json({ error: '获取分类列表失败' });
+  }
+});
+
 app.get('/api/stats', async (req, res) => {
   try {
     const db = await initializeDatabase();
