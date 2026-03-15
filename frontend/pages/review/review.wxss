@@ -69,6 +69,27 @@
   font-family: monospace;
 }
 
+/* 🆕 发音播放按钮 */
+.audio-play-btn {
+  display: inline-block;
+  margin-top: 10rpx;
+  font-size: 40rpx;
+  cursor: pointer;
+  padding: 10rpx;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  width: 60rpx;
+  height: 60rpx;
+  line-height: 60rpx;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.audio-play-btn:active {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(0.95);
+}
+
 .phrase-badge {
   display: inline-block;
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);

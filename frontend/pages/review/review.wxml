@@ -16,6 +16,11 @@
     <view class="word-header">
       <view class="word-text">{{currentWord.word}}</view>
       <view class="word-phonetic">{{currentWord.phonetic}}</view>
+      
+      <!-- 🆕 播放按钮 -->
+      <view class="audio-play-btn" bindtap="playWordAudio">
+        🔊
+      </view>
     </view>
 
     <!-- 短语标记 -->

@@ -181,7 +181,7 @@ app.get('/api/words/new', async (req, res) => {
     const db = await initializeDatabase();
     const words = await db.all('SELECT * FROM ielts_words ORDER BY RANDOM() LIMIT 10');
     
-    // 处理 example_sentences 字段（安全解析 JSON）
+    // 处理字段映射和 example_sentences（安全解析 JSON）
     const processedWords = words.map(word => {
       let exampleSentences = [];
       if (typeof word.example_sentences === 'string' && word.example_sentences.trim()) {
@@ -193,8 +193,16 @@ app.get('/api/words/new', async (req, res) => {
         }
       }
       
+      // 🆕 字段映射：数据库字段 → 前端期望字段
       return {
         ...word,
+        // 核心字段映射
+        translation: word.definition || '',  // definition → translation
+        example: Array.isArray(exampleSentences) && exampleSentences.length > 0 ? exampleSentences[0] : '',  // example_sentences[0] → example
+        example_translation: '',  // 预留字段
+        pos: word.part_of_speech || '',  // part_of_speech → pos
+        synonyms: [],  // 预留字段
+        antonyms: [],  // 预留字段
         example_sentences: exampleSentences
       };
     });
@@ -230,8 +238,16 @@ app.get('/api/words/review', async (req, res) => {
         exampleSentences = word.example_sentences;
       }
       
+      // 🆕 字段映射：数据库字段 → 前端期望字段
       return {
         ...word,
+        // 核心字段映射
+        translation: word.definition || '',  // definition → translation
+        example: Array.isArray(exampleSentences) && exampleSentences.length > 0 ? exampleSentences[0] : '',  // example_sentences[0] → example
+        example_translation: '',  // 预留字段
+        pos: word.part_of_speech || '',  // part_of_speech → pos
+        synonyms: [],  // 预留字段
+        antonyms: [],  // 预留字段
         example_sentences: exampleSentences
       };
     });
