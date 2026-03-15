@@ -200,6 +200,16 @@
       <view class="complete-time">
         学习时长：{{formattedDuration}}
       </view>
+      
+      <!-- 🆕 操作按钮 -->
+      <view class="complete-actions">
+        <button class="continue-button" bindtap="continueLearning">
+          📚 继续学习
+        </button>
+        <button class="finish-button" bindtap="finishLearning">
+          ✓ 结束学习
+        </button>
+      </view>
     </view>
   </view>
 </view>

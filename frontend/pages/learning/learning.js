@@ -711,10 +711,7 @@ Page({
       showComplete: true
     });
     
-    // 1.5 秒后返回
-    setTimeout(() => {
-      wx.navigateBack();
-    }, 2000);
+    // 🆕 删除自动返回，等待用户选择
   },
 
   /**
@@ -769,6 +766,51 @@ Page({
       fail: (err) => {
         console.error('保存失败:', err);
       }
+    });
+  },
+
+  /**
+   * 🆕 继续学习 - 重新开始学习新单词
+   */
+  continueLearning() {
+    wx.showLoading({
+      title: '加载中...',
+      mask: true
+    });
+    
+    // 重置状态
+    this.setData({
+      words: [],
+      currentWord: null,
+      currentIndex: 0,
+      totalWords: 0,
+      progress: 0,
+      showComplete: false,
+      sessionStats: {
+        newWords: 0,
+        reviewWords: 0,
+        masteredWords: 0
+      },
+      elapsedSeconds: 0,
+      formattedDuration: '00:00',
+      sessionStartTime: new Date().getTime()
+    });
+    
+    // 重新开始计时
+    this.startDurationTimer();
+    
+    // 重新加载新词
+    this.loadNewWords();
+    
+    wx.hideLoading();
+  },
+
+  /**
+   * 🆕 结束学习 - 返回首页
+   */
+  finishLearning() {
+    wx.navigateBack({
+      delta: 1
     });
   }
 });

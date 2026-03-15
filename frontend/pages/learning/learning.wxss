@@ -511,6 +511,43 @@
   font-size: 28rpx;
   color: #f59e0b;
   font-weight: bold;
+  margin-bottom: 40rpx;
+}
+
+/* 🆕 完成页面操作按钮 */
+.complete-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+  margin-top: 30rpx;
+}
+
+.continue-button {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  border-radius: 50rpx;
+  padding: 28rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+  box-shadow: 0 4rpx 12rpx rgba(59, 130, 246, 0.3);
+}
+
+.continue-button:active {
+  transform: scale(0.98);
+}
+
+.finish-button {
+  background: transparent;
+  color: #9ca3af;
+  border: 2rpx solid #374151;
+  border-radius: 50rpx;
+  padding: 24rpx;
+  font-size: 28rpx;
+}
+
+.finish-button:active {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 /* 🆕 发音练习 */
