@@ -215,17 +215,35 @@ app.get('/api/words/review', async (req, res) => {
     const db = await initializeDatabase();
     const words = await db.all('SELECT * FROM ielts_words ORDER BY RANDOM() LIMIT 10');
     
-    const processedWords = words.map(word => ({
-      ...word,
-      example_sentences: typeof word.example_sentences === 'string' 
-        ? (word.example_sentences ? JSON.parse(word.example_sentences) : [])
-        : word.example_sentences || []
-    }));
+    const processedWords = words.map(word => {
+      let exampleSentences = [];
+      
+      // 安全解析 example_sentences 字段
+      if (typeof word.example_sentences === 'string' && word.example_sentences.trim()) {
+        try {
+          exampleSentences = JSON.parse(word.example_sentences);
+        } catch (e) {
+          // 如果不是有效 JSON，当作普通字符串处理
+          exampleSentences = [word.example_sentences];
+        }
+      } else if (Array.isArray(word.example_sentences)) {
+        exampleSentences = word.example_sentences;
+      }
+      
+      return {
+        ...word,
+        example_sentences: exampleSentences
+      };
+    });
     
     res.json(processedWords);
   } catch (error) {
     console.error('获取复习词失败:', error);
-    res.status(500).json({ error: '获取复习词失败' });
+    console.error('错误堆栈:', error.stack);
+    res.status(500).json({ 
+      error: '获取复习词失败',
+      message: error.message 
+    });
   }
 });
 
