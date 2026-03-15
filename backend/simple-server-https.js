@@ -64,13 +64,28 @@ app.use('/api/audio/vocabulary', express.static(path.join(__dirname, '../vocabul
   }
 }));
 
-// 🆕 发音音频静态服务
-app.use('/api/pronunciation/word-audio', express.static(path.join(__dirname, '../audio'), {
-  setHeaders: (res) => {
-    res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('Access-Control-Allow-Origin', '*');
+// 🆕 发音音频动态路由（支持不带 .mp3 后缀）
+app.get('/api/pronunciation/word-audio/:word', (req, res) => {
+  const { word } = req.params;
+  const cleanWord = decodeURIComponent(word).split(' ')[0].toLowerCase();
+  const audioPath = path.join(__dirname, 'audio', `${cleanWord}.mp3`);
+  
+  // 检查文件是否存在
+  if (!fs.existsSync(audioPath)) {
+    console.log(`[Audio] File not found: ${audioPath}`);
+    return res.status(404).json({ 
+      error: 'Audio not found',
+      word: cleanWord,
+      message: '该单词的发音音频暂不可用'
+    });
   }
-}));
+  
+  console.log(`[Audio] Serving: ${audioPath}`);
+  res.setHeader('Content-Type', 'audio/mpeg');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Accept-Ranges', 'bytes');
+  res.sendFile(audioPath);
+});
 
 app.use(cors({
   origin: [
