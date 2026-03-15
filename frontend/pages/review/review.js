@@ -23,6 +23,9 @@ Page({
     showComplete: false,
     reviewResults: [],
     
+    // 🆕 是否显示答案（点击"不认识"后显示）
+    showAnswer: false,
+    
     // 🆕 发音练习
     isRecording: false,
     recordingTime: 0,
@@ -114,7 +117,8 @@ Page({
       const currentWord = words[currentIndex];
       this.setData({
         currentWord: currentWord,
-        progress: ((currentIndex + 1) / totalWords) * 100
+        progress: ((currentIndex + 1) / totalWords) * 100,
+        showAnswer: false  // 🆕 重置为不显示答案
       });
     } else {
       // 完成所有单词
@@ -123,15 +127,27 @@ Page({
   },
 
   /**
-   * 播放单词发音
+   * 播放单词发音 - 🆕 修复：确保正确获取 cleanWord
    */
   playWordAudio() {
     const { currentWord, audioContext } = this.data;
-    if (!currentWord || !audioContext) return;
+    if (!currentWord || !currentWord.word || !audioContext) {
+      console.error('播放失败：缺少必要参数');
+      wx.showToast({ title: '无法播放', icon: 'error' });
+      return;
+    }
 
+    // 清理单词：去掉音标和多余空格
     let word = currentWord.word;
     if (word.includes('/')) {
       word = word.split('/')[0].trim();
+    }
+    word = word.trim();
+    
+    if (!word) {
+      console.error('播放失败：单词为空');
+      wx.showToast({ title: '单词为空', icon: 'error' });
+      return;
     }
     
     if (this.data.isPlaying) {
@@ -139,7 +155,10 @@ Page({
     }
 
     try {
-      audioContext.src = `${app.globalData.apiUrl}/pronunciation/word-audio/${encodeURIComponent(word)}`;
+      const audioUrl = `${app.globalData.apiUrl}/pronunciation/word-audio/${encodeURIComponent(word)}`;
+      console.log('播放单词发音:', audioUrl);
+      audioContext.src = audioUrl;
+      audioContext.play();
     } catch (error) {
       console.error('播放失败:', error);
       wx.showToast({ title: '播放失败', icon: 'error' });
@@ -166,17 +185,33 @@ Page({
   },
 
   /**
-   * 处理认识
+   * 🆕 处理认识 - 如果已显示答案，可以直接记录结果
    */
   handleKnown() {
-    this.recordResult('known');
+    const { showAnswer } = this.data;
+    
+    if (showAnswer) {
+      // 已显示答案，直接记录
+      this.recordResult('known');
+    } else {
+      // 未显示答案，认为认识，直接下一个
+      this.recordResult('known');
+    }
   },
 
   /**
-   * 处理不认识
+   * 🆕 处理不认识 - 先显示答案，再次点击才记录结果
    */
   handleUnknown() {
-    this.recordResult('unknown');
+    const { showAnswer } = this.data;
+    
+    if (!showAnswer) {
+      // 第一次点击：显示答案
+      this.setData({ showAnswer: true });
+    } else {
+      // 第二次点击：记录结果并进入下一个单词
+      this.recordResult('unknown');
+    }
   },
 
   /**

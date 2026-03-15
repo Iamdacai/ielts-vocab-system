@@ -100,12 +100,44 @@
   margin-bottom: 20rpx;
 }
 
+/* 🆕 提示区域（未显示答案时） */
+.hint-section {
+  text-align: center;
+  padding: 60rpx 20rpx;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16rpx;
+  margin-bottom: 20rpx;
+}
+
+.hint-icon {
+  font-size: 80rpx;
+  margin-bottom: 20rpx;
+}
+
+.hint-text {
+  font-size: 32rpx;
+  color: #ffffff;
+  font-weight: bold;
+  margin-bottom: 10rpx;
+}
+
+.hint-subtext {
+  font-size: 24rpx;
+  color: #9ca3af;
+}
+
+/* 🆕 答案区域（点击"不认识"后显示） */
+.answer-section {
+  margin-top: 20rpx;
+}
+
 /* 释义区域 */
 .translation-section {
   background: #111827;
   border-radius: 16rpx;
   padding: 24rpx;
   margin-bottom: 20rpx;
+  position: relative;
 }
 
 .translation-title {
@@ -118,6 +150,17 @@
   font-size: 32rpx;
   color: #22c55e;
   font-weight: bold;
+  line-height: 1.6;
+}
+
+.pos-tag {
+  display: inline-block;
+  background: #374151;
+  color: #60a5fa;
+  padding: 6rpx 16rpx;
+  border-radius: 50rpx;
+  font-size: 22rpx;
+  margin-top: 10rpx;
 }
 
 /* 例句区域 */
@@ -131,7 +174,19 @@
 .example-title {
   font-size: 24rpx;
   color: #9ca3af;
-  margin-bottom: 10rpx;
+  margin-bottom: 15rpx;
+}
+
+/* 🆕 例句列表项 */
+.example-item {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin-bottom: 15rpx;
+}
+
+.example-item:last-child {
+  margin-bottom: 0;
 }
 
 .example-text {

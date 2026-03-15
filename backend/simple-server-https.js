@@ -194,13 +194,18 @@ app.get('/api/words/new', async (req, res) => {
       }
       
       // 🆕 字段映射：数据库字段 → 前端期望字段
+      // 🆕 定义可能是英文，需要添加中文翻译（简单处理：保留英文定义）
+      const definition = word.definition || '';
+      
       return {
         ...word,
         // 核心字段映射
-        translation: word.definition || '',  // definition → translation
-        example: Array.isArray(exampleSentences) && exampleSentences.length > 0 ? exampleSentences[0] : '',  // example_sentences[0] → example
-        example_translation: '',  // 预留字段
+        translation: definition,  // 保留英文定义（后续可接入翻译 API）
+        translation_cn: '',  // 预留中文翻译字段
         pos: word.part_of_speech || '',  // part_of_speech → pos
+        examples: exampleSentences,  // 🆕 返回全部例句
+        example: Array.isArray(exampleSentences) && exampleSentences.length > 0 ? exampleSentences[0] : '',  // 第一个例句
+        example_translation: '',  // 预留例句翻译
         synonyms: [],  // 预留字段
         antonyms: [],  // 预留字段
         example_sentences: exampleSentences
@@ -243,9 +248,11 @@ app.get('/api/words/review', async (req, res) => {
         ...word,
         // 核心字段映射
         translation: word.definition || '',  // definition → translation
-        example: Array.isArray(exampleSentences) && exampleSentences.length > 0 ? exampleSentences[0] : '',  // example_sentences[0] → example
-        example_translation: '',  // 预留字段
+        translation_cn: '',  // 预留中文翻译字段
         pos: word.part_of_speech || '',  // part_of_speech → pos
+        examples: exampleSentences,  // 🆕 返回全部例句
+        example: Array.isArray(exampleSentences) && exampleSentences.length > 0 ? exampleSentences[0] : '',  // 第一个例句
+        example_translation: '',  // 预留例句翻译
         synonyms: [],  // 预留字段
         antonyms: [],  // 预留字段
         example_sentences: exampleSentences

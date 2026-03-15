@@ -66,22 +66,24 @@
 
     <!-- 释义 -->
     <view class="translation-section">
-      <view class="translation-title">释义</view>
+      <view class="translation-title">📖 释义</view>
       <view class="translation-text">{{currentWord.translation}}</view>
+      <view wx:if="{{currentWord.pos}}" class="pos-tag">{{currentWord.pos}}</view>
     </view>
 
-    <!-- 例句 -->
-    <view wx:if="{{currentWord.example}}" class="example-section">
-      <view class="example-title">例句</view>
-      <view class="example-text">{{currentWord.example}}</view>
-      <view class="example-translation">{{currentWord.example_translation}}</view>
+    <!-- 例句（显示全部例句） -->
+    <view wx:if="{{currentWord.examples && currentWord.examples.length > 0}}" class="example-section">
+      <view class="example-title">💬 例句</view>
+      <view wx:for="{{currentWord.examples}}" wx:key="*this" class="example-item">
+        <view class="example-text">{{item}}</view>
+      </view>
       
       <!-- 发音按钮 -->
       <view class="audio-buttons">
         <button class="audio-button" bindtap="playWordAudio">
           🔈 单词发音
         </button>
-        <button class="audio-button" bindtap="playExampleAudio">
+        <button wx:if="{{currentWord.example}}" class="audio-button" bindtap="playExampleAudio">
           🔈 例句发音
         </button>
       </view>

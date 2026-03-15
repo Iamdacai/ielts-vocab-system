@@ -28,26 +28,38 @@
       📝 短语
     </view>
 
-    <!-- 释义 -->
-    <view class="translation-section">
-      <view class="translation-title">释义</view>
-      <view class="translation-text">{{currentWord.translation}}</view>
+    <!-- 🆕 提示：点击"不认识"查看释义 -->
+    <view wx:if="{{!showAnswer}}" class="hint-section">
+      <view class="hint-icon">🤔</view>
+      <view class="hint-text">这个单词你认识吗？</view>
+      <view class="hint-subtext">如果不认识，请点击下方"✗ 不认识"按钮</view>
     </view>
 
-    <!-- 例句 -->
-    <view wx:if="{{currentWord.example}}" class="example-section">
-      <view class="example-title">例句</view>
-      <view class="example-text">{{currentWord.example}}</view>
-      <view class="example-translation">{{currentWord.example_translation}}</view>
-      
-      <!-- 发音按钮 -->
-      <view class="audio-buttons">
-        <button class="audio-button" bindtap="playWordAudio">
-          🔈 单词发音
-        </button>
-        <button class="audio-button" bindtap="playExampleAudio">
-          🔈 例句发音
-        </button>
+    <!-- 🆕 释义和例句（点击"不认识"后显示） -->
+    <view wx:if="{{showAnswer}}" class="answer-section">
+      <!-- 释义 -->
+      <view class="translation-section">
+        <view class="translation-title">📖 释义</view>
+        <view class="translation-text">{{currentWord.translation}}</view>
+        <view wx:if="{{currentWord.pos}}" class="pos-tag">{{currentWord.pos}}</view>
+      </view>
+
+      <!-- 例句（全部显示） -->
+      <view wx:if="{{currentWord.examples && currentWord.examples.length > 0}}" class="example-section">
+        <view class="example-title">💬 例句</view>
+        <view wx:for="{{currentWord.examples}}" wx:key="*this" class="example-item">
+          <view class="example-text">{{item}}</view>
+        </view>
+        
+        <!-- 发音按钮 -->
+        <view class="audio-buttons">
+          <button class="audio-button" bindtap="playWordAudio">
+            🔈 单词发音
+          </button>
+          <button wx:if="{{currentWord.example}}" class="audio-button" bindtap="playExampleAudio">
+            🔈 例句发音
+          </button>
+        </view>
       </view>
     </view>
     
