@@ -322,3 +322,109 @@
   font-size: 32rpx;
   font-weight: bold;
 }
+
+/* 🆕 发音练习 */
+.pronunciation-practice {
+  margin: 30rpx 0;
+  padding: 30rpx;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20rpx;
+  text-align: center;
+}
+
+.practice-button {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  border-radius: 50rpx;
+  padding: 24rpx 60rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+  box-shadow: 0 4rpx 12rpx rgba(59, 130, 246, 0.3);
+}
+
+.practice-button:active {
+  transform: scale(0.98);
+}
+
+.recording-status {
+  margin-top: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  color: #ef4444;
+  font-size: 28rpx;
+  font-weight: bold;
+}
+
+.recording-indicator {
+  width: 20rpx;
+  height: 20rpx;
+  background: #ef4444;
+  border-radius: 50%;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+}
+
+.pronunciation-result {
+  margin-top: 30rpx;
+  padding: 30rpx;
+  background: rgba(34, 197, 94, 0.1);
+  border-radius: 20rpx;
+  border: 2rpx solid rgba(34, 197, 94, 0.3);
+}
+
+.score-display {
+  margin-bottom: 20rpx;
+}
+
+.score-number {
+  font-size: 80rpx;
+  font-weight: bold;
+  color: #22c55e;
+  line-height: 1;
+}
+
+.score-label {
+  font-size: 28rpx;
+  color: #9ca3af;
+  margin-left: 10rpx;
+}
+
+.feedback-text {
+  font-size: 28rpx;
+  color: #ffffff;
+  margin-bottom: 20rpx;
+  line-height: 1.5;
+}
+
+.score-details {
+  font-size: 24rpx;
+  color: #9ca3af;
+  margin-bottom: 20rpx;
+}
+
+.retry-button {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border: none;
+  border-radius: 50rpx;
+  padding: 20rpx 40rpx;
+  font-size: 28rpx;
+  font-weight: bold;
+}
+
+.retry-button:active {
+  transform: scale(0.98);
+}

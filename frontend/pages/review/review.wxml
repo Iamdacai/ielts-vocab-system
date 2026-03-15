@@ -45,6 +45,31 @@
         </button>
       </view>
     </view>
+    
+    <!-- 🆕 发音练习 -->
+    <view class="pronunciation-practice">
+      <button class="practice-button" bindtap="startPronunciationPractice">
+        🎤 跟读练习
+      </button>
+      <view wx:if="{{isRecording}}" class="recording-status">
+        <view class="recording-indicator"></view>
+        <text>正在录音... {{recordingTime}}s</text>
+      </view>
+      <view wx:if="{{pronunciationResult}}" class="pronunciation-result">
+        <view class="score-display">
+          <text class="score-number">{{pronunciationResult.score}}</text>
+          <text class="score-label">分</text>
+        </view>
+        <view class="feedback-text">{{pronunciationResult.feedback}}</view>
+        <view class="score-details" wx:if="{{pronunciationResult.accuracy}}">
+          <text>准确度：{{pronunciationResult.accuracy}}</text>
+          <text wx:if="{{pronunciationResult.fluency}}"> | 流利度：{{pronunciationResult.fluency}}</text>
+        </view>
+        <button class="retry-button" bindtap="startPronunciationPractice">
+          🔄 重新练习
+        </button>
+      </view>
+    </view>
 
     <!-- 同义替换 -->
     <view wx:if="{{currentWord.synonyms && currentWord.synonyms.length > 0}}" class="synonyms-section">
