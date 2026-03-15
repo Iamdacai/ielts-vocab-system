@@ -64,27 +64,53 @@ app.use('/api/audio/vocabulary', express.static(path.join(__dirname, '../vocabul
   }
 }));
 
-// 🆕 发音音频动态路由（支持不带 .mp3 后缀）
-app.get('/api/pronunciation/word-audio/:word', (req, res) => {
+// 🆕 发音音频动态路由（支持从有道 TTS 获取）
+const axios = require('axios');
+
+app.get('/api/pronunciation/word-audio/:word', async (req, res) => {
   const { word } = req.params;
   const cleanWord = decodeURIComponent(word).split(' ')[0].toLowerCase();
   const audioPath = path.join(__dirname, 'audio', `${cleanWord}.mp3`);
   
-  // 检查文件是否存在
-  if (!fs.existsSync(audioPath)) {
-    console.log(`[Audio] File not found: ${audioPath}`);
-    return res.status(404).json({ 
-      error: 'Audio not found',
-      word: cleanWord,
-      message: '该单词的发音音频暂不可用'
-    });
+  // 先检查本地是否有缓存
+  if (fs.existsSync(audioPath)) {
+    console.log(`[Audio] Cache hit: ${audioPath}`);
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Accept-Ranges', 'bytes');
+    return res.sendFile(audioPath);
   }
   
-  console.log(`[Audio] Serving: ${audioPath}`);
-  res.setHeader('Content-Type', 'audio/mpeg');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Accept-Ranges', 'bytes');
-  res.sendFile(audioPath);
+  // 本地没有，从有道 TTS 获取
+  console.log(`[Audio] Cache miss, fetching from Youdao: ${cleanWord}`);
+  try {
+    const youdaoUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(cleanWord)}&type=2`;
+    const response = await axios.get(youdaoUrl, {
+      responseType: 'arraybuffer',
+      timeout: 10000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    });
+    
+    // 保存到本地缓存
+    fs.writeFileSync(audioPath, response.data);
+    console.log(`[Audio] Cached: ${audioPath}`);
+    
+    // 返回音频
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.send(response.data);
+    
+  } catch (error) {
+    console.error(`[Audio] Fetch failed: ${error.message}`);
+    res.status(500).json({ 
+      error: 'TTS service unavailable',
+      word: cleanWord,
+      message: '发音服务暂不可用'
+    });
+  }
 });
 
 app.use(cors({
