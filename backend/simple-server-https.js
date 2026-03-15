@@ -270,8 +270,75 @@ app.get('/api/words/review', async (req, res) => {
   }
 });
 
-app.post('/api/words/progress', (req, res) => {
-  res.json({ success: true, mastery: 85, nextReviewAt: new Date(Date.now() + 86400000) });
+// 🆕 保存单词学习进度
+app.post('/api/words/progress', async (req, res) => {
+  try {
+    const db = await initializeDatabase();
+    const { wordId, result, masteryScore, stage, nextReviewDate } = req.body;
+    
+    if (!wordId) {
+      return res.status(400).json({ error: 'wordId is required' });
+    }
+    
+    const userId = 1; // 默认用户 ID
+    const now = new Date().toISOString();
+    
+    // 计算掌握分数
+    let score = masteryScore || 0;
+    if (result === 'know' || result === 'known') {
+      score = Math.max(score, 75);
+    } else if (result === 'hard') {
+      score = Math.max(score, 50);
+    } else if (result === 'forgot' || result === 'unknown') {
+      score = Math.min(score, 25);
+    }
+    
+    // 检查是否已有记录
+    const existing = await db.get(
+      'SELECT * FROM user_word_progress WHERE user_id = ? AND word_id = ?',
+      [userId, wordId]
+    );
+    
+    if (existing) {
+      // 更新现有记录
+      await db.run(`
+        UPDATE user_word_progress 
+        SET mastery_score = ?, 
+            status = ?,
+            review_count = review_count + 1,
+            next_review_at = ?,
+            updated_at = ?
+        WHERE user_id = ? AND word_id = ?
+      `, [score, result === 'known' || result === 'know' ? 'learning' : 'new', nextReviewDate || now, now, userId, wordId]);
+    } else {
+      // 插入新记录
+      await db.run(`
+        INSERT INTO user_word_progress (user_id, word_id, status, mastery_score, next_review_at, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `, [userId, wordId, 'learning', score, nextReviewDate || now, now, now]);
+    }
+    
+    // 记录学习行为到 learning_records 表
+    const actionType = stage !== undefined ? 'review' : 'new';
+    await db.run(`
+      INSERT INTO learning_records (user_id, word_id, action_type, result, created_at)
+      VALUES (?, ?, ?, ?, ?)
+    `, [userId, wordId, actionType, result, now]);
+    
+    console.log(`[Progress] Saved: wordId=${wordId}, result=${result}, score=${score}`);
+    
+    res.json({ 
+      success: true, 
+      mastery: score, 
+      nextReviewAt: nextReviewDate || now 
+    });
+  } catch (error) {
+    console.error('保存学习进度失败:', error);
+    res.status(500).json({ 
+      error: '保存学习进度失败',
+      message: error.message 
+    });
+  }
 });
 
 // 获取所有单词统计（九宫格用）
@@ -390,55 +457,120 @@ app.get('/api/words/categories', async (req, res) => {
   }
 });
 
+// 🆕 获取统计数据（首页用）
 app.get('/api/stats', async (req, res) => {
   try {
     const db = await initializeDatabase();
-    const result = await db.get('SELECT COUNT(*) as count FROM ielts_words');
+    
+    // 获取总单词数
+    const totalResult = await db.get('SELECT COUNT(*) as count FROM ielts_words');
+    const total_words = totalResult.count || 0;
+    
+    // 获取今日日期范围
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStart = today.toISOString();
+    today.setDate(today.getDate() + 1);
+    const todayEnd = today.toISOString();
+    
+    // 统计今日新学单词数（从 learning_records 表）
+    const todayNewResult = await db.get(`
+      SELECT COUNT(DISTINCT word_id) as count 
+      FROM learning_records 
+      WHERE action_type = 'new' 
+      AND created_at >= ? AND created_at < ?
+    `, [todayStart, todayEnd]);
+    const today_new_words = todayNewResult?.count || 0;
+    
+    // 统计今日复习单词数
+    const todayReviewResult = await db.get(`
+      SELECT COUNT(DISTINCT word_id) as count 
+      FROM learning_records 
+      WHERE action_type = 'review' 
+      AND created_at >= ? AND created_at < ?
+    `, [todayStart, todayEnd]);
+    const today_review_words = todayReviewResult?.count || 0;
+    
+    // 统计已掌握单词数（mastery_score >= 75）
+    const masteredResult = await db.get(`
+      SELECT COUNT(*) as count 
+      FROM user_word_progress 
+      WHERE mastery_score >= 75
+    `);
+    const mastered_words = masteredResult?.count || 0;
+    
+    // 统计学习中单词数（mastery_score < 75 且有记录）
+    const learningResult = await db.get(`
+      SELECT COUNT(*) as count 
+      FROM user_word_progress 
+      WHERE mastery_score < 75 AND mastery_score > 0
+    `);
+    const learning_words = learningResult?.count || 0;
+    
+    // 计算平均掌握率
+    const avgResult = await db.get(`
+      SELECT AVG(mastery_score) as avg_score 
+      FROM user_word_progress 
+      WHERE mastery_score > 0
+    `);
+    const avg_mastery_score = avgResult?.avg_score ? Math.round(avgResult.avg_score) : 0;
+    
+    // 计算掌握率百分比
+    const masteryRate = total_words > 0 ? Math.round((mastered_words / total_words) * 100) : 0;
+    
     res.json({
-      total_words: result.count,
-      mastered_words: 0,
-      learning_words: 0,
-      avg_mastery_score: 0,
-      today_learning_count: 0
+      total_words,
+      mastered_words,
+      learning_words,
+      avg_mastery_score,
+      today_new_words,
+      today_review_words,
+      mastery_rate: masteryRate,
+      today_learning_count: today_new_words + today_review_words
     });
   } catch (error) {
+    console.error('获取统计数据失败:', error);
     res.json({
       total_words: 0,
       mastered_words: 0,
       learning_words: 0,
       avg_mastery_score: 0,
+      today_new_words: 0,
+      today_review_words: 0,
+      mastery_rate: 0,
       today_learning_count: 0
     });
   }
 });
 
-// 学习会话路由 - 新增
+// 🆕 保存学习会话
 app.post('/api/sessions', async (req, res) => {
   try {
     const db = await initializeDatabase();
-    const { userId, vocabularySet, mode, plannedDuration } = req.body;
+    const { duration, newWords, reviewedWords, masteredWords, confirmedDuration } = req.body;
     
-    const session = {
-      userId: userId || 1,
-      vocabularySet: vocabularySet || 'ielts-core',
-      mode: mode || 'new',
-      startTime: new Date().toISOString(),
-      plannedDuration: plannedDuration || 1800
-    };
+    const userId = 1; // 默认用户 ID
+    const now = new Date().toISOString();
     
-    const sessionId = 'session_' + Date.now();
-    console.log('创建学习会话:', sessionId, session);
+    // 插入学习记录
+    await db.run(`
+      INSERT INTO learning_records (user_id, word_id, action_type, result, created_at)
+      VALUES (?, ?, ?, ?, ?)
+    `, [userId, 0, 'session_summary', `duration:${duration||0},new:${newWords||0},review:${reviewedWords||0},mastered:${masteredWords||0}`, now]);
+    
+    console.log(`[Session] Saved: duration=${duration}s, new=${newWords}, review=${reviewedWords}, mastered=${masteredWords}`);
     
     res.json({
       success: true,
-      sessionId: sessionId,
-      session: session
+      sessionId: 'session_' + Date.now(),
+      message: '学习会话已保存'
     });
   } catch (error) {
-    console.error('创建会话失败:', error);
+    console.error('保存学习会话失败:', error);
     res.status(500).json({
       success: false,
-      error: error.message
+      error: '保存学习会话失败',
+      message: error.message
     });
   }
 });
