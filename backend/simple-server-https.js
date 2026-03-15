@@ -318,8 +318,8 @@ app.post('/api/words/progress', async (req, res) => {
       `, [userId, wordId, 'learning', score, nextReviewDate || now, now, now]);
     }
     
-    // 记录学习行为到 learning_records 表
-    const actionType = stage !== undefined ? 'review' : 'new';
+    // 🆕 记录学习行为到 learning_records 表（action_type 必须是：new_word, review, test, mastered）
+    const actionType = stage !== undefined ? 'review' : 'new_word';
     await db.run(`
       INSERT INTO learning_records (user_id, word_id, action_type, result, created_at)
       VALUES (?, ?, ?, ?, ?)
@@ -552,11 +552,13 @@ app.post('/api/sessions', async (req, res) => {
     const userId = 1; // 默认用户 ID
     const now = new Date().toISOString();
     
-    // 插入学习记录
+    // 🆕 插入会话摘要记录（action_type 使用 'review' 作为通用类型）
+    // 注意：learning_records 表的 action_type 只能是：new_word, review, test, mastered
+    const sessionData = `duration:${duration||0},new:${newWords||0},review:${reviewedWords||0},mastered:${masteredWords||0}`;
     await db.run(`
       INSERT INTO learning_records (user_id, word_id, action_type, result, created_at)
       VALUES (?, ?, ?, ?, ?)
-    `, [userId, 0, 'session_summary', `duration:${duration||0},new:${newWords||0},review:${reviewedWords||0},mastered:${masteredWords||0}`, now]);
+    `, [userId, 0, 'review', sessionData, now]);
     
     console.log(`[Session] Saved: duration=${duration}s, new=${newWords}, review=${reviewedWords}, mastered=${masteredWords}`);
     
