@@ -518,6 +518,15 @@ app.get('/api/stats', async (req, res) => {
     // 计算掌握率百分比
     const masteryRate = total_words > 0 ? Math.round((mastered_words / total_words) * 100) : 0;
     
+    // 🆕 计算待复习单词数（user_word_progress 表中 next_review_at <= 现在 且 mastery_score < 75）
+    const now = new Date().toISOString();
+    const dueResult = await db.get(`
+      SELECT COUNT(*) as count 
+      FROM user_word_progress 
+      WHERE next_review_at <= ? AND mastery_score < 75
+    `, [now]);
+    const due_words_count = dueResult?.count || 0;
+    
     res.json({
       total_words,
       mastered_words,
@@ -525,6 +534,7 @@ app.get('/api/stats', async (req, res) => {
       avg_mastery_score,
       today_new_words,
       today_review_words,
+      due_words_count,  // 🆕 待复习单词数
       mastery_rate: masteryRate,
       today_learning_count: today_new_words + today_review_words
     });

@@ -168,10 +168,21 @@ Page({
           });
         }
 
+        // 🆕 从后端统计数据中获取今日学习数据
+        const todayStats = {
+          newWords: stats.today_new_words || 0,
+          reviewWords: stats.today_review_words || 0,
+          masteredWords: stats.mastered_words || 0
+        };
+        
+        // 🆕 使用后端返回的待复习单词数（更准确）
+        const finalDueCount = stats.due_words_count !== undefined ? stats.due_words_count : dueCount;
+        
         this.setData({
           stats,
+          todayStats,  // 🆕 更新今日学习统计
           memoryWheelData: wheelData,
-          dueWordsCount: dueCount,
+          dueWordsCount: finalDueCount,  // 🆕 使用后端数据
           masteryRate,
           loading: false
         });
