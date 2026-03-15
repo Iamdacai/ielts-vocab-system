@@ -138,6 +138,38 @@
   color: #9ca3af;
 }
 
+/* 🆕 学习数据网格 */
+.data-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20rpx;
+}
+
+.data-item {
+  text-align: center;
+  padding: 25rpx 15rpx;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%);
+  border-radius: 16rpx;
+  border: 1rpx solid rgba(59, 130, 246, 0.2);
+}
+
+.data-icon {
+  font-size: 36rpx;
+  margin-bottom: 10rpx;
+}
+
+.data-value {
+  font-size: 36rpx;
+  font-weight: bold;
+  margin-bottom: 8rpx;
+  line-height: 1;
+}
+
+.data-label {
+  font-size: 22rpx;
+  color: #9ca3af;
+}
+
 /* 颜色 */
 .primary-color {
   color: #3b82f6;
@@ -149,6 +181,14 @@
 
 .warning-color {
   color: #f59e0b;
+}
+
+.info-color {
+  color: #06b6d4;
+}
+
+.highlight-color {
+  color: #ec4899;
 }
 
 /* 操作按钮 */

@@ -76,6 +76,43 @@
       </view>
     </view>
 
+    <!-- 🆕 学习数据概览 -->
+    <view class="card">
+      <view class="card-title">📊 学习数据</view>
+      <view class="data-grid">
+        <view class="data-item">
+          <view class="data-icon">📚</view>
+          <view class="data-value">{{stats.total_words}}</view>
+          <view class="data-label">总词汇量</view>
+        </view>
+        <view class="data-item">
+          <view class="data-icon">✅</view>
+          <view class="data-value success-color">{{stats.mastered_words}}</view>
+          <view class="data-label">已掌握</view>
+        </view>
+        <view class="data-item">
+          <view class="data-icon">📖</view>
+          <view class="data-value primary-color">{{stats.learning_words}}</view>
+          <view class="data-label">学习中</view>
+        </view>
+        <view class="data-item">
+          <view class="data-icon">⏰</view>
+          <view class="data-value warning-color">{{dueWordsCount}}</view>
+          <view class="data-label">待复习</view>
+        </view>
+        <view class="data-item">
+          <view class="data-icon">📊</view>
+          <view class="data-value info-color">{{todayStats.reviewWords}}</view>
+          <view class="data-label">今日复习</view>
+        </view>
+        <view class="data-item">
+          <view class="data-icon">💯</view>
+          <view class="data-value highlight-color">{{stats.avg_mastery_score}}</view>
+          <view class="data-label">平均分</view>
+        </view>
+      </view>
+    </view>
+
     <!-- 学习统计 -->
     <view class="card">
       <view class="card-title">📈 今日学习</view>
