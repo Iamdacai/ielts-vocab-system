@@ -195,6 +195,7 @@ Page({
   toggleDay(e) {
     const dayValue = parseInt(e.currentTarget.dataset.value);
     console.log('切换天数:', dayValue);
+    
     const currentDays = [...this.data.config.weekly_new_words_days];
     const index = currentDays.indexOf(dayValue);
     
@@ -207,8 +208,13 @@ Page({
       currentDays.sort((a, b) => a - b);
     }
     
+    console.log('更新后的天数:', currentDays);
+    
+    // 🆕 使用完整路径更新，确保视图刷新
     this.setData({
       'config.weekly_new_words_days': currentDays
+    }, () => {
+      console.log('视图已更新，当前选中:', this.data.config.weekly_new_words_days);
     });
   },
 
