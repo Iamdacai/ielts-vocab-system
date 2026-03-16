@@ -1,43 +1,48 @@
-// pages/review/review.js - 剪纸盒风格复习
+// pages/review/review.js - 复习课模式
 const app = getApp();
 import { calculateNextStage, calculateNextReviewDate } from '../../utils/memoryWheel';
+import { getTodaySession, submitAnswer } from '../../utils/reviewSession';
 
 Page({
   data: {
+    // 复习课信息
+    session: null,
+    hasSession: false,
+    
+    // 单词列表
     words: [],
     currentWord: null,
     currentIndex: 0,
     totalWords: 0,
     progress: 0,
     loading: true,
+    
+    // 音频和录音
     audioContext: null,
     isPlaying: false,
-    
-    // 剪纸盒统计
-    counts: {
-      mastered: 0,
-      pending: 0,
-      unknown: 0
-    },
-    
-    showComplete: false,
-    reviewResults: [],
-    
-    // 🆕 是否显示答案（点击"不认识"后显示）
-    showAnswer: false,
-    
-    // 🆕 发音练习
     isRecording: false,
     recordingTime: 0,
     recordingTimer: null,
     recorderManager: null,
-    pronunciationResult: null
+    pronunciationResult: null,
+    
+    // 界面状态
+    showComplete: false,
+    reviewResults: [],
+    showAnswer: false,  // 是否显示答案
+    
+    // 复习课统计
+    counts: {
+      correct: 0,
+      wrong: 0,
+      pending: 0
+    }
   },
 
   onLoad() {
     this.initAudio();
     this.initRecorder();
-    this.loadReviewWords();
+    this.loadReviewSession();
   },
 
   /**

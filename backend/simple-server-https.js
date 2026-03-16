@@ -525,6 +525,289 @@ app.post('/api/words/progress', async (req, res) => {
   }
 });
 
+// 🆕 复习课管理 API
+
+// 获取今日复习课
+app.get('/api/review/sessions/today', async (req, res) => {
+  try {
+    const db = await initializeDatabase();
+    const userId = 1; // 默认用户 ID
+    const today = new Date().toISOString().split('T')[0];
+    
+    // 查询今日复习课
+    let session = await db.get(`
+      SELECT * FROM review_sessions
+      WHERE user_id = ? AND session_date = ?
+    `, [userId, today]);
+    
+    // 如果今天没有复习课，创建一个新的
+    if (!session) {
+      // 查询待复习单词数
+      const dueWords = await db.get(`
+        SELECT COUNT(*) as count FROM user_word_progress
+        WHERE user_id = ? AND next_review_at <= datetime('now') AND mastery_score < 75
+      `, [userId]);
+      
+      if (dueWords.count === 0) {
+        return res.json({
+          hasSession: false,
+          message: '今天没有待复习的单词',
+          plannedWords: 0
+        });
+      }
+      
+      // 创建复习课
+      const result = await db.run(`
+        INSERT INTO review_sessions (user_id, session_date, planned_words, status, started_at)
+        VALUES (?, ?, ?, 'pending', CURRENT_TIMESTAMP)
+      `, [userId, today, dueWords.count]);
+      
+      const sessionId = result.lastID;
+      
+      // 插入复习课详情
+      await db.run(`
+        INSERT INTO review_session_items (session_id, word_id, status)
+        SELECT ?, word_id, 'pending'
+        FROM user_word_progress
+        WHERE user_id = ? AND next_review_at <= datetime('now') AND mastery_score < 75
+      `, [sessionId, userId]);
+      
+      session = await db.get(`SELECT * FROM review_sessions WHERE id = ?`, [sessionId]);
+    }
+    
+    // 查询复习课详情（包含单词信息）
+    const items = await db.all(`
+      SELECT 
+        rsi.id as item_id,
+        rsi.status as item_status,
+        rsi.result,
+        rsi.answered_at,
+        iw.id,
+        iw.word,
+        iw.phonetic,
+        iw.part_of_speech,
+        iw.definition,
+        iw.example_sentences,
+        uwp.mastery_score,
+        uwp.stage,
+        uwp.next_review_at,
+        uwp.review_count
+      FROM review_session_items rsi
+      JOIN ielts_words iw ON rsi.word_id = iw.id
+      LEFT JOIN user_word_progress uwp ON uwp.user_id = ? AND uwp.word_id = iw.id
+      WHERE rsi.session_id = ?
+      ORDER BY 
+        CASE rsi.status 
+          WHEN 'pending' THEN 0 
+          WHEN 'wrong' THEN 1 
+          WHEN 'correct' THEN 2 
+        END,
+        RANDOM()
+    `, [userId, session.id]);
+    
+    // 处理例句 JSON
+    const words = items.map(item => {
+      let examples = [];
+      if (typeof item.example_sentences === 'string' && item.example_sentences.trim()) {
+        try {
+          examples = JSON.parse(item.example_sentences);
+        } catch (e) {
+          examples = [item.example_sentences];
+        }
+      }
+      
+      return {
+        ...item,
+        example_sentences: examples,
+        example: examples.length > 0 ? examples[0] : '',
+        sessionItemId: item.item_id
+      };
+    });
+    
+    res.json({
+      hasSession: true,
+      session: {
+        id: session.id,
+        sessionDate: session.session_date,
+        plannedWords: session.planned_words,
+        completedWords: session.completed_words,
+        status: session.status,
+        startedAt: session.started_at
+      },
+      words
+    });
+  } catch (error) {
+    console.error('获取今日复习课失败:', error);
+    res.status(500).json({ 
+      error: '获取复习课失败',
+      message: error.message 
+    });
+  }
+});
+
+// 提交复习课答案
+app.post('/api/review/sessions/:sessionId/answer', async (req, res) => {
+  try {
+    const db = await initializeDatabase();
+    const { sessionId } = req.params;
+    const { wordId, result, stage } = req.body;
+    
+    if (!sessionId || !wordId || !result) {
+      return res.status(400).json({ error: '缺少必填参数' });
+    }
+    
+    const userId = 1;
+    const now = new Date().toISOString();
+    
+    // 计算下次复习时间（基于阶段）
+    const REVIEW_STAGES = [0, 1, 2, 4, 7, 15, 21, 30];
+    const daysToAdd = REVIEW_STAGES[stage] || 0;
+    const nextReviewDate = new Date();
+    nextReviewDate.setDate(nextReviewDate.getDate() + daysToAdd);
+    
+    // 计算掌握分数
+    const masteryScore = result === 'known' ? 75 : 25;
+    
+    // 1. 更新复习课详情
+    await db.run(`
+      UPDATE review_session_items
+      SET status = ?, result = ?, answered_at = ?
+      WHERE session_id = ? AND word_id = ?
+    `, [result === 'known' ? 'correct' : 'wrong', result, now, sessionId, wordId]);
+    
+    // 2. 更新用户单词进度
+    await db.run(`
+      INSERT OR REPLACE INTO user_word_progress 
+      (user_id, word_id, status, mastery_score, stage, next_review_at, review_count, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?, 
+        COALESCE((SELECT review_count FROM user_word_progress WHERE user_id = ? AND word_id = ?), 0) + 1,
+        ?)
+    `, [userId, wordId, 'learning', masteryScore, stage, nextReviewDate.toISOString(), userId, wordId, now]);
+    
+    // 3. 更新复习课完成数
+    await db.run(`
+      UPDATE review_sessions
+      SET completed_words = (
+        SELECT COUNT(*) FROM review_session_items 
+        WHERE session_id = ? AND status = 'correct'
+      ),
+      status = CASE 
+        WHEN completed_words + 1 >= planned_words THEN 'completed'
+        ELSE status
+      END,
+      completed_at = CASE 
+        WHEN completed_words + 1 >= planned_words THEN ?
+        ELSE completed_at
+      END
+      WHERE id = ?
+    `, [sessionId, now, sessionId]);
+    
+    // 4. 记录学习行为
+    await db.run(`
+      INSERT INTO learning_records (user_id, word_id, action_type, result, created_at)
+      VALUES (?, ?, 'review', ?, ?)
+    `, [userId, wordId, result, now]);
+    
+    // 返回复习课最新状态
+    const session = await db.get(`
+      SELECT * FROM review_sessions WHERE id = ?
+    `, [sessionId]);
+    
+    res.json({
+      success: true,
+      session: {
+        completedWords: session.completed_words,
+        plannedWords: session.planned_words,
+        status: session.status,
+        isComplete: session.status === 'completed'
+      }
+    });
+  } catch (error) {
+    console.error('提交答案失败:', error);
+    res.status(500).json({ 
+      error: '提交答案失败',
+      message: error.message 
+    });
+  }
+});
+
+// 获取复习课历史
+app.get('/api/review/sessions/history', async (req, res) => {
+  try {
+    const db = await initializeDatabase();
+    const userId = 1;
+    const { days = 7 } = req.query;
+    
+    const sessions = await db.all(`
+      SELECT 
+        session_date,
+        planned_words,
+        completed_words,
+        status,
+        started_at,
+        completed_at,
+        ROUND(completed_words * 100.0 / planned_words, 2) as completion_rate
+      FROM review_sessions
+      WHERE user_id = ? AND session_date >= date('now', ? || ' days')
+      ORDER BY session_date DESC
+    `, [userId, -parseInt(days)]);
+    
+    res.json({ sessions });
+  } catch (error) {
+    console.error('获取复习课历史失败:', error);
+    res.status(500).json({ 
+      error: '获取历史失败',
+      message: error.message 
+    });
+  }
+});
+
+// 获取复习课统计
+app.get('/api/review/sessions/stats', async (req, res) => {
+  try {
+    const db = await initializeDatabase();
+    const userId = 1;
+    
+    // 总复习课数
+    const totalStats = await db.get(`
+      SELECT 
+        COUNT(*) as total_sessions,
+        SUM(planned_words) as total_words,
+        SUM(completed_words) as completed_words,
+        AVG(completion_rate) as avg_completion_rate
+      FROM (
+        SELECT 
+          *,
+          ROUND(completed_words * 100.0 / planned_words, 2) as completion_rate
+        FROM review_sessions
+        WHERE user_id = ? AND status = 'completed'
+      )
+    `, [userId]);
+    
+    // 连续复习天数
+    const streakStats = await db.get(`
+      SELECT COUNT(DISTINCT session_date) as streak_days
+      FROM review_sessions
+      WHERE user_id = ? AND status = 'completed'
+        AND session_date >= date('now', '-7 days')
+    `, [userId]);
+    
+    res.json({
+      totalSessions: totalStats.total_sessions || 0,
+      totalWords: totalStats.total_words || 0,
+      completedWords: totalStats.completed_words || 0,
+      avgCompletionRate: totalStats.avg_completion_rate || 0,
+      weekStreak: streakStats.streak_days || 0
+    });
+  } catch (error) {
+    console.error('获取复习课统计失败:', error);
+    res.status(500).json({ 
+      error: '获取统计失败',
+      message: error.message 
+    });
+  }
+});
+
 // 获取所有单词统计（九宫格用）
 app.get('/api/words/all', async (req, res) => {
   try {
