@@ -133,12 +133,20 @@ Page({
       },
       success: (res) => {
         if (res.statusCode === 200) {
+          // 🆕 确保 weekly_new_words_days 是数字数组
+          const serverConfig = res.data || {};
+          if (serverConfig.weekly_new_words_days) {
+            serverConfig.weekly_new_words_days = serverConfig.weekly_new_words_days.map(day => parseInt(day));
+          }
+          
           this.setData({ 
             config: {
               ...this.data.config,
-              ...res.data
+              ...serverConfig
             },
             loading: false
+          }, () => {
+            console.log('配置加载完成，当前选中天数:', this.data.config.weekly_new_words_days);
           });
         } else {
           console.error('加载配置失败:', res);
