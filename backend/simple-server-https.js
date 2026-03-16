@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -6,6 +7,12 @@ const fs = require('fs');
 const https = require('https');
 const path = require('path');
 const multer = require('multer');
+const crypto = require('crypto');
+const axios = require('axios');
+
+// 有道智云 API 配置
+const YOUDAO_APP_KEY = process.env.YOUDAO_APP_KEY;
+const YOUDAO_SECRET_KEY = process.env.YOUDAO_SECRET_KEY;
 
 // 初始化数据库
 const { initializeDatabase } = require('./database');
@@ -65,7 +72,6 @@ app.use('/api/audio/vocabulary', express.static(path.join(__dirname, '../vocabul
 }));
 
 // 🆕 发音音频动态路由（支持从有道 TTS 获取）
-const axios = require('axios');
 
 app.get('/api/pronunciation/word-audio/:word', async (req, res) => {
   const { word } = req.params;
@@ -174,6 +180,145 @@ app.get('/api/config', (req, res) => {
 app.post('/api/config', (req, res) => {
   res.json(req.body);
 });
+
+// 🆕 有道词典查询 - 获取完整单词信息
+app.get('/api/words/lookup/:word', async (req, res) => {
+  try {
+    const { word } = req.params;
+    const cleanWord = decodeURIComponent(word).trim();
+    
+    if (!cleanWord) {
+      return res.status(400).json({ error: '单词不能为空' });
+    }
+    
+    // 调用有道 API 翻译（英译中）
+    const translation = await translateWithYoudao(cleanWord, 'auto', 'zh-CHS');
+    
+    // 调用有道 API 获取英文释义
+    const englishDef = await translateWithYoudao(cleanWord, 'auto', 'en');
+    
+    // 尝试获取音标（从翻译结果中提取）
+    const phonetic = extractPhonetic(translation);
+    
+    res.json({
+      word: cleanWord,
+      translation: translation,
+      definition: englishDef || cleanWord,
+      phonetic: phonetic || '',
+      timestamp: Date.now()
+    });
+  } catch (error) {
+    console.error('单词查询失败:', error);
+    res.status(500).json({ 
+      error: '查询失败',
+      message: error.message 
+    });
+  }
+});
+
+// 🆕 从翻译结果中提取音标（如果有）
+function extractPhonetic(text) {
+  if (!text) return null;
+  // 匹配音标格式：[xxx] 或 /xxx/
+  const match = text.match(/[\[/][^\]\/]+[\]/]/);
+  return match ? match[0] : null;
+}
+
+// 🆕 批量查询单词信息
+app.post('/api/words/lookup/batch', async (req, res) => {
+  try {
+    const { words } = req.body;
+    
+    if (!Array.isArray(words) || words.length === 0) {
+      return res.status(400).json({ error: '单词列表不能为空' });
+    }
+    
+    // 限制每次最多查询 50 个单词
+    const limitedWords = words.slice(0, 50);
+    
+    const results = await Promise.all(
+      limitedWords.map(async (word) => {
+        try {
+          const translation = await translateWithYoudao(word, 'auto', 'zh-CHS');
+          const englishDef = await translateWithYoudao(word, 'auto', 'en');
+          return {
+            word,
+            translation,
+            definition: englishDef,
+            success: true
+          };
+        } catch (err) {
+          return {
+            word,
+            error: err.message,
+            success: false
+          };
+        }
+      })
+    );
+    
+    res.json({
+      results,
+      total: words.length,
+      success: results.filter(r => r.success).length,
+      failed: results.filter(r => !r.success).length
+    });
+  } catch (error) {
+    console.error('批量查询失败:', error);
+    res.status(500).json({ 
+      error: '批量查询失败',
+      message: error.message 
+    });
+  }
+});
+
+// 🆕 有道翻译辅助函数
+async function translateWithYoudao(q, from, to) {
+  if (!YOUDAO_APP_KEY || !YOUDAO_SECRET_KEY) {
+    throw new Error('有道 API 配置缺失');
+  }
+  
+  const salt = crypto.randomUUID();
+  const curtime = Math.round(Date.now() / 1000);
+  
+  // 计算 input（签名用）
+  let input = q;
+  if (q.length > 20) {
+    input = q.substring(0, 10) + q.length + q.substring(q.length - 10);
+  }
+  
+  // 计算签名：sha256(appKey + input + salt + curtime + secretKey)
+  const signStr = YOUDAO_APP_KEY + input + salt + curtime + YOUDAO_SECRET_KEY;
+  const sign = crypto.createHash('sha256').update(signStr).digest('hex');
+  
+  // 构建请求参数
+  const params = new URLSearchParams({
+    q,
+    from,
+    to,
+    appKey: YOUDAO_APP_KEY,
+    salt,
+    sign,
+    signType: 'v3',
+    curtime: curtime.toString()
+  });
+  
+  // 发送请求
+  const response = await axios.get('https://openapi.youdao.com/api', {
+    params,
+    timeout: 10000
+  });
+  
+  const data = response.data;
+  
+  // 检查错误码
+  if (data.errorCode !== '0') {
+    throw new Error(`有道 API 错误：${data.errorCode}`);
+  }
+  
+  // 返回翻译结果
+  return Array.isArray(data.translation) ? data.translation.join('\n') : data.translation;
+}
 
 // 获取真实新词
 app.get('/api/words/new', async (req, res) => {
