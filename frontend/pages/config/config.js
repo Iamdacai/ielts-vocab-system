@@ -14,13 +14,13 @@ Page({
     categories: [],                // 🆕 分类列表
     categoryIndex: 0,              // 🆕 当前选中的分类索引
     daysOfWeek: [
-      { value: 1, name: '周一' },
-      { value: 2, name: '周二' },
-      { value: 3, name: '周三' },
-      { value: 4, name: '周四' },
-      { value: 5, name: '周五' },
-      { value: 6, name: '周六' },
-      { value: 7, name: '周日' }
+      { value: 1, name: '周一', selected: true },
+      { value: 2, name: '周二', selected: true },
+      { value: 3, name: '周三', selected: true },
+      { value: 4, name: '周四', selected: true },
+      { value: 5, name: '周五', selected: true },
+      { value: 6, name: '周六', selected: true },
+      { value: 7, name: '周日', selected: true }
     ]
   },
 
@@ -133,17 +133,22 @@ Page({
       },
       success: (res) => {
         if (res.statusCode === 200) {
-          // 🆕 确保 weekly_new_words_days 是数字数组
           const serverConfig = res.data || {};
-          if (serverConfig.weekly_new_words_days) {
-            serverConfig.weekly_new_words_days = serverConfig.weekly_new_words_days.map(day => parseInt(day));
-          }
+          const selectedDays = serverConfig.weekly_new_words_days || this.data.config.weekly_new_words_days;
+          
+          // 🆕 更新 daysOfWeek 的 selected 状态
+          const updatedDays = this.data.daysOfWeek.map(day => ({
+            ...day,
+            selected: selectedDays.includes(day.value)
+          }));
           
           this.setData({ 
             config: {
               ...this.data.config,
-              ...serverConfig
+              ...serverConfig,
+              weekly_new_words_days: selectedDays.map(day => parseInt(day))
             },
+            daysOfWeek: updatedDays,
             loading: false
           }, () => {
             console.log('配置加载完成，当前选中天数:', this.data.config.weekly_new_words_days);
@@ -204,25 +209,24 @@ Page({
     const dayValue = parseInt(e.currentTarget.dataset.value);
     console.log('切换天数:', dayValue);
     
-    const currentDays = [...this.data.config.weekly_new_words_days];
-    const index = currentDays.indexOf(dayValue);
+    // 🆕 切换 selected 状态
+    const updatedDays = this.data.daysOfWeek.map(day => {
+      if (day.value === dayValue) {
+        return { ...day, selected: !day.selected };
+      }
+      return day;
+    });
     
-    if (index > -1) {
-      // 移除选中的天
-      currentDays.splice(index, 1);
-    } else {
-      // 添加未选中的天
-      currentDays.push(dayValue);
-      currentDays.sort((a, b) => a - b);
-    }
+    // 同时更新 config.weekly_new_words_days 数组
+    const selectedDays = updatedDays.filter(day => day.selected).map(day => day.value);
     
-    console.log('更新后的天数:', currentDays);
+    console.log('更新后的选中天数:', selectedDays);
     
-    // 🆕 使用完整路径更新，确保视图刷新
     this.setData({
-      'config.weekly_new_words_days': currentDays
+      daysOfWeek: updatedDays,
+      'config.weekly_new_words_days': selectedDays
     }, () => {
-      console.log('视图已更新，当前选中:', this.data.config.weekly_new_words_days);
+      console.log('视图已更新');
     });
   },
 

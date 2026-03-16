@@ -48,8 +48,8 @@
       <view class="days-selector">
         <view 
           wx:for="{{daysOfWeek}}" 
-          wx:key="index"
-          class="day-item {{config.weekly_new_words_days.includes(item.value) ? 'selected' : ''}}"
+          wx:key="value"
+          class="day-item {{item.selected ? 'selected' : ''}}"
           data-value="{{item.value}}"
           bindtap="toggleDay">
           {{item.name}}
