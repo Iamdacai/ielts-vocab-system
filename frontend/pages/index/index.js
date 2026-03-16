@@ -122,23 +122,25 @@ Page({
         if (wordsRes.statusCode === 200) {
           const words = wordsRes.data.words || wordsRes.data || [];
           
-          // 计算九宫格数据（即使数据为空也要显示 8 个扇区）
+          // 计算九宫格数据（圆圈布局）
           const stageCounts = countWordsByStage(words);
           wheelData = stageCounts.map((stage, index) => {
-            const path = calculateArcPath(index, 8, 100);
-            const center = getSectorCenter(index, 8, 100, 40);
-            const labelCenter = getSectorCenter(index, 8, 100, 70);
+            // 计算圆圈位置（围绕中心点 160rpx 半径的圆）
+            const angle = (index * 360 / 8) - 90; // 从顶部开始
+            const radius = 125; // 圆圈中心到页面中心的距离
+            const radian = angle * Math.PI / 180;
+            const centerX = 160 + radius * Math.cos(radian);
+            const centerY = 160 + radius * Math.sin(radian);
+            const transform = `translate(${centerX - 35}px, ${centerY - 35}px)`;
             
             return {
               id: stage.id,
-              path,
               color: stage.color,
               count: stage.count,
               label: stage.label,
-              centerX: center.x,
-              centerY: center.y,
-              labelX: labelCenter.x,
-              labelY: labelCenter.y,
+              transform,
+              angle,
+              radius
             };
           });
 
@@ -149,21 +151,23 @@ Page({
           // 计算掌握率
           masteryRate = calculateMasteryRate(words);
         } else {
-          // API 请求失败时，初始化空的九宫格数据
+          // API 请求失败时，初始化空的九宫格数据（圆圈布局）
           wheelData = REVIEW_STAGES.map((stage, index) => {
-            const path = calculateArcPath(index, 8, 100);
-            const center = getSectorCenter(index, 8, 100, 40);
-            const labelCenter = getSectorCenter(index, 8, 100, 70);
+            const angle = (index * 360 / 8) - 90;
+            const radius = 125;
+            const radian = angle * Math.PI / 180;
+            const centerX = 160 + radius * Math.cos(radian);
+            const centerY = 160 + radius * Math.sin(radian);
+            const transform = `translate(${centerX - 35}px, ${centerY - 35}px)`;
+            
             return {
               id: stage.id,
-              path,
               color: stage.color,
               count: 0,
               label: stage.label,
-              centerX: center.x,
-              centerY: center.y,
-              labelX: labelCenter.x,
-              labelY: labelCenter.y,
+              transform,
+              angle,
+              radius
             };
           });
         }

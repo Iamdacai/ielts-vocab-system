@@ -16,50 +16,28 @@
   </view>
 
   <view wx:else class="dashboard-section">
-    <!-- 九宫格记忆轮 -->
+    <!-- 九宫格记忆轮 - 🆕 圆圈布局 -->
     <view class="card memory-wheel-card">
       <view class="card-title">📊 记忆九宫格</view>
       <view class="wheel-container">
-        <view class="memory-wheel" style="width: 300px; height: 300px;">
-          <svg width="300" height="300" viewBox="0 0 200 200">
-            <!-- 8 个扇区 -->
-            <block wx:for="{{memoryWheelData}}" wx:key="id">
-              <path
-                d="{{item.path}}"
-                fill="{{item.color}}"
-                stroke="#1f2937"
-                stroke-width="1"
-              />
-              <text
-                wx:if="{{item.count > 0}}"
-                x="{{item.centerX}}"
-                y="{{item.centerY}}"
-                text-anchor="middle"
-                dominant-baseline="middle"
-                fill="white"
-                font-size="14"
-                font-weight="bold"
-              >
-                {{item.count}}
-              </text>
-              <text
-                x="{{item.labelX}}"
-                y="{{item.labelY}}"
-                text-anchor="middle"
-                fill="white"
-                font-size="10"
-                opacity="0.8"
-              >
-                {{item.label}}
-              </text>
-            </block>
-            
-            <!-- 中心按钮 -->
-            <circle cx="100" cy="100" r="35" fill="#ef4444" bindtap="startReview" />
-            <text x="100" y="95" text-anchor="middle" fill="white" font-size="12" font-weight="bold">START</text>
-            <text x="100" y="115" text-anchor="middle" fill="white" font-size="10">{{dueWordsCount}}词待复习</text>
-            <polygon points="95,92 95,108 110,100" fill="white" />
-          </svg>
+        <view class="memory-wheel-circle">
+          <!-- 8 个阶段圆圈 -->
+          <block wx:for="{{memoryWheelData}}" wx:key="id">
+            <view 
+              class="stage-circle"
+              style="background: {{item.color}}; transform: {{item.transform}};"
+              bindtap="showStageDetail"
+              data-stage="{{item}}">
+              <view class="stage-count">{{item.count}}</view>
+              <view class="stage-label">{{item.label}}</view>
+            </view>
+          </block>
+          
+          <!-- 中心按钮 -->
+          <view class="center-button" bindtap="startReview">
+            <view class="center-text">START</view>
+            <view class="center-subtitle">{{dueWordsCount}}词待复习</view>
+          </view>
         </view>
       </view>
       
@@ -132,18 +110,18 @@
       </view>
     </view>
 
-    <!-- 快捷操作 -->
+    <!-- 快捷操作 - 🆕 横向排列 -->
     <view class="card">
       <view class="card-title">🚀 开始学习</view>
-      <view class="action-buttons">
-        <button class="action-button primary" bindtap="navigateToLearning">
-          🟢 新词学习
+      <view class="action-buttons-row">
+        <button class="action-button-small primary" bindtap="navigateToLearning">
+          🟢 新词
         </button>
-        <button class="action-button warning" bindtap="navigateToReview">
-          🟠 复习单词
+        <button class="action-button-small warning" bindtap="navigateToReview">
+          🟠 复习
         </button>
-        <button class="action-button success" bindtap="navigateToConfig">
-          ⚙️ 学习设置
+        <button class="action-button-small success" bindtap="navigateToConfig">
+          ⚙️ 设置
         </button>
       </view>
     </view>
