@@ -1,6 +1,6 @@
 # 🔑 关键项目信息 - 严禁遗忘！
 
-**更新时间**: 2026-03-13 19:20  
+**更新时间**: 2026-03-16 09:52  
 **重要性**: ⭐⭐⭐⭐⭐ 每次任务前必须检查
 
 ---
@@ -120,4 +120,51 @@ git push origin master
 
 ---
 
-_最后更新：2026-03-13 19:20 | 菜菜 🦞_
+---
+
+## ✅ 稳定版本标记（2026-03-16 完工）
+
+**当前稳定版本**: `f477d2a` (2026-03-16 09:52)
+
+**已验证可用的功能**:
+- ✅ 单词发音播放（有道 TTS 动态获取 + 本地缓存）
+- ✅ 发音练习（录音 + 评分 + 反馈）- 学习页面 + 复习页面
+- ✅ 发音历史记录和统计
+- ✅ 配置页面（词库选择 + 分类选择 + 每周学习天数）
+- ✅ 新词学习（发音 + 跟读）
+- ✅ 复习功能（JSON 安全解析 + 发音 + 跟读）
+- ✅ 配置页面选中状态显示（修复完成）
+
+**核心保护代码**（后续开发不要随意修改）:
+- ⚠️ `backend/simple-server-https.js`: `/api/pronunciation/word-audio/:word` 路由（有道 TTS）
+- ⚠️ `backend/simple-server-https.js`: `/api/words/review` 路由（安全 JSON 解析）
+- ⚠️ `backend/simple-server-https.js`: `/api/pronunciation/analyze` 路由（发音评分）
+- ⚠️ `frontend/pages/learning/learning.js`: `playFallbackAudio()`, `playWordAudio()`, 发音练习方法
+- ⚠️ `frontend/pages/review/review.js`: `playWordAudio()`, 发音练习方法
+- ⚠️ `frontend/pages/config/config.js`: `daysOfWeek` 数据结构（带 `selected` 属性）
+- ⚠️ `backend/audio/` 目录：TTS 音频缓存
+
+**最新 10 次提交**:
+```
+f477d2a fix: 修复配置页面每周学习天数选中状态（改用 selected 属性）
+beccf34 fix: 修复配置页面每周学习天数选中状态显示问题
+5e5ba31 fix: 修复设置页面每周学习天数选择无选中状态
+2f6b9a0 feat: 首页增加学习数据概览卡片
+e0ca603 fix: 修复首页按钮跳转和待复习单词数显示
+d81842c feat: 学习完成页面添加继续学习按钮
+444f880 fix: 修复学习进度保存 500 错误
+0e4e26d feat: 实现学习进度统计和保存功能
+c527c54 feat: 复习页面交互优化 + 新词学习页面完善
+731b161 feat: 复习页面添加发音按钮 + 修复单词释义显示
+```
+
+**回滚方法**（如需恢复到稳定版本）:
+```bash
+cd /home/admin/.openclaw/workspace/git-repos/ielts-vocab-system
+git reset --hard f477d2a
+git push origin master --force
+```
+
+---
+
+_最后更新：2026-03-16 09:52 | 菜菜 🦞_
