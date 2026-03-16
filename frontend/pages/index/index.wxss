@@ -157,30 +157,6 @@
   margin-top: 6rpx;
 }
 
-.wheel-stats {
-  display: flex;
-  justify-content: space-around;
-  margin-top: 30rpx;
-  padding-top: 30rpx;
-  border-top: 1rpx solid #374151;
-}
-
-.wheel-stats .stat-item {
-  text-align: center;
-}
-
-.wheel-stats .stat-label {
-  font-size: 24rpx;
-  color: #9ca3af;
-  margin-bottom: 8rpx;
-}
-
-.wheel-stats .stat-value {
-  font-size: 36rpx;
-  font-weight: bold;
-  color: #ffffff;
-}
-
 /* 统计网格 */
 .stats-grid {
   display: grid;
