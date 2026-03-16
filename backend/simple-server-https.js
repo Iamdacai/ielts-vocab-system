@@ -320,6 +320,36 @@ async function translateWithYoudao(q, from, to) {
   return Array.isArray(data.translation) ? data.translation.join('\n') : data.translation;
 }
 
+// 🆕 补充单词信息（按需调用有道 API）
+async function enrichWordWithYoudao(word) {
+  try {
+    // 如果已有中文翻译，直接返回
+    if (word.translation_cn && word.translation_cn.trim()) {
+      return word;
+    }
+    
+    // 调用有道 API 获取中文翻译
+    const translation = await translateWithYoudao(word.word, 'auto', 'zh-CHS');
+    
+    // 提取音标（如果有）
+    const phonetic = extractPhonetic(translation);
+    
+    // 清理翻译文本（去除音标）
+    const cleanTranslation = translation.replace(/[\[/][^\]\/]+[\]/]/g, '').trim();
+    
+    return {
+      ...word,
+      translation_cn: cleanTranslation,
+      phonetic: word.phonetic || phonetic || '',
+      _fromYoudao: true  // 标记来自有道 API
+    };
+  } catch (error) {
+    console.log(`[有道 API] 查询单词 "${word.word}" 失败:`, error.message);
+    // API 失败时返回原数据，不影响使用
+    return word;
+  }
+}
+
 // 获取真实新词
 app.get('/api/words/new', async (req, res) => {
   try {
@@ -327,7 +357,7 @@ app.get('/api/words/new', async (req, res) => {
     const words = await db.all('SELECT * FROM ielts_words ORDER BY RANDOM() LIMIT 10');
     
     // 处理字段映射和 example_sentences（安全解析 JSON）
-    const processedWords = words.map(word => {
+    let processedWords = words.map(word => {
       let exampleSentences = [];
       if (typeof word.example_sentences === 'string' && word.example_sentences.trim()) {
         try {
@@ -339,23 +369,27 @@ app.get('/api/words/new', async (req, res) => {
       }
       
       // 🆕 字段映射：数据库字段 → 前端期望字段
-      // 🆕 定义可能是英文，需要添加中文翻译（简单处理：保留英文定义）
       const definition = word.definition || '';
       
       return {
         ...word,
         // 核心字段映射
-        translation: definition,  // 保留英文定义（后续可接入翻译 API）
-        translation_cn: '',  // 预留中文翻译字段
-        pos: word.part_of_speech || '',  // part_of_speech → pos
-        examples: exampleSentences,  // 🆕 返回全部例句
-        example: Array.isArray(exampleSentences) && exampleSentences.length > 0 ? exampleSentences[0] : '',  // 第一个例句
-        example_translation: '',  // 预留例句翻译
-        synonyms: [],  // 预留字段
-        antonyms: [],  // 预留字段
+        translation: definition,
+        translation_cn: '',  // 预留中文翻译字段（将由有道 API 补充）
+        pos: word.part_of_speech || '',
+        examples: exampleSentences,
+        example: Array.isArray(exampleSentences) && exampleSentences.length > 0 ? exampleSentences[0] : '',
+        example_translation: '',
+        synonyms: [],
+        antonyms: [],
         example_sentences: exampleSentences
       };
     });
+    
+    // 🆕 按需调用有道 API 补充中文翻译（异步并行处理）
+    processedWords = await Promise.all(
+      processedWords.map(word => enrichWordWithYoudao(word))
+    );
     
     res.json(processedWords);
   } catch (error) {
@@ -373,7 +407,7 @@ app.get('/api/words/review', async (req, res) => {
     const db = await initializeDatabase();
     const words = await db.all('SELECT * FROM ielts_words ORDER BY RANDOM() LIMIT 10');
     
-    const processedWords = words.map(word => {
+    let processedWords = words.map(word => {
       let exampleSentences = [];
       
       // 安全解析 example_sentences 字段
@@ -392,17 +426,22 @@ app.get('/api/words/review', async (req, res) => {
       return {
         ...word,
         // 核心字段映射
-        translation: word.definition || '',  // definition → translation
-        translation_cn: '',  // 预留中文翻译字段
-        pos: word.part_of_speech || '',  // part_of_speech → pos
-        examples: exampleSentences,  // 🆕 返回全部例句
-        example: Array.isArray(exampleSentences) && exampleSentences.length > 0 ? exampleSentences[0] : '',  // 第一个例句
-        example_translation: '',  // 预留例句翻译
-        synonyms: [],  // 预留字段
-        antonyms: [],  // 预留字段
+        translation: word.definition || '',
+        translation_cn: '',  // 预留中文翻译字段（将由有道 API 补充）
+        pos: word.part_of_speech || '',
+        examples: exampleSentences,
+        example: Array.isArray(exampleSentences) && exampleSentences.length > 0 ? exampleSentences[0] : '',
+        example_translation: '',
+        synonyms: [],
+        antonyms: [],
         example_sentences: exampleSentences
       };
     });
+    
+    // 🆕 按需调用有道 API 补充中文翻译（异步并行处理）
+    processedWords = await Promise.all(
+      processedWords.map(word => enrichWordWithYoudao(word))
+    );
     
     res.json(processedWords);
   } catch (error) {
