@@ -97,11 +97,11 @@ Page({
           hasSession: true,
           session,
           words,
-          totalWords: session.planned_words,
+          totalWords: session.planned_words || words.length || 0,
           currentIndex: 0,
           loading: false,
           counts: {
-            correct: session.completed_words,
+            correct: session.completed_words || 0,
             wrong: 0,
             pending: pendingCount
           }
