@@ -123,6 +123,58 @@ app.get('/api/pronunciation/word-audio/:word', async (req, res) => {
   }
 });
 
+// 🆕 例句音频动态路由（从有道 TTS 获取）
+app.get('/api/pronunciation/sentence-audio/:sentence', async (req, res) => {
+  const { sentence } = req.params;
+  const cleanSentence = decodeURIComponent(sentence).trim();
+  
+  // 例句太长，只取前 50 个字符作为缓存文件名
+  const cacheName = cleanSentence.substring(0, 50).replace(/[^a-zA-Z0-9]/g, '_');
+  const audioPath = path.join(__dirname, 'audio', `sentence_${cacheName}.mp3`);
+  
+  // 先检查本地是否有缓存
+  if (fs.existsSync(audioPath)) {
+    console.log(`[Sentence Audio] Cache hit: ${audioPath}`);
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Accept-Ranges', 'bytes');
+    return res.sendFile(audioPath);
+  }
+  
+  // 本地没有，从有道 TTS 获取（使用英音）
+  console.log(`[Sentence Audio] Cache miss, fetching from Youdao: ${cleanSentence.substring(0, 30)}...`);
+  try {
+    // 有道 TTS 支持长文本，但需要截断到合理长度
+    const truncatedSentence = cleanSentence.substring(0, 200);
+    const youdaoUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(truncatedSentence)}&type=1`;
+    const response = await axios.get(youdaoUrl, {
+      responseType: 'arraybuffer',
+      timeout: 15000,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+      }
+    });
+    
+    // 保存到本地缓存
+    fs.writeFileSync(audioPath, response.data);
+    console.log(`[Sentence Audio] Cached: ${audioPath}`);
+    
+    // 返回音频
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.send(response.data);
+    
+  } catch (error) {
+    console.error(`[Sentence Audio] Fetch failed: ${error.message}`);
+    res.status(500).json({ 
+      error: 'TTS service unavailable',
+      sentence: cleanSentence.substring(0, 50),
+      message: '例句发音服务暂不可用'
+    });
+  }
+});
+
 app.use(cors({
   origin: [
     'http://localhost:8080', 
