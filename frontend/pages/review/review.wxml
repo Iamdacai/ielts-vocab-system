@@ -14,7 +14,7 @@
     <view class="wheel-section">
       <view class="section-title">📊 记忆九宫格</view>
       <view class="wheel-container">
-        <!-- 九宫格圆圈布局 -->
+        <!-- 中心圆圈 -->
         <view class="wheel-center">
           <view class="center-text">{{stats.totalWords}}</view>
           <view class="center-label">总单词</view>
