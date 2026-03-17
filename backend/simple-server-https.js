@@ -17,6 +17,10 @@ const YOUDAO_SECRET_KEY = process.env.YOUDAO_SECRET_KEY;
 // 初始化数据库
 const { initializeDatabase } = require('./database');
 
+// 🆕 认证模块
+const { wechatLogin, updateUserProfile, verifyToken, isAdmin, JWT_SECRET } = require('./auth-wechat');
+const { authenticateToken, requireAdmin, optionalAuth } = require('./auth-middleware');
+
 const app = express();
 
 // 🆕 配置文件上传（发音练习）
@@ -1484,6 +1488,412 @@ app.get('/api/health', async (req, res) => {
     res.json({ 
       status: 'ERROR', 
       error: error.message 
+    });
+  }
+});
+
+// ====================  🆕 认证与用户管理路由  ====================
+
+/**
+ * 🆕 微信登录
+ */
+app.post('/api/auth/wechat-login', async (req, res) => {
+  try {
+    const { code } = req.body;
+    
+    if (!code) {
+      return res.status(400).json({ 
+        error: 'Missing code',
+        message: '请提供微信登录 code' 
+      });
+    }
+    
+    const result = await wechatLogin(code);
+    res.json(result);
+  } catch (error) {
+    console.error('微信登录失败:', error);
+    res.status(500).json({ 
+      error: 'Login failed',
+      message: error.message 
+    });
+  }
+});
+
+/**
+ * 🆕 检查登录状态
+ */
+app.get('/api/auth/check', authenticateToken, async (req, res) => {
+  try {
+    const db = await initializeDatabase();
+    const userId = req.user.userId;
+    
+    // 获取用户信息
+    const user = await new Promise((resolve, reject) => {
+      db.get(
+        'SELECT id, openid, role, status, created_at FROM users WHERE id = ?',
+        [userId],
+        (err, row) => {
+          if (err) reject(err);
+          else resolve(row);
+        }
+      );
+    });
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // 获取 profile
+    const profile = await new Promise((resolve) => {
+      db.get(
+        'SELECT * FROM user_profiles WHERE user_id = ?',
+        [userId],
+        (err, row) => resolve(row)
+      );
+    });
+    
+    // 获取统计数据
+    const stats = await new Promise((resolve) => {
+      db.get(
+        `SELECT 
+           COUNT(DISTINCT DATE(created_at)) as studyDays,
+           COUNT(*) as totalWords
+         FROM learning_records 
+         WHERE user_id = ?`,
+        [userId],
+        (err, row) => {
+          resolve({
+            studyDays: row?.studyDays || 0,
+            totalWords: row?.totalWords || 0
+          });
+        }
+      );
+    });
+    
+    res.json({
+      valid: true,
+      user: {
+        id: user.id,
+        openid: user.openid,
+        role: user.role,
+        nickname: profile?.nickname || '微信用户',
+        avatar: profile?.avatar_url || '',
+        studyDays: stats.studyDays,
+        totalWords: stats.totalWords
+      }
+    });
+  } catch (error) {
+    console.error('检查登录状态失败:', error);
+    res.status(500).json({ 
+      error: 'Check failed',
+      message: error.message 
+    });
+  }
+});
+
+/**
+ * 🆕 更新用户 profile
+ */
+app.post('/api/users/profile', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { nickname, avatarUrl, gender, city, province, country, language } = req.body;
+    
+    await updateUserProfile(userId, {
+      nickname,
+      avatarUrl,
+      gender,
+      city,
+      province,
+      country,
+      language
+    });
+    
+    res.json({ success: true, message: 'Profile updated' });
+  } catch (error) {
+    console.error('更新 profile 失败:', error);
+    res.status(500).json({ 
+      error: 'Update failed',
+      message: error.message 
+    });
+  }
+});
+
+/**
+ * 🆕 学习进度复位
+ */
+app.post('/api/users/reset-progress', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { confirm, reason } = req.body;
+    
+    if (!confirm) {
+      return res.status(400).json({ 
+        error: 'Confirmation required',
+        message: '请确认复位操作' 
+      });
+    }
+    
+    const db = await initializeDatabase();
+    
+    // 统计将要删除的数据
+    const wordProgressCount = await new Promise((resolve) => {
+      db.get('SELECT COUNT(*) as count FROM user_word_progress WHERE user_id = ?', [userId], (err, row) => {
+        resolve(row?.count || 0);
+      });
+    });
+    
+    const recordsCount = await new Promise((resolve) => {
+      db.get('SELECT COUNT(*) as count FROM learning_records WHERE user_id = ?', [userId], (err, row) => {
+        resolve(row?.count || 0);
+      });
+    });
+    
+    const sessionsCount = await new Promise((resolve) => {
+      db.get('SELECT COUNT(*) as count FROM review_sessions WHERE user_id = ?', [userId], (err, row) => {
+        resolve(row?.count || 0);
+      });
+    });
+    
+    const pronunciationCount = await new Promise((resolve) => {
+      db.get('SELECT COUNT(*) as count FROM pronunciation_records WHERE user_id = ?', [userId], (err, row) => {
+        resolve(row?.count || 0);
+      });
+    });
+    
+    // 删除数据（使用事务）
+    await new Promise((resolve, reject) => {
+      db.serialize(() => {
+        db.run('BEGIN TRANSACTION');
+        db.run('DELETE FROM user_word_progress WHERE user_id = ?', [userId]);
+        db.run('DELETE FROM learning_records WHERE user_id = ?', [userId]);
+        db.run('DELETE FROM review_sessions WHERE user_id = ?', [userId]);
+        db.run('DELETE FROM review_session_items WHERE session_id IN (SELECT id FROM review_sessions WHERE user_id = ?)', [userId]);
+        db.run('DELETE FROM pronunciation_records WHERE user_id = ?', [userId]);
+        db.run('COMMIT', (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+    });
+    
+    // 记录复位日志
+    await new Promise((resolve) => {
+      db.run(
+        'INSERT INTO system_logs (admin_id, action, details, created_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)',
+        [userId, 'reset_progress', JSON.stringify({ reason, resetCount: { words: wordProgressCount, records: recordsCount, sessions: sessionsCount, pronunciation: pronunciationCount } })],
+        resolve
+      );
+    });
+    
+    console.log(`[复位] 用户 ${userId} 复位了学习进度`);
+    
+    res.json({
+      success: true,
+      resetCount: {
+        words: wordProgressCount,
+        records: recordsCount,
+        sessions: sessionsCount,
+        pronunciation: pronunciationCount
+      }
+    });
+  } catch (error) {
+    console.error('复位失败:', error);
+    res.status(500).json({ 
+      error: 'Reset failed',
+      message: error.message 
+    });
+  }
+});
+
+// ====================  🆕 管理员功能  ====================
+
+/**
+ * 🆕 获取用户列表（管理员）
+ */
+app.get('/api/admin/users', requireAdmin, async (req, res) => {
+  try {
+    const db = await initializeDatabase();
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 20;
+    const offset = (page - 1) * pageSize;
+    
+    // 获取用户列表
+    const users = await new Promise((resolve, reject) => {
+      db.all(`
+        SELECT 
+          u.id, u.openid, u.role, u.status, u.created_at, u.last_login_at,
+          p.nickname, p.avatar_url,
+          (SELECT COUNT(DISTINCT DATE(created_at)) FROM learning_records WHERE user_id = u.id) as studyDays,
+          (SELECT COUNT(*) FROM learning_records WHERE user_id = u.id) as totalWords
+        FROM users u
+        LEFT JOIN user_profiles p ON u.id = p.user_id
+        ORDER BY u.created_at DESC
+        LIMIT ? OFFSET ?
+      `, [pageSize, offset], (err, rows) => {
+        if (err) reject(err);
+        else resolve(rows);
+      });
+    });
+    
+    // 获取总数
+    const total = await new Promise((resolve) => {
+      db.get('SELECT COUNT(*) as count FROM users', (err, row) => {
+        resolve(row?.count || 0);
+      });
+    });
+    
+    res.json({
+      users,
+      total,
+      page,
+      pageSize
+    });
+  } catch (error) {
+    console.error('获取用户列表失败:', error);
+    res.status(500).json({ 
+      error: 'Failed to get users',
+      message: error.message 
+    });
+  }
+});
+
+/**
+ * 🆕 获取全局统计（管理员）
+ */
+app.get('/api/admin/stats', requireAdmin, async (req, res) => {
+  try {
+    const db = await initializeDatabase();
+    
+    // 总用户数
+    const totalUsers = await new Promise((resolve) => {
+      db.get('SELECT COUNT(*) as count FROM users', (err, row) => {
+        resolve(row?.count || 0);
+      });
+    });
+    
+    // 活跃用户数（最近 7 天有学习记录）
+    const activeUsers = await new Promise((resolve) => {
+      db.get(
+        'SELECT COUNT(DISTINCT user_id) as count FROM learning_records WHERE created_at >= datetime("now", "-7 days")',
+        (err, row) => resolve(row?.count || 0)
+      );
+    });
+    
+    // 今日新增用户
+    const newUsersToday = await new Promise((resolve) => {
+      db.get(
+        'SELECT COUNT(*) as count FROM users WHERE DATE(created_at) = DATE("now")',
+        (err, row) => resolve(row?.count || 0)
+      );
+    });
+    
+    // 总学习单词数
+    const totalWordsLearned = await new Promise((resolve) => {
+      db.get('SELECT COUNT(*) as count FROM learning_records', (err, row) => {
+        resolve(row?.count || 0);
+      });
+    });
+    
+    // Top 用户
+    const topUsers = await new Promise((resolve) => {
+      db.all(`
+        SELECT 
+          p.nickname,
+          COUNT(DISTINCT DATE(lr.created_at)) as studyDays,
+          (SELECT COUNT(*) FROM user_word_progress WHERE user_id = u.id AND mastery_score >= 75) as masteredWords
+        FROM users u
+        LEFT JOIN user_profiles p ON u.id = p.user_id
+        LEFT JOIN learning_records lr ON u.id = lr.user_id
+        GROUP BY u.id
+        ORDER BY studyDays DESC
+        LIMIT 10
+      `, (err, rows) => resolve(rows || []));
+    });
+    
+    res.json({
+      totalUsers,
+      activeUsers,
+      totalWordsLearned,
+      newUsersToday,
+      topUsers
+    });
+  } catch (error) {
+    console.error('获取统计失败:', error);
+    res.status(500).json({ 
+      error: 'Failed to get stats',
+      message: error.message 
+    });
+  }
+});
+
+/**
+ * 🆕 管理员数据复位
+ */
+app.post('/api/admin/data-reset', requireAdmin, async (req, res) => {
+  try {
+    const adminId = req.user.userId;
+    const { userIds, confirm, reason } = req.body;
+    
+    if (!confirm) {
+      return res.status(400).json({ error: 'Confirmation required' });
+    }
+    
+    const db = await initializeDatabase();
+    
+    // 如果指定了 userIds，只复位指定用户；否则复位所有用户
+    let targetUserIds = userIds;
+    if (!userIds || userIds.length === 0) {
+      targetUserIds = await new Promise((resolve) => {
+        db.all('SELECT id FROM users', (err, rows) => {
+          resolve(rows.map(r => r.id));
+        });
+      });
+    }
+    
+    let totalResetCount = 0;
+    
+    // 逐个复位
+    for (const userId of targetUserIds) {
+      await new Promise((resolve, reject) => {
+        db.serialize(() => {
+          db.run('BEGIN TRANSACTION');
+          db.run('DELETE FROM user_word_progress WHERE user_id = ?', [userId]);
+          db.run('DELETE FROM learning_records WHERE user_id = ?', [userId]);
+          db.run('DELETE FROM review_sessions WHERE user_id = ?', [userId]);
+          db.run('DELETE FROM review_session_items WHERE session_id IN (SELECT id FROM review_sessions WHERE user_id = ?)', [userId]);
+          db.run('DELETE FROM pronunciation_records WHERE user_id = ?', [userId]);
+          db.run('COMMIT', (err) => {
+            if (err) reject(err);
+            else {
+              totalResetCount++;
+              resolve();
+            }
+          });
+        });
+      });
+    }
+    
+    // 记录日志
+    await new Promise((resolve) => {
+      db.run(
+        'INSERT INTO system_logs (admin_id, action, details, created_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)',
+        [adminId, 'admin_data_reset', JSON.stringify({ targetUserIds, reason, resetCount: totalResetCount })],
+        resolve
+      );
+    });
+    
+    console.log(`[管理员复位] 管理员 ${adminId} 复位了 ${totalResetCount} 个用户的数据`);
+    
+    res.json({
+      success: true,
+      resetCount: totalResetCount
+    });
+  } catch (error) {
+    console.error('管理员复位失败:', error);
+    res.status(500).json({ 
+      error: 'Admin reset failed',
+      message: error.message 
     });
   }
 });
