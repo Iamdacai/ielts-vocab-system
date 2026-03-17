@@ -22,16 +22,23 @@
     </button>
   </view>
 
-  <!-- 登录后：显示完整功能 -->
-  <view wx:else class="dashboard-section">
+  <!-- 🆕 登录后：显示完整功能（自动登录，不再显示登录前状态） -->
+  <view class="dashboard-section">
     <!-- 用户信息卡片 -->
     <view class="card user-card">
       <view class="user-info">
         <view class="user-avatar">👤</view>
         <view class="user-details">
-          <view class="user-name">{{userInfo.nickName || '同学'}}</view>
-          <view class="user-level">雅思备考中</view>
+          <view class="user-name">{{userInfo.nickname || '同学'}}</view>
+          <view class="user-stats-inline">
+            <text>学习 {{userInfo.studyDays || 0}} 天</text>
+            <text class="divider">|</text>
+            <text>累计 {{userInfo.totalWords || 0}} 词</text>
+          </view>
         </view>
+      </view>
+      <view class="user-actions" bindtap="goToProfile">
+        <view class="action-icon">⚙️</view>
       </view>
     </view>
 
