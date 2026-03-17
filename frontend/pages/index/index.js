@@ -129,6 +129,16 @@ Page({
   },
 
   handleLogin() {
+    // 🆕 开发阶段：直接使用测试账号登录
+    // 生产环境请改用 wx.login()
+    const useTestAccount = true; // 设置为 false 使用微信登录
+    
+    if (useTestAccount) {
+      this.testLogin();
+      return;
+    }
+    
+    // 正式微信登录
     wx.login({
       success: (loginRes) => {
         if (loginRes.code) {
@@ -181,6 +191,60 @@ Page({
         });
       }
     });
+  },
+
+  /**
+   * 🆕 测试账号登录（开发阶段使用）
+   */
+  async testLogin() {
+    wx.showLoading({ title: '登录中...' });
+    
+    try {
+      const res = await new Promise((resolve, reject) => {
+        wx.request({
+          url: `${app.globalData.apiUrl}/auth/login`,
+          method: 'POST',
+          data: { code: 'test_user' },
+          success: resolve,
+          fail: reject
+        });
+      });
+      
+      wx.hideLoading();
+      
+      if (res.statusCode === 200 && res.data.token) {
+        app.globalData.token = res.data.token;
+        app.globalData.userInfo = res.data.user;
+        app.globalData.hasLogin = true;
+        
+        wx.setStorageSync('token', res.data.token);
+        wx.setStorageSync('userInfo', res.data.user);
+        
+        this.setData({
+          hasLogin: true,
+          userInfo: res.data.user
+        });
+        
+        this.loadStats();
+        
+        wx.showToast({
+          title: '测试登录成功',
+          icon: 'success'
+        });
+      } else {
+        wx.showToast({
+          title: '登录失败',
+          icon: 'error'
+        });
+      }
+    } catch (err) {
+      wx.hideLoading();
+      console.error('测试登录失败:', err);
+      wx.showToast({
+        title: '网络错误',
+        icon: 'error'
+      });
+    }
   },
 
   startReview() {
