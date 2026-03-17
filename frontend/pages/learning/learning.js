@@ -412,14 +412,28 @@ Page({
    */
   playExampleAudio() {
     const { currentWord, audioContext } = this.data;
-    if (!currentWord || !currentWord.example || !audioContext) return;
+    if (!currentWord || !currentWord.example || !audioContext) {
+      console.error('播放例句失败：缺少必要数据', { currentWord: !!currentWord, example: currentWord?.example, audioContext: !!audioContext });
+      wx.showToast({
+        title: '无例句音频',
+        icon: 'none'
+      });
+      return;
+    }
 
+    // 停止当前播放
     if (this.data.isPlaying) {
       audioContext.stop();
     }
 
     try {
-      audioContext.src = `${app.globalData.apiUrl}/pronunciation/sentence-audio/${encodeURIComponent(currentWord.example)}`;
+      const audioUrl = `${app.globalData.apiUrl}/pronunciation/sentence-audio/${encodeURIComponent(currentWord.example)}`;
+      console.log('播放例句音频:', audioUrl);
+      
+      audioContext.src = audioUrl;
+      audioContext.play();
+      
+      console.log('✅ 例句音频开始播放');
     } catch (error) {
       console.error('播放失败:', error);
       wx.showToast({ title: '播放失败', icon: 'error' });
