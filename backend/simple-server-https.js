@@ -58,9 +58,13 @@ app.use(helmet({
       scriptSrc: ["'self'", "'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "https://your-wechat-appid.wx.qcloud.la", "https://localhost:3001"]
+      connectSrc: ["'self'", "https://servicewechat.com", "https://mp.weixin.qq.com", "https://caiyuyang.cn:3001", "https://localhost:3001", "*"]
     }
-  }
+  },
+  // 开发环境放宽限制
+  crossOriginEmbedderPolicy: false,
+  crossOriginOpenerPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
 // 🆕 音频文件静态服务（真经词库音频）
@@ -123,9 +127,14 @@ app.use(cors({
   origin: [
     'http://localhost:8080', 
     'https://your-wechat-appid.wx.qcloud.la',
-    'https://localhost:3001'
+    'https://localhost:3001',
+    'https://servicewechat.com',  // 微信小程序开发环境
+    'https://mp.weixin.qq.com',    // 微信小程序环境
+    '*'  // 开发环境允许所有来源（生产环境应移除）
   ],
-  credentials: true
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 }));
 
 // 解析JSON
