@@ -76,6 +76,9 @@ Page({
   checkLoginStatus() {
     const token = wx.getStorageSync('token');
     if (!token) {
+      // 隐藏 tabBar
+      wx.hideTabBar();
+      
       wx.showModal({
         title: '请先登录',
         content: '需要登录后才能进行复习',
@@ -88,6 +91,8 @@ Page({
       });
       return false;
     }
+    // 显示 tabBar
+    wx.showTabBar();
     return true;
   },
 

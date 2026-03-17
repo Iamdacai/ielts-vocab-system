@@ -27,8 +27,13 @@ Page({
   },
 
   onShow() {
+    // 登录后显示 tabBar
     if (this.data.hasLogin) {
+      wx.showTabBar();
       this.loadStats();
+    } else {
+      // 未登录时隐藏 tabBar
+      wx.hideTabBar();
     }
   },
 
