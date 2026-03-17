@@ -67,11 +67,6 @@ Page({
       url: '/pages/profile/profile'
     });
   },
-    this.setData({ 
-      hasLogin: false,
-      loading: false
-    });
-  },
 
   async loadStats() {
     try {
