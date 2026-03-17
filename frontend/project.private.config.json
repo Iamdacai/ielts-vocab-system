@@ -1,3 +1,6 @@
 {
-  "libVersion": "2.28.1"
+  "libVersion": "3.14.3",
+  "setting": {
+    "urlCheck": true
+  }
 }
