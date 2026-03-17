@@ -1,5 +1,22 @@
 <!-- pages/config/config.wxml -->
 <view class="container">
+  <!-- 🆕 个人中心入口 -->
+  <view class="profile-card" bindtap="goToProfile">
+    <view class="profile-avatar">
+      <image wx:if="{{userInfo.avatar}}" src="{{userInfo.avatar}}" mode="aspectFill"></image>
+      <view wx:else class="avatar-placeholder">👤</view>
+    </view>
+    <view class="profile-info">
+      <view class="profile-nickname">{{userInfo.nickname || '点击登录'}}</view>
+      <view class="profile-stats">
+        <text>学习 {{userInfo.studyDays || 0}} 天</text>
+        <text class="divider">|</text>
+        <text>累计 {{userInfo.totalWords || 0}} 词</text>
+      </view>
+    </view>
+    <view class="profile-arrow">›</view>
+  </view>
+
   <view class="card" wx:if="{{!loading}}">
     <view class="title">学习配置</view>
     

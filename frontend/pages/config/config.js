@@ -2,6 +2,7 @@ const app = getApp();
 
 Page({
   data: {
+    userInfo: null,
     config: {
       vocab_library: 'cambridge',  // 🆕 默认词库
       vocab_category: '',          // 🆕 词汇分类
@@ -25,8 +26,26 @@ Page({
   },
 
   async onLoad() {
+    this.loadUserInfo();
     await this.checkLoginStatus();
     await this.loadLibraries();
+  },
+
+  /**
+   * 🆕 加载用户信息
+   */
+  loadUserInfo() {
+    const userInfo = wx.getStorageSync('userInfo');
+    this.setData({ userInfo });
+  },
+
+  /**
+   * 🆕 跳转到个人中心
+   */
+  goToProfile() {
+    wx.navigateTo({
+      url: '/pages/profile/profile'
+    });
   },
 
   // 改进的登录状态检查

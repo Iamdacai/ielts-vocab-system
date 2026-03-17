@@ -1,118 +1,101 @@
-<!-- 个人中心页面 -->
-<view class="container">
+<!--pages/profile/profile.wxml-->
+<view class="profile-container">
   <!-- 用户信息卡片 -->
   <view class="user-card">
-    <view class="user-info">
-      <image class="avatar" src="{{user.avatar || '/images/default-avatar.png'}}" mode="aspectFill"></image>
-      <view class="user-details">
-        <text class="nickname">{{user.nickname || '微信用户'}}</text>
-        <view class="user-meta">
-          <text class="meta-item">ID: {{user.id}}</text>
-          <text class="meta-tag" wx:if="{{user.role === 'admin'}}">管理员</text>
-        </view>
-      </view>
+    <view class="user-avatar">
+      <image wx:if="{{userInfo.avatar}}" src="{{userInfo.avatar}}" mode="aspectFill"></image>
+      <view wx:else class="avatar-placeholder">👤</view>
     </view>
-    
-    <!-- 统计数据 -->
+    <view class="user-info">
+      <view class="user-nickname">{{userInfo.nickname || '微信用户'}}</view>
+      <view class="user-id">ID: {{userInfo.id}}</view>
+    </view>
+    <view class="user-role-tag" wx:if="{{userInfo.role === 'admin'}}">管理员</view>
+  </view>
+
+  <!-- 学习统计 -->
+  <view class="stats-card">
+    <view class="card-title">📊 学习统计</view>
     <view class="stats-grid">
       <view class="stat-item">
-        <text class="stat-value">{{stats.studyDays || 0}}</text>
-        <text class="stat-label">学习天数</text>
+        <view class="stat-value">{{userInfo.studyDays}}</view>
+        <view class="stat-label">学习天数</view>
       </view>
       <view class="stat-item">
-        <text class="stat-value">{{stats.totalLearned || 0}}</text>
-        <text class="stat-label">累计学习</text>
+        <view class="stat-value">{{userInfo.totalWords}}</view>
+        <view class="stat-label">累计单词</view>
       </view>
       <view class="stat-item">
-        <text class="stat-value">{{stats.masteredWords || 0}}</text>
-        <text class="stat-label">已掌握</text>
+        <view class="stat-value">{{stats.masteredWords || 0}}</view>
+        <view class="stat-label">已掌握</view>
       </view>
       <view class="stat-item">
-        <text class="stat-value">{{stats.streakDays || 0}}</text>
-        <text class="stat-label">连续天数</text>
+        <view class="stat-value">{{stats.practiceCount || 0}}</view>
+        <view class="stat-label">发音练习</view>
       </view>
     </view>
   </view>
 
   <!-- 功能菜单 -->
-  <view class="menu-section">
-    <view class="menu-item" bindtap="goToSettings">
-      <text class="menu-icon">⚙️</text>
-      <text class="menu-text">学习设置</text>
-      <text class="menu-arrow">></text>
+  <view class="menu-card">
+    <view class="menu-item" bindtap="goToReset">
+      <view class="menu-icon">🔄</view>
+      <view class="menu-text">学习进度复位</view>
+      <view class="menu-arrow">›</view>
     </view>
-    
-    <view class="menu-item" bindtap="goToMistakes">
-      <text class="menu-icon">📖</text>
-      <text class="menu-text">错题本</text>
-      <text class="menu-arrow">></text>
+    <view class="menu-item" bindtap="goToPronunciation">
+      <view class="menu-icon">🎤</view>
+      <view class="menu-text">发音练习</view>
+      <view class="menu-arrow">›</view>
     </view>
-    
     <view class="menu-item" bindtap="goToAchievements">
-      <text class="menu-icon">🏆</text>
-      <text class="menu-text">成就系统</text>
-      <text class="menu-arrow">></text>
+      <view class="menu-icon">🏆</view>
+      <view class="menu-text">成就系统</view>
+      <view class="menu-arrow">›</view>
     </view>
-    
-    <view class="menu-item" wx:if="{{user.role === 'admin'}}" bindtap="goToAdmin">
-      <text class="menu-icon">👨‍💼</text>
-      <text class="menu-text">管理员后台</text>
-      <text class="menu-arrow">></text>
-    </view>
-    
-    <view class="menu-item danger" bindtap="showResetConfirm">
-      <text class="menu-icon">🔄</text>
-      <text class="menu-text">复位学习进度</text>
-      <text class="menu-arrow">></text>
+    <view class="menu-item" wx:if="{{userInfo.role === 'admin'}}" bindtap="goToAdmin">
+      <view class="menu-icon">⚙️</view>
+      <view class="menu-text">管理员后台</view>
+      <view class="menu-arrow">›</view>
     </view>
   </view>
 
-  <!-- 退出登录按钮 -->
-  <view class="logout-section">
-    <button class="logout-btn" bindtap="onLogout">退出登录</button>
+  <!-- 操作按钮 -->
+  <view class="action-buttons">
+    <button class="logout-button" bindtap="handleLogout">
+      退出登录
+    </button>
   </view>
 
   <!-- 复位确认弹窗 -->
-  <view class="modal" wx:if="{{showResetConfirm}}">
-    <view class="modal-content">
-      <view class="modal-header">
-        <text class="modal-title">⚠️ 确认复位学习进度？</text>
+  <view wx:if="{{showResetModal}}" class="modal-overlay" bindtap="closeResetModal">
+    <view class="modal-content" catchtap="true">
+      <view class="modal-icon">⚠️</view>
+      <view class="modal-title">确认复位学习进度？</view>
+      <view class="modal-subtitle">此操作将清空：</view>
+      <view class="modal-list">
+        <view class="list-item">✓ 所有单词学习状态</view>
+        <view class="list-item">✓ 学习记录</view>
+        <view class="list-item">✓ 复习会话</view>
+        <view class="list-item">✓ 发音练习记录</view>
+      </view>
+      <view class="modal-keep">
+        <view class="keep-title">不会清空：</view>
+        <view class="keep-item">✓ 个人配置</view>
+        <view class="keep-item">✓ 账号信息</view>
       </view>
       
-      <view class="modal-body">
-        <view class="reset-warning">
-          <text>此操作将清空：</text>
-          <text class="warning-item">✓ 所有单词学习状态</text>
-          <text class="warning-item">✓ 学习记录</text>
-          <text class="warning-item">✓ 复习会话</text>
-          <text class="warning-item">✓ 发音练习记录</text>
-        </view>
-        
-        <view class="reset-keep">
-          <text>不会清空：</text>
-          <text class="keep-item">✓ 个人配置</text>
-          <text class="keep-item">✓ 账号信息</text>
-        </view>
-        
-        <view class="reason-section">
-          <text class="reason-label">复位原因：</text>
-          <picker mode="selector" range="{{['重新开始学习', '误操作导致混乱', '其他原因']}}" value="{{resetReasonIndex}}" bindchange="onReasonChange">
-            <view class="reason-picker">
-              {{['重新开始学习', '误操作导致混乱', '其他原因'][resetReasonIndex || 0]}}
-            </view>
-          </picker>
-        </view>
+      <view class="reset-reason">
+        <view class="reason-label">复位原因：</view>
+        <picker mode="selector" range="{{resetReasons}}" value="{{reasonIndex}}" bindchange="selectReason">
+          <view class="reason-picker">{{resetReasons[reasonIndex]}}</view>
+        </picker>
       </view>
       
-      <view class="modal-footer">
-        <button class="modal-cancel" bindtap="hideResetConfirm">取消</button>
-        <button class="modal-confirm" bindtap="confirmReset">确认复位</button>
+      <view class="modal-actions">
+        <button class="cancel-button" bindtap="closeResetModal">取消</button>
+        <button class="confirm-button" bindtap="confirmReset" loading="{{resetLoading}}">确认复位</button>
       </view>
     </view>
-  </view>
-
-  <!-- 加载状态 -->
-  <view class="loading-mask" wx:if="{{loading}}">
-    <text>加载中...</text>
   </view>
 </view>

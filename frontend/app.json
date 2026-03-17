@@ -4,7 +4,10 @@
     "pages/learning/learning",
     "pages/review/review",
     "pages/config/config",
-    "pages/pronunciation/pronunciation"
+    "pages/pronunciation/pronunciation",
+    "pages/login/login",
+    "pages/profile/profile",
+    "pages/admin/index"
   ],
   "window": {
     "backgroundTextStyle": "light",

@@ -1,119 +1,63 @@
-/**
- * 个人中心页面
- * 显示用户信息、学习统计、设置等
- */
-
-const auth = require('../../utils/auth');
+// pages/profile/profile.js
+const app = getApp();
 
 Page({
   data: {
-    user: null,
-    stats: null,
-    config: null,
-    loading: true,
-    showResetConfirm: false,
-    resetReason: 'restart'
+    userInfo: null,
+    stats: {
+      masteredWords: 0,
+      practiceCount: 0
+    },
+    showResetModal: false,
+    resetLoading: false,
+    resetReasons: ['重新开始学习', '误操作导致混乱', '想挑战更高分数', '其他原因'],
+    reasonIndex: 0
   },
 
   onLoad() {
-    this.loadProfile();
+    this.loadUserInfo();
   },
 
   onShow() {
-    // 每次显示时刷新数据
-    if (auth.isLoggedIn()) {
-      this.loadProfile();
-    }
+    this.loadUserInfo();
   },
 
   /**
-   * 加载用户资料
+   * 加载用户信息
    */
-  async loadProfile() {
-    this.setData({ loading: true });
-
-    try {
-      const profile = await auth.getProfile();
-      this.setData({
-        user: profile.user,
-        stats: profile.stats,
-        config: profile.config,
-        loading: false
+  loadUserInfo() {
+    const userInfo = wx.getStorageSync('userInfo');
+    const token = wx.getStorageSync('token');
+    
+    if (!userInfo || !token) {
+      // 未登录，跳转到登录页
+      wx.redirectTo({
+        url: '/pages/login/login'
       });
-    } catch (error) {
-      console.error('加载用户资料失败:', error);
-      this.setData({ loading: false });
-      
-      if (error.message !== '登录已过期') {
-        wx.showToast({
-          title: '加载失败',
-          icon: 'none'
-        });
-      }
+      return;
     }
+    
+    this.setData({ userInfo });
+    
+    // 加载详细统计
+    this.loadStats();
   },
 
   /**
-   * 显示复位确认弹窗
+   * 加载统计数据
    */
-  showResetConfirm() {
-    this.setData({ showResetConfirm: true });
-  },
-
-  /**
-   * 隐藏复位确认弹窗
-   */
-  hideResetConfirm() {
-    this.setData({ 
-      showResetConfirm: false,
-      resetReason: 'restart'
-    });
-  },
-
-  /**
-   * 选择复位原因
-   */
-  onReasonChange(e) {
-    this.setData({ resetReason: e.detail.value });
-  },
-
-  /**
-   * 确认复位学习进度
-   */
-  async confirmReset() {
-    const { resetReason } = this.data;
-
-    try {
-      await auth.resetProgress(resetReason);
-      
-      wx.showToast({
-        title: '已复位',
-        icon: 'success'
-      });
-
-      this.hideResetConfirm();
-      this.loadProfile(); // 刷新数据
-    } catch (error) {
-      console.error('复位失败:', error);
-      wx.showToast({
-        title: error.message || '复位失败',
-        icon: 'none'
-      });
-    }
-  },
-
-  /**
-   * 退出登录
-   */
-  async onLogout() {
-    wx.showModal({
-      title: '确认退出',
-      content: '确定要退出登录吗？',
-      success: async (res) => {
-        if (res.confirm) {
-          await auth.logout();
-          wx.reLaunch({
-            url: '/pages/login/login'
+  loadStats() {
+    wx.request({
+      url: `${app.globalData.apiUrl}/stats`,
+      method: 'GET',
+      header: {
+        'Authorization': `Bearer ${wx.getStorageSync('token')}`
+      },
+      success: (res) => {
+        if (res.statusCode === 200) {
+          this.setData({
+            'stats.masteredWords': res.data.mastered_words || 0,
+            'stats.practiceCount': res.data.total_pronunciation || 0
           });
         }
       }
@@ -121,45 +65,145 @@ Page({
   },
 
   /**
-   * 跳转到管理员后台
+   * 跳转到发音练习
    */
-  goToAdmin() {
-    if (auth.isAdmin()) {
-      wx.navigateTo({
-        url: '/pages/admin/index'
-      });
-    } else {
-      wx.showToast({
-        title: '无权限',
-        icon: 'none'
-      });
-    }
-  },
-
-  /**
-   * 跳转到设置页面
-   */
-  goToSettings() {
+  goToPronunciation() {
     wx.navigateTo({
-      url: '/pages/config/config'
+      url: '/pages/pronunciation/pronunciation'
     });
   },
 
   /**
-   * 跳转到错题本
-   */
-  goToMistakes() {
-    wx.navigateTo({
-      url: '/pages/mistakes/index'
-    });
-  },
-
-  /**
-   * 跳转到成就页面
+   * 跳转到成就系统
    */
   goToAchievements() {
     wx.navigateTo({
-      url: '/pages/achievements/index'
+      url: '/pages/achievements/achievements'
+    });
+  },
+
+  /**
+   * 跳转到管理员后台
+   */
+  goToAdmin() {
+    wx.navigateTo({
+      url: '/pages/admin/index'
+    });
+  },
+
+  /**
+   * 显示复位确认弹窗
+   */
+  goToReset() {
+    this.setData({
+      showResetModal: true,
+      reasonIndex: 0
+    });
+  },
+
+  /**
+   * 关闭复位弹窗
+   */
+  closeResetModal() {
+    this.setData({
+      showResetModal: false
+    });
+  },
+
+  /**
+   * 选择复位原因
+   */
+  selectReason(e) {
+    this.setData({
+      reasonIndex: e.detail.value
+    });
+  },
+
+  /**
+   * 确认复位
+   */
+  confirmReset() {
+    this.setData({ resetLoading: true });
+    
+    const reason = this.data.resetReasons[this.data.reasonIndex];
+    
+    wx.request({
+      url: `${app.globalData.apiUrl}/users/reset-progress`,
+      method: 'POST',
+      header: {
+        'Authorization': `Bearer ${wx.getStorageSync('token')}`,
+        'Content-Type': 'application/json'
+      },
+      data: {
+        confirm: true,
+        reason: reason
+      },
+      success: (res) => {
+        this.setData({ resetLoading: false, showResetModal: false });
+        
+        if (res.statusCode === 200 && res.data.success) {
+          wx.showToast({
+            title: '复位成功',
+            icon: 'success'
+          });
+          
+          // 更新本地统计
+          this.setData({
+            'stats.masteredWords': 0,
+            'stats.practiceCount': 0,
+            'userInfo.totalWords': 0,
+            'userInfo.studyDays': 0
+          });
+          
+          // 保存到本地存储
+          wx.setStorageSync('userInfo', this.data.userInfo);
+        } else {
+          wx.showToast({
+            title: res.data.message || '复位失败',
+            icon: 'error'
+          });
+        }
+      },
+      fail: (err) => {
+        this.setData({ resetLoading: false });
+        console.error('复位失败:', err);
+        wx.showToast({
+          title: '网络错误',
+          icon: 'error'
+        });
+      }
+    });
+  },
+
+  /**
+   * 退出登录
+   */
+  handleLogout() {
+    wx.showModal({
+      title: '确认退出',
+      content: '退出登录后需要重新登录才能继续学习',
+      success: (res) => {
+        if (res.confirm) {
+          // 清除本地存储
+          wx.removeStorageSync('token');
+          wx.removeStorageSync('userInfo');
+          
+          // 清除全局状态
+          app.clearLoginStatus();
+          
+          wx.showToast({
+            title: '已退出登录',
+            icon: 'success'
+          });
+          
+          // 跳转到登录页
+          setTimeout(() => {
+            wx.redirectTo({
+              url: '/pages/login/login'
+            });
+          }, 1000);
+        }
+      }
     });
   }
 });
