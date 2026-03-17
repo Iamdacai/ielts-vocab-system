@@ -1,0 +1,59 @@
+<!-- 登录页面 -->
+<view class="container">
+  <!-- Logo 和标题 -->
+  <view class="header">
+    <image class="logo" src="/images/logo.png" mode="aspectFit"></image>
+    <text class="title">雅思智能背单词</text>
+    <text class="subtitle">高效记忆 · 科学复习</text>
+  </view>
+
+  <!-- 登录按钮 -->
+  <view class="login-section">
+    <button 
+      class="login-btn" 
+      type="primary" 
+      bindtap="onWechatLogin" 
+      disabled="{{loading}}"
+    >
+      <image class="wechat-icon" src="/images/wechat-icon.png" mode="aspectFit"></image>
+      {{loading ? '登录中...' : '微信一键登录'}}
+    </button>
+  </view>
+
+  <!-- 用户协议 -->
+  <view class="policy-section">
+    <label class="policy-check">
+      <checkbox 
+        checked="{{agreePolicy}}" 
+        bindchange="onPolicyChange" 
+        color="#07c160"
+      />
+      <text class="policy-text">
+        我已阅读并同意
+        <text class="policy-link" bindtap="viewPolicy">《用户协议》</text>
+        和
+        <text class="policy-link" bindtap="viewPolicy">《隐私政策》</text>
+      </text>
+    </label>
+  </view>
+
+  <!-- 功能介绍 -->
+  <view class="features">
+    <view class="feature-item">
+      <text class="feature-icon">📚</text>
+      <text class="feature-text">4464+ 雅思核心词汇</text>
+    </view>
+    <view class="feature-item">
+      <text class="feature-icon">🎯</text>
+      <text class="feature-text">智能记忆曲线</text>
+    </view>
+    <view class="feature-item">
+      <text class="feature-icon">🎤</text>
+      <text class="feature-text">发音练习评分</text>
+    </view>
+    <view class="feature-item">
+      <text class="feature-icon">📊</text>
+      <text class="feature-text">学习数据统计</text>
+    </view>
+  </view>
+</view>

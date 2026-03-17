@@ -1,57 +1,54 @@
-const jwt = require('jsonwebtoken');
-const { initializeDatabase } = require('../database-sqlite');
+const { wechatLogin, updateUserProfile } = require('../auth-wechat');
 
 /**
- * SQLite版本的微信小程序登录认证控制器
- * 使用模拟openid进行测试
+ * 微信小程序登录认证控制器
+ * 使用微信 code 换取 openid 并登录
  */
 const authenticateWechat = async (req, res) => {
   try {
-    // 开发环境直接返回测试用户
-    const openid = 'test_openid_' + Date.now();
-    
-    const db = await initializeDatabase();
-    
-    // 查找或创建用户
-    let user = await db.get('SELECT * FROM users WHERE openid = ?', [openid]);
-    
-    if (!user) {
-      // 创建新用户
-      const result = await db.run(
-        'INSERT INTO users(openid) VALUES(?)',
-        [openid]
-      );
-      user = {
-        id: result.lastID,
-        openid: openid
-      };
-      
-      // 创建默认配置
-      await db.run(
-        'INSERT INTO user_configs(user_id) VALUES(?)',
-        [user.id]
-      );
+    const { code } = req.body;
+
+    if (!code) {
+      return res.status(400).json({ error: '缺少微信登录 code' });
     }
-    
-    // 生成JWT token
-    const token = jwt.sign(
-      { userId: user.id, openid: user.openid },
-      process.env.JWT_SECRET || 'dev_secret',
-      { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
-    );
-    
-    res.json({
-      token,
-      user: {
-        id: user.id,
-        openid: user.openid
-      }
-    });
-    
+
+    // 调用微信登录服务
+    const result = await wechatLogin(code);
+
+    res.json(result);
+
   } catch (error) {
-    console.error('微信登录失败:', error);
-    res.status(500).json({ error: '登录失败，请重试' });
+    console.error('微信登录失败:', error.message);
+    res.status(401).json({ 
+      error: '登录失败',
+      message: error.message 
+    });
   }
 };
 
-module.exports = { authenticateWechat };
+/**
+ * 更新用户信息（可选，登录后可调用）
+ */
+const updateUserInfo = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { nickname, avatarUrl, gender, city, province, country } = req.body;
+
+    await updateUserProfile(userId, {
+      nickname,
+      avatarUrl,
+      gender,
+      city,
+      province,
+      country
+    });
+
+    res.json({ success: true, message: '用户信息更新成功' });
+
+  } catch (error) {
+    console.error('更新用户信息失败:', error);
+    res.status(500).json({ error: '更新失败' });
+  }
+};
+
+module.exports = { authenticateWechat, updateUserInfo };

@@ -1,15 +1,16 @@
 // app.js
+const auth = require('./utils/auth');
+
 App({
   onLaunch() {
-    // ⚠️ 生产环境 - 使用正式域名（小程序在 Windows 上运行）
-    const serverDomain = 'caiyuyang.cn';  // 正式域名
+    // 服务器配置
+    const serverDomain = 'caiyuyang.cn';
     const serverPort = '3001';
     
     // 初始化全局状态
     this.globalData = {
       userInfo: null,
       hasLogin: false,
-      // ⚠️ 使用 HTTPS 正式域名
       apiUrl: `https://${serverDomain}:${serverPort}/api`,
       token: null
     };
@@ -18,12 +19,18 @@ App({
     console.log('API 地址:', this.globalData.apiUrl);
     console.log('服务器域名:', serverDomain);
     console.log('服务器端口:', serverPort);
-    console.log('运行环境：生产环境（HTTPS 域名）');
     console.log('========================================');
     
-    // 尝试从本地存储恢复登录状态
-    const token = wx.getStorageSync('token');
-    const userInfo = wx.getStorageSync('userInfo');
+    // 从本地存储恢复登录状态
+    this.checkLoginStatus();
+  },
+  
+  /**
+   * 检查登录状态
+   */
+  checkLoginStatus() {
+    const token = auth.getToken();
+    const userInfo = auth.getUserInfo();
     
     if (token && userInfo) {
       this.globalData.token = token;
@@ -32,5 +39,28 @@ App({
     }
   },
   
-  globalData: {}
+  /**
+   * 更新全局登录状态
+   */
+  setLoginStatus(token, userInfo) {
+    this.globalData.token = token;
+    this.globalData.userInfo = userInfo;
+    this.globalData.hasLogin = true;
+  },
+  
+  /**
+   * 清除登录状态
+   */
+  clearLoginStatus() {
+    this.globalData.token = null;
+    this.globalData.userInfo = null;
+    this.globalData.hasLogin = false;
+  },
+  
+  /**
+   * 检查是否是管理员
+   */
+  isAdmin() {
+    return this.globalData.userInfo?.user?.role === 'admin';
+  }
 });

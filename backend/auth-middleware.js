@@ -1,10 +1,14 @@
 const jwt = require('jsonwebtoken');
+const { isAdmin } = require('./auth-wechat');
 
-// JWT 认证中间件
+const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret';
+
+/**
+ * 基础认证中间件 - 验证 JWT token
+ */
 const authenticateToken = (req, res, next) => {
-  // 从 Authorization header 获取 token
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+  const token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
     return res.status(401).json({ 
@@ -14,8 +18,7 @@ const authenticateToken = (req, res, next) => {
   }
 
   try {
-    // 验证 token
-    const decoded = jwt.verify(token, 'dev_secret');
+    const decoded = jwt.verify(token, JWT_SECRET);
     req.user = decoded;
     next();
   } catch (error) {
@@ -27,4 +30,45 @@ const authenticateToken = (req, res, next) => {
   }
 };
 
-module.exports = { authenticateToken };
+/**
+ * 管理员认证中间件 - 验证用户是否为管理员
+ */
+const requireAdmin = (req, res, next) => {
+  authenticateToken(req, res, () => {
+    if (!isAdmin(req.user)) {
+      return res.status(403).json({ 
+        error: 'Permission denied',
+        message: '需要管理员权限' 
+      });
+    }
+    next();
+  });
+};
+
+/**
+ * 可选认证中间件 - token 存在则验证，不存在则跳过
+ */
+const optionalAuth = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    req.user = null;
+    return next();
+  }
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+  } catch (error) {
+    req.user = null;
+  }
+  next();
+};
+
+module.exports = { 
+  authenticateToken, 
+  requireAdmin,
+  optionalAuth,
+  JWT_SECRET
+};
