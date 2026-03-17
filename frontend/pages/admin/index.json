@@ -1,5 +1,5 @@
 {
   "navigationBarTitleText": "管理员后台",
-  "enablePullDownRefresh": true,
-  "usingComponents": {}
+  "navigationBarBackgroundColor": "#722ed1",
+  "navigationBarTextStyle": "white"
 }

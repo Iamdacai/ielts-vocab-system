@@ -1,201 +1,235 @@
-/**
- * 管理员后台页面
- * 用户管理、全局统计、数据复位等
- */
-
-const auth = require('../../utils/auth');
+// pages/admin/index.js
+const app = getApp();
 
 Page({
   data: {
-    stats: null,
+    stats: {
+      totalUsers: 0,
+      activeUsers: 0,
+      totalWordsLearned: 0,
+      newUsersToday: 0
+    },
     users: [],
-    loading: true,
+    loading: false,
     page: 1,
     pageSize: 20,
     hasMore: true,
-    activeTab: 'stats', // stats | users | logs
-    showResetConfirm: false,
-    selectedUserId: null
+    showResetAllModal: false,
+    resetLoading: false
   },
 
   onLoad() {
-    // 检查管理员权限
-    if (!auth.isAdmin()) {
-      wx.showToast({
-        title: '无权限访问',
-        icon: 'none'
-      });
-      setTimeout(() => {
-        wx.navigateBack();
-      }, 1500);
-      return;
-    }
+    this.checkAdminPermission();
+  },
 
+  onShow() {
     this.loadStats();
     this.loadUsers();
   },
 
   /**
+   * 检查管理员权限
+   */
+  checkAdminPermission() {
+    const userInfo = wx.getStorageSync('userInfo');
+    
+    if (!userInfo || userInfo.role !== 'admin') {
+      wx.showModal({
+        title: '无权限',
+        content: '需要管理员权限才能访问此页面',
+        showCancel: false,
+        success: () => {
+          wx.navigateBack();
+        }
+      });
+      return;
+    }
+  },
+
+  /**
    * 加载全局统计
    */
-  async loadStats() {
-    try {
-      const stats = await auth.getAdminStats();
-      this.setData({ stats });
-    } catch (error) {
-      console.error('加载统计失败:', error);
-    }
+  loadStats() {
+    wx.request({
+      url: `${app.globalData.apiUrl}/admin/stats`,
+      method: 'GET',
+      header: {
+        'Authorization': `Bearer ${wx.getStorageSync('token')}`
+      },
+      success: (res) => {
+        if (res.statusCode === 200) {
+          this.setData({ stats: res.data });
+        }
+      }
+    });
   },
 
   /**
    * 加载用户列表
    */
-  async loadUsers(refresh = false) {
-    if (refresh) {
-      this.setData({ page: 1, users: [], hasMore: true });
-    }
-
-    const { page, pageSize } = this.data;
-
-    try {
-      const result = await auth.getUserList(page, pageSize);
-      
-      this.setData({
-        users: refresh ? result.users : [...this.data.users, ...result.users],
-        page: page + 1,
-        hasMore: result.page < result.totalPages
-      });
-    } catch (error) {
-      console.error('加载用户列表失败:', error);
-    }
-  },
-
-  /**
-   * 切换标签页
-   */
-  onTabChange(e) {
-    const { tab } = e.currentTarget.dataset;
-    this.setData({ activeTab: tab });
-  },
-
-  /**
-   * 下拉刷新
-   */
-  async onRefresh() {
-    await this.loadStats();
-    await this.loadUsers(true);
-    wx.stopPullDownRefresh();
-  },
-
-  /**
-   * 上拉加载更多
-   */
-  onReachBottom() {
-    if (this.data.hasMore && this.data.activeTab === 'users') {
-      this.loadUsers();
-    }
-  },
-
-  /**
-   * 修改用户角色
-   */
-  async changeRole(e) {
-    const { id, role } = e.currentTarget.dataset;
+  loadUsers() {
+    if (this.data.loading) return;
     
+    this.setData({ loading: true });
+    
+    wx.request({
+      url: `${app.globalData.apiUrl}/admin/users`,
+      method: 'GET',
+      data: {
+        page: 1,
+        pageSize: this.data.pageSize
+      },
+      header: {
+        'Authorization': `Bearer ${wx.getStorageSync('token')}`
+      },
+      success: (res) => {
+        this.setData({ loading: false });
+        
+        if (res.statusCode === 200) {
+          const { users, total } = res.data;
+          const hasMore = users.length < total;
+          
+          this.setData({
+            users,
+            page: 1,
+            hasMore
+          });
+        }
+      },
+      fail: () => {
+        this.setData({ loading: false });
+        wx.showToast({
+          title: '加载失败',
+          icon: 'error'
+        });
+      }
+    });
+  },
+
+  /**
+   * 加载更多用户
+   */
+  loadMore() {
+    if (this.data.loading || !this.data.hasMore) return;
+    
+    const nextPage = this.data.page + 1;
+    this.setData({ loading: true });
+    
+    wx.request({
+      url: `${app.globalData.apiUrl}/admin/users`,
+      method: 'GET',
+      data: {
+        page: nextPage,
+        pageSize: this.data.pageSize
+      },
+      header: {
+        'Authorization': `Bearer ${wx.getStorageSync('token')}`
+      },
+      success: (res) => {
+        this.setData({ loading: false });
+        
+        if (res.statusCode === 200) {
+          const { users, total } = res.data;
+          const currentUsers = this.data.users;
+          const allUsers = [...currentUsers, ...users];
+          const hasMore = allUsers.length < total;
+          
+          this.setData({
+            users: allUsers,
+            page: nextPage,
+            hasMore
+          });
+        }
+      },
+      fail: () => {
+        this.setData({ loading: false });
+        wx.showToast({
+          title: '加载失败',
+          icon: 'error'
+        });
+      }
+    });
+  },
+
+  /**
+   * 显示复位全部弹窗
+   */
+  showResetAllModal() {
     wx.showModal({
-      title: '确认修改',
-      content: `确定将用户角色改为${role === 'admin' ? '管理员' : '普通用户'}？`,
-      success: async (res) => {
+      title: '高危操作确认',
+      content: '此操作将清空所有用户的学习进度，且不可恢复！请谨慎操作！',
+      confirmText: '我已知晓风险',
+      confirmColor: '#ff4d4f',
+      success: (res) => {
         if (res.confirm) {
-          try {
-            await auth.request({
-              url: 'https://caiyuyang.cn:3001/api/admin/users/' + id + '/role',
-              method: 'POST',
-              data: { role }
-            });
-            
-            wx.showToast({ title: '修改成功', icon: 'success' });
-            this.loadUsers(true);
-          } catch (error) {
-            wx.showToast({ title: '修改失败', icon: 'none' });
-          }
+          this.setData({ showResetAllModal: true });
         }
       }
     });
   },
 
   /**
-   * 封禁/解封用户
+   * 关闭复位弹窗
    */
-  async toggleBan(e) {
-    const { id, status } = e.currentTarget.dataset;
-    const action = status === 'active' ? 'ban' : 'unban';
+  closeResetAllModal() {
+    this.setData({ showResetAllModal: false });
+  },
+
+  /**
+   * 确认复位全部
+   */
+  confirmResetAll() {
+    this.setData({ resetLoading: true });
     
-    wx.showModal({
-      title: '确认操作',
-      content: `确定要${action === 'ban' ? '封禁' : '解封'}该用户？`,
-      success: async (res) => {
-        if (res.confirm) {
-          try {
-            await auth.request({
-              url: `https://caiyuyang.cn:3001/api/admin/users/${id}/${action}`,
-              method: 'POST',
-              data: action === 'ban' ? { reason: '违规操作' } : {}
-            });
-            
-            wx.showToast({ title: '操作成功', icon: 'success' });
-            this.loadUsers(true);
-          } catch (error) {
-            wx.showToast({ title: '操作失败', icon: 'none' });
-          }
+    wx.request({
+      url: `${app.globalData.apiUrl}/admin/data-reset`,
+      method: 'POST',
+      header: {
+        'Authorization': `Bearer ${wx.getStorageSync('token')}`,
+        'Content-Type': 'application/json'
+      },
+      data: {
+        userIds: [],  // 空表示复位所有用户
+        confirm: true,
+        reason: '管理员手动复位'
+      },
+      success: (res) => {
+        this.setData({ resetLoading: false, showResetAllModal: false });
+        
+        if (res.statusCode === 200 && res.data.success) {
+          wx.showToast({
+            title: `已复位 ${res.data.resetCount} 个用户`,
+            icon: 'success'
+          });
+          
+          // 重新加载统计
+          this.loadStats();
+          this.loadUsers();
+        } else {
+          wx.showToast({
+            title: res.data.message || '复位失败',
+            icon: 'error'
+          });
         }
+      },
+      fail: (err) => {
+        this.setData({ resetLoading: false });
+        console.error('复位失败:', err);
+        wx.showToast({
+          title: '网络错误',
+          icon: 'error'
+        });
       }
     });
   },
 
   /**
-   * 显示复位确认
+   * 查看系统日志
    */
-  showResetConfirm(e) {
-    const { id } = e.currentTarget.dataset;
-    this.setData({ 
-      showResetConfirm: true,
-      selectedUserId: id 
+  viewSystemLogs() {
+    wx.showToast({
+      title: '功能开发中',
+      icon: 'none'
     });
-  },
-
-  /**
-   * 隐藏复位确认
-   */
-  hideResetConfirm() {
-    this.setData({ 
-      showResetConfirm: false,
-      selectedUserId: null 
-    });
-  },
-
-  /**
-   * 确认复位用户数据
-   */
-  async confirmReset() {
-    const { selectedUserId } = this.data;
-    
-    try {
-      await auth.request({
-        url: 'https://caiyuyang.cn:3001/api/admin/data-reset',
-        method: 'POST',
-        data: {
-          userIds: selectedUserId ? [selectedUserId] : [],
-          confirm: true,
-          reason: '管理员手动复位'
-        }
-      });
-      
-      wx.showToast({ title: '复位成功', icon: 'success' });
-      this.hideResetConfirm();
-      this.loadStats();
-    } catch (error) {
-      wx.showToast({ title: '复位失败', icon: 'none' });
-    }
   }
 });

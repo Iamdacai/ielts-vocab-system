@@ -1,88 +1,142 @@
-/**
- * 登录页面
- * 处理微信小程序登录流程
- */
-
-const auth = require('../../utils/auth');
+// pages/login/login.js
+const app = getApp();
 
 Page({
   data: {
-    loading: false,
-    agreePolicy: false
+    loginLoading: false
   },
 
   onLoad() {
     // 检查是否已登录
-    if (auth.isLoggedIn()) {
-      wx.switchTab({
-        url: '/pages/index/index'
-      });
+    this.checkLoginStatus();
+  },
+
+  /**
+   * 检查登录状态
+   */
+  checkLoginStatus() {
+    const token = wx.getStorageSync('token');
+    const userInfo = wx.getStorageSync('userInfo');
+    
+    if (token && userInfo) {
+      // 已登录，验证 token 是否有效
+      this.checkTokenValidity(token);
     }
   },
 
   /**
-   * 处理协议勾选
+   * 检查 token 有效性
    */
-  onPolicyChange(e) {
-    this.setData({
-      agreePolicy: e.detail.value
+  checkTokenValidity(token) {
+    wx.request({
+      url: `${app.globalData.apiUrl}/auth/check`,
+      method: 'GET',
+      header: {
+        'Authorization': `Bearer ${token}`
+      },
+      success: (res) => {
+        if (res.statusCode === 200 && res.data.valid) {
+          // token 有效，跳转到首页
+          wx.switchTab({
+            url: '/pages/index/index'
+          });
+        } else {
+          // token 无效，清除本地存储
+          wx.removeStorageSync('token');
+          wx.removeStorageSync('userInfo');
+        }
+      },
+      fail: () => {
+        // 请求失败，清除本地存储
+        wx.removeStorageSync('token');
+        wx.removeStorageSync('userInfo');
+      }
     });
   },
 
   /**
-   * 微信登录按钮点击
+   * 微信登录
    */
-  async onWechatLogin() {
-    if (!this.data.agreePolicy) {
-      wx.showToast({
-        title: '请先同意用户协议',
-        icon: 'none'
-      });
-      return;
-    }
-
-    this.setData({ loading: true });
-
-    try {
-      // 1. 获取微信登录 code
-      const { code } = await wx.login({ timeout: 10000 });
-
-      if (!code) {
-        throw new Error('获取登录 code 失败');
-      }
-
-      // 2. 调用后端登录接口
-      const result = await auth.login(code);
-
-      wx.showToast({
-        title: '登录成功',
-        icon: 'success'
-      });
-
-      // 3. 跳转到首页
-      setTimeout(() => {
-        wx.switchTab({
-          url: '/pages/index/index'
+  handleWechatLogin() {
+    this.setData({ loginLoading: true });
+    
+    // 1. 获取微信登录 code
+    wx.login({
+      success: (res) => {
+        if (res.code) {
+          // 2. 调用后端登录接口
+          this.doLogin(res.code);
+        } else {
+          this.setData({ loginLoading: false });
+          wx.showToast({
+            title: '登录失败',
+            icon: 'error'
+          });
+        }
+      },
+      fail: (err) => {
+        this.setData({ loginLoading: false });
+        console.error('微信登录失败:', err);
+        wx.showToast({
+          title: '网络错误',
+          icon: 'error'
         });
-      }, 1500);
-
-    } catch (error) {
-      console.error('登录失败:', error);
-      wx.showToast({
-        title: error.message || '登录失败，请重试',
-        icon: 'none'
-      });
-    } finally {
-      this.setData({ loading: false });
-    }
+      }
+    });
   },
 
   /**
-   * 查看用户协议
+   * 执行登录
    */
-  viewPolicy() {
-    wx.navigateTo({
-      url: '/pages/policy/policy'
+  doLogin(code) {
+    wx.request({
+      url: `${app.globalData.apiUrl}/auth/wechat-login`,
+      method: 'POST',
+      header: {
+        'Content-Type': 'application/json'
+      },
+      data: {
+        code: code
+      },
+      success: (res) => {
+        this.setData({ loginLoading: false });
+        
+        if (res.statusCode === 200 && res.data.token) {
+          // 登录成功，保存 token 和用户信息
+          const { token, user } = res.data;
+          
+          wx.setStorageSync('token', token);
+          wx.setStorageSync('userInfo', user);
+          
+          // 更新全局状态
+          app.setLoginStatus(token, user);
+          
+          wx.showToast({
+            title: '登录成功',
+            icon: 'success'
+          });
+          
+          // 延迟跳转到首页
+          setTimeout(() => {
+            wx.switchTab({
+              url: '/pages/index/index'
+            });
+          }, 1000);
+        } else {
+          wx.showToast({
+            title: res.data.message || '登录失败',
+            icon: 'error'
+          });
+        }
+      },
+      fail: (err) => {
+        this.setData({ loginLoading: false });
+        console.error('登录请求失败:', err);
+        wx.showToast({
+          title: '网络错误',
+          icon: 'error'
+        });
+      }
     });
   }
 });

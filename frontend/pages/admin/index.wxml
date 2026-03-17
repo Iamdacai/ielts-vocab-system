@@ -1,98 +1,92 @@
-<!-- 管理员后台页面 -->
-<view class="container">
-  <!-- 标签页切换 -->
-  <view class="tabs">
-    <view class="tab-item {{activeTab === 'stats' ? 'active' : ''}}" data-tab="stats" bindtap="onTabChange">
-      全局统计
-    </view>
-    <view class="tab-item {{activeTab === 'users' ? 'active' : ''}}" data-tab="users" bindtap="onTabChange">
-      用户管理
-    </view>
-  </view>
-
-  <!-- 统计面板 -->
-  <view class="panel" wx:if="{{activeTab === 'stats'}}">
+<!--pages/admin/index.wxml-->
+<view class="admin-container">
+  <!-- 全局统计 -->
+  <view class="stats-card">
+    <view class="card-title">📊 全局统计</view>
     <view class="stats-grid">
-      <view class="stat-card">
-        <text class="stat-value">{{stats.totalUsers || 0}}</text>
-        <text class="stat-label">总用户数</text>
+      <view class="stat-item">
+        <view class="stat-value">{{stats.totalUsers}}</view>
+        <view class="stat-label">总用户数</view>
       </view>
-      <view class="stat-card">
-        <text class="stat-value">{{stats.activeUsers || 0}}</text>
-        <text class="stat-label">活跃用户</text>
+      <view class="stat-item">
+        <view class="stat-value">{{stats.activeUsers}}</view>
+        <view class="stat-label">活跃用户</view>
       </view>
-      <view class="stat-card">
-        <text class="stat-value">{{stats.newUsersToday || 0}}</text>
-        <text class="stat-label">今日新增</text>
+      <view class="stat-item">
+        <view class="stat-value">{{stats.totalWordsLearned}}</view>
+        <view class="stat-label">学习单词</view>
       </view>
-      <view class="stat-card">
-        <text class="stat-value">{{stats.totalWordsLearned || 0}}</text>
-        <text class="stat-label">学习单词</text>
-      </view>
-    </view>
-
-    <!-- 排行榜 -->
-    <view class="top-users">
-      <view class="section-title">📊 学习排行榜</view>
-      <view class="user-list">
-        <view class="user-item" wx:for="{{stats.topUsers}}" wx:key="id">
-          <view class="rank">{{index + 1}}</view>
-          <image class="avatar" src="{{item.avatar || '/images/default-avatar.png'}}" mode="aspectFill"></image>
-          <view class="user-info">
-            <text class="nickname">{{item.nickname}}</text>
-            <text class="meta">已掌握 {{item.masteredWords || 0}} 词</text>
-          </view>
-          <view class="stat-value">{{item.totalWords || 0}}</view>
-        </view>
+      <view class="stat-item">
+        <view class="stat-value">{{stats.newUsersToday}}</view>
+        <view class="stat-label">今日新增</view>
       </view>
     </view>
   </view>
 
   <!-- 用户列表 -->
-  <view class="panel" wx:if="{{activeTab === 'users'}}">
-    <view class="user-list">
-      <view class="user-item" wx:for="{{users}}" wx:key="id">
-        <image class="avatar" src="{{item.avatar || '/images/default-avatar.png'}}" mode="aspectFill"></image>
-        <view class="user-info">
-          <view class="nickname-row">
-            <text class="nickname">{{item.nickname}}</text>
-            <text class="tag tag-{{item.role}}" wx:if="{{item.role === 'admin'}}">管理员</text>
-            <text class="tag tag-banned" wx:if="{{item.status === 'banned'}}">已封禁</text>
+  <view class="users-card">
+    <view class="card-header">
+      <view class="card-title">👥 用户列表</view>
+      <view class="refresh-btn" bindtap="loadUsers">🔄</view>
+    </view>
+    
+    <view wx:if="{{loading}}" class="loading-text">加载中...</view>
+    
+    <view wx:else class="user-list">
+      <view wx:for="{{users}}" wx:key="id" class="user-item">
+        <view class="user-left">
+          <view class="user-avatar-small">
+            <image wx:if="{{item.avatar_url}}" src="{{item.avatar_url}}" mode="aspectFill"></image>
+            <view wx:else>👤</view>
           </view>
-          <text class="meta">学习 {{item.studyDays}} 天 · {{item.totalWords}} 词</text>
+          <view class="user-detail">
+            <view class="user-name">{{item.nickname || '微信用户'}}</view>
+            <view class="user-meta">
+              <text class="role-tag" wx:if="{{item.role === 'admin'}}">管理员</text>
+              <text class="status-tag" wx:if="{{item.status === 'active'}}">正常</text>
+              <text class="status-tag banned" wx:if="{{item.status === 'banned'}}">封禁</text>
+            </view>
+          </view>
         </view>
-        <view class="actions">
-          <button class="action-btn" bindtap="changeRole" data-id="{{item.id}}" data-role="{{item.role === 'admin' ? 'user' : 'admin'}}">
-            {{item.role === 'admin' ? '取消管理' : '设为管理'}}
-          </button>
-          <button class="action-btn {{item.status === 'active' ? 'danger' : 'success'}}" bindtap="toggleBan" data-id="{{item.id}}" data-status="{{item.status}}">
-            {{item.status === 'active' ? '封禁' : '解封'}}
-          </button>
-          <button class="action-btn warn" bindtap="showResetConfirm" data-id="{{item.id}}">
-            复位数据
-          </button>
+        <view class="user-stats">
+          <view class="user-stat">
+            <text class="stat-num">{{item.studyDays}}</text>
+            <text class="stat-unit">天</text>
+          </view>
+          <view class="user-stat">
+            <text class="stat-num">{{item.totalWords}}</text>
+            <text class="stat-unit">词</text>
+          </view>
         </view>
       </view>
     </view>
-
+    
     <!-- 加载更多 -->
-    <view class="load-more" wx:if="{{hasMore}}">
-      <text>加载更多...</text>
+    <view wx:if="{{hasMore}}" class="load-more" bindtap="loadMore">
+      加载更多
     </view>
   </view>
 
-  <!-- 复位确认弹窗 -->
-  <view class="modal" wx:if="{{showResetConfirm}}">
-    <view class="modal-content">
-      <view class="modal-header">
-        <text class="modal-title">⚠️ 确认复位用户数据？</text>
-      </view>
-      <view class="modal-body">
-        <text>此操作将清空该用户的所有学习进度，且不可恢复！</text>
-      </view>
-      <view class="modal-footer">
-        <button class="modal-cancel" bindtap="hideResetConfirm">取消</button>
-        <button class="modal-confirm" bindtap="confirmReset">确认复位</button>
+  <!-- 管理员操作 -->
+  <view class="admin-actions">
+    <view class="action-title">⚙️ 管理操作</view>
+    <button class="action-button" bindtap="showResetAllModal">
+      🔄 复位全部用户数据
+    </button>
+    <button class="action-button warning" bindtap="viewSystemLogs">
+      📋 查看系统日志
+    </button>
+  </view>
+
+  <!-- 复位全部用户确认弹窗 -->
+  <view wx:if="{{showResetAllModal}}" class="modal-overlay" bindtap="closeResetAllModal">
+    <view class="modal-content" catchtap="true">
+      <view class="modal-icon">⚠️</view>
+      <view class="modal-title">确认复位全部用户数据？</view>
+      <view class="modal-warning">此操作将清空所有用户的学习进度，且不可恢复！</view>
+      <view class="modal-actions">
+        <button class="cancel-button" bindtap="closeResetAllModal">取消</button>
+        <button class="confirm-button danger" bindtap="confirmResetAll" loading="{{resetLoading}}">确认复位</button>
       </view>
     </view>
   </view>
