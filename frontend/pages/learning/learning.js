@@ -73,7 +73,7 @@ Page({
       return;
     }
     this.loadNewWords();
-  },
+    
     if (!this.data.showDurationModal && !this.data.showComplete) {
       this.startDurationTimer();
     }
