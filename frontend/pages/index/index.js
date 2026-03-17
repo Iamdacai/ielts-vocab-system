@@ -23,61 +23,50 @@ Page({
   },
 
   onLoad() {
-    this.checkLoginStatus();
+    // 🆕 自动登录已在 app.js 中处理，直接使用全局状态
+    this.setData({
+      hasLogin: app.globalData.hasLogin,
+      userInfo: app.globalData.userInfo
+    });
   },
 
   onShow() {
-    // 登录后显示 tabBar
-    if (this.data.hasLogin) {
-      wx.showTabBar({
-        success: () => console.log('tabBar 显示成功'),
-        fail: (err) => console.error('tabBar 显示失败:', err)
+    // 🆕 始终显示 tabBar（自动登录）
+    wx.showTabBar();
+    
+    // 等待 app 自动登录完成后加载数据
+    if (app.globalData.hasLogin) {
+      this.setData({
+        hasLogin: true,
+        userInfo: app.globalData.userInfo
       });
       this.loadStats();
     } else {
-      // 未登录时隐藏 tabBar
-      wx.hideTabBar();
+      // 如果还未登录，等待登录完成
+      const checkLogin = setInterval(() => {
+        if (app.globalData.hasLogin) {
+          clearInterval(checkLogin);
+          this.setData({
+            hasLogin: true,
+            userInfo: app.globalData.userInfo
+          });
+          this.loadStats();
+        }
+      }, 500);
+      
+      // 最多等待 10 秒
+      setTimeout(() => clearInterval(checkLogin), 10000);
     }
   },
 
-  async checkLoginStatus() {
-    const token = wx.getStorageSync('token');
-    const userInfo = wx.getStorageSync('userInfo');
-    
-    if (token && userInfo) {
-      try {
-        const res = await new Promise((resolve, reject) => {
-          wx.request({
-            url: `${app.globalData.apiUrl}/health`,
-            header: {
-              'Authorization': `Bearer ${token}`
-            },
-            success: resolve,
-            fail: reject
-          });
-        });
-        
-        if (res.statusCode === 200) {
-          app.globalData.token = token;
-          app.globalData.userInfo = userInfo;
-          app.globalData.hasLogin = true;
-          this.setData({ 
-            hasLogin: true,
-            userInfo: userInfo
-          });
-          this.loadStats();
-          return;
-        }
-      } catch (err) {
-        console.log('Token 验证失败:', err);
-      }
-    }
-    
-    app.globalData.hasLogin = false;
-    app.globalData.token = null;
-    app.globalData.userInfo = null;
-    wx.removeStorageSync('token');
-    wx.removeStorageSync('userInfo');
+  /**
+   * 🆕 跳转到个人中心
+   */
+  goToProfile() {
+    wx.navigateTo({
+      url: '/pages/profile/profile'
+    });
+  },
     this.setData({ 
       hasLogin: false,
       loading: false
