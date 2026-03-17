@@ -303,7 +303,9 @@ Page({
     }
 
     try {
-      const audioUrl = `${app.globalData.apiUrl}/pronunciation/word-audio/${encodeURIComponent(word)}`;
+      // 🆕 开发阶段使用有道 TTS 直链（避免域名校验问题）
+      // 生产环境使用后端 API: ${app.globalData.apiUrl}/pronunciation/word-audio/${encodeURIComponent(word)}
+      const audioUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=2`;
       console.log('播放单词发音:', audioUrl);
       audioContext.src = audioUrl;
       audioContext.play();
