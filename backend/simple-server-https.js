@@ -1371,6 +1371,7 @@ app.get('/api/pronunciation/history', async (req, res) => {
   try {
     const db = await initializeDatabase();
     const { limit = 20, offset = 0 } = req.query;
+    const userId = req.user?.userId || 1; // 使用认证用户 ID
     
     // 获取发音历史记录
     const records = await db.all(`
@@ -1381,17 +1382,17 @@ app.get('/api/pronunciation/history', async (req, res) => {
         p.pronunciation_score as score,
         p.feedback,
         p.created_at as timestamp
-      FROM pronunciation_records p
+      FROM pronunciation_practice_records p
       LEFT JOIN ielts_words w ON p.word_id = w.id
       WHERE p.user_id = ?
       ORDER BY p.created_at DESC
       LIMIT ? OFFSET ?
-    `, [1, parseInt(limit), parseInt(offset)]);
+    `, [userId, parseInt(limit), parseInt(offset)]);
     
     // 获取总数
     const totalResult = await db.get(
-      'SELECT COUNT(*) as total FROM pronunciation_records WHERE user_id = ?',
-      [1]
+      'SELECT COUNT(*) as total FROM pronunciation_practice_records WHERE user_id = ?',
+      [userId]
     );
     
     res.json({
@@ -1414,6 +1415,7 @@ app.get('/api/pronunciation/history', async (req, res) => {
 app.get('/api/pronunciation/stats', async (req, res) => {
   try {
     const db = await initializeDatabase();
+    const userId = req.user?.userId || 1; // 使用认证用户 ID
     
     // 获取统计数据
     const stats = await db.get(`
@@ -1422,9 +1424,9 @@ app.get('/api/pronunciation/stats', async (req, res) => {
         AVG(pronunciation_score) as averageScore,
         MAX(pronunciation_score) as bestScore,
         COUNT(DISTINCT word_id) as uniqueWords
-      FROM pronunciation_records
+      FROM pronunciation_practice_records
       WHERE user_id = ?
-    `, [1]);
+    `, [userId]);
     
     // 获取最近 7 天的练习趋势
     const trend = await db.all(`
@@ -1432,12 +1434,12 @@ app.get('/api/pronunciation/stats', async (req, res) => {
         DATE(created_at) as date,
         COUNT(*) as count,
         AVG(pronunciation_score) as avgScore
-      FROM pronunciation_records
+      FROM pronunciation_practice_records
       WHERE user_id = ?
         AND created_at >= datetime('now', '-7 days')
       GROUP BY DATE(created_at)
       ORDER BY date DESC
-    `, [1]);
+    `, [userId]);
     
     // 获取最佳发音单词 Top 5
     const bestWords = await db.all(`
@@ -1445,14 +1447,14 @@ app.get('/api/pronunciation/stats', async (req, res) => {
         w.word,
         MAX(p.pronunciation_score) as bestScore,
         COUNT(*) as practiceCount
-      FROM pronunciation_records p
+      FROM pronunciation_practice_records p
       LEFT JOIN ielts_words w ON p.word_id = w.id
       WHERE p.user_id = ?
       GROUP BY p.word_id
       HAVING practiceCount >= 2
       ORDER BY bestScore DESC, practiceCount DESC
       LIMIT 5
-    `, [1]);
+    `, [userId]);
     
     res.json({
       totalPractice: stats?.totalPractice || 0,
