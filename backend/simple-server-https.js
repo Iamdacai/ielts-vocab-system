@@ -135,18 +135,19 @@ app.get('/api/pronunciation/sentence-audio/:sentence', async (req, res) => {
       cleanSentence = cleanSentence.split('%E5')[0].trim();
     }
     // 如果还有中文，尝试用空格分割取第一部分
-    const chineseMatch = cleanSentence.match(/[\u4e00-\u9fa5]/);
-    if (chineseMatch) {
-      // 找到中文字符位置，截取之前的英文部分
-      const chineseIndex = cleanSentence.search(/[\u4e00-\u9fa5]/);
-      if (chineseIndex > 0) {
-        cleanSentence = cleanSentence.substring(0, chineseIndex).trim();
-      }
+    const chineseIndex = cleanSentence.search(/[\u4e00-\u9fa5]/);
+    if (chineseIndex > 0) {
+      cleanSentence = cleanSentence.substring(0, chineseIndex).trim();
     }
     
-    // 限制句子长度（有道 TTS 限制）
-    if (cleanSentence.length > 100) {
-      cleanSentence = cleanSentence.substring(0, 100);
+    // 清理特殊字符（保留字母、数字、空格、基本标点）
+    cleanSentence = cleanSentence.replace(/[^a-zA-Z0-9\s.,!?-]/g, '');
+    
+    // 限制句子长度（有道 TTS 限制在 60 字符以内更稳定）
+    if (cleanSentence.length > 60) {
+      // 找到最后一个空格，避免截断单词
+      const lastSpace = cleanSentence.lastIndexOf(' ', 60);
+      cleanSentence = cleanSentence.substring(0, lastSpace > 0 ? lastSpace : 60);
     }
     
     // 生成缓存文件名（使用 MD5 哈希避免特殊字符问题）
