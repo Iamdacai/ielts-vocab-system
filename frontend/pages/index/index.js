@@ -29,7 +29,10 @@ Page({
   onShow() {
     // 登录后显示 tabBar
     if (this.data.hasLogin) {
-      wx.showTabBar();
+      wx.showTabBar({
+        success: () => console.log('tabBar 显示成功'),
+        fail: (err) => console.error('tabBar 显示失败:', err)
+      });
       this.loadStats();
     } else {
       // 未登录时隐藏 tabBar
@@ -165,6 +168,9 @@ Page({
                   userInfo: res.data.user
                 });
                 
+                // 🆕 登录后显示 tabBar
+                wx.showTabBar();
+                
                 this.loadStats();
               } else {
                 wx.showToast({
@@ -229,6 +235,9 @@ Page({
           hasLogin: true,
           userInfo: res.data.user
         });
+        
+        // 🆕 登录后显示 tabBar
+        wx.showTabBar();
         
         this.loadStats();
         

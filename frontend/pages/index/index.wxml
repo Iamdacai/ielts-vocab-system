@@ -79,21 +79,7 @@
       </view>
     </view>
 
-    <!-- 快捷操作 -->
-    <view class="card">
-      <view class="card-title">🚀 快捷入口</view>
-      <view class="action-buttons-row">
-        <button class="action-button-small primary" bindtap="navigateToLearning">
-          🟢 新词学习
-        </button>
-        <button class="action-button-small warning" bindtap="navigateToReview">
-          🟠 复习
-        </button>
-        <button class="action-button-small success" bindtap="navigateToConfig">
-          ⚙️ 设置
-        </button>
-      </view>
-    </view>
+
 
     <!-- 学习进度 -->
     <view class="card">
