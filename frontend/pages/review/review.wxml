@@ -23,7 +23,7 @@
         <!-- 8 个阶段圆圈 -->
         <view wx:for="{{wheelData}}" wx:key="id" 
               class="wheel-node"
-              style="transform: {{item.transform}}; background: {{item.color}};">
+              style="left: {{item.left}}; top: {{item.top}}; background: {{item.color}};">
           <view class="node-count">{{item.count}}</view>
           <view class="node-label">{{item.label}}</view>
         </view>
@@ -142,7 +142,7 @@
         <view class="word-text">{{currentWord.word}}</view>
         <view class="word-phonetic">{{currentWord.phonetic}}</view>
         
-        <!-- 播放按钮 -->
+        <!-- 🆕 播放按钮 - 点击才发音 -->
         <view class="audio-play-btn" bindtap="playWordAudio">
           🔊
         </view>

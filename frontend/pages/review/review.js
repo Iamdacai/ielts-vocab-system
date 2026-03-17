@@ -131,18 +131,25 @@ Page({
           progressPercent = Math.round(todaySession.completedWords / todaySession.plannedWords * 100);
         }
         
-        // 计算九宫格位置（圆圈布局）
+        // 计算九宫格位置（圆圈布局）- 🆕 优化排列算法
         const wheelDataWithPos = wheelData.map((item, index) => {
-          const angle = (index * 360 / 8) - 90; // 从顶部开始
-          const radius = 120; // 圆圈中心到页面中心的距离
+          // 8 个阶段均匀分布在圆周上
+          const angle = (index * 360 / 8) - 90; // 从顶部 12 点方向开始，顺时针
+          const radius = 110; // 圆圈中心到页面中心的距离（像素）
           const radian = angle * Math.PI / 180;
+          
+          // 计算圆心坐标（页面中心 150, 150）
           const centerX = 150 + radius * Math.cos(radian);
           const centerY = 150 + radius * Math.sin(radian);
-          const transform = `translate(${centerX - 40}px, ${centerY - 40}px)`;
+          
+          // 使用 left/top 定位，而不是 transform
+          const left = centerX - 40; // 40 是圆圈半径
+          const top = centerY - 40;
           
           return {
             ...item,
-            transform
+            left: `${left}px`,
+            top: `${top}px`
           };
         });
         
@@ -325,8 +332,8 @@ Page({
       pronunciationResult: null
     });
     
-    // 自动播放发音
-    this.playWordAudio(currentWord.word);
+    // 🆕 不再自动播放发音，改为手动点击播放
+    // this.playWordAudio(currentWord.word);
   },
 
   /**
