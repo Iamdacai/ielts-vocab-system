@@ -123,7 +123,7 @@ app.get('/api/pronunciation/word-audio/:word', async (req, res) => {
   }
 });
 
-// 🆕 例句音频动态路由（从有道 TTS 获取）
+// 🆕 例句音频动态路由（从 Google TTS 获取 - 更稳定）
 app.get('/api/pronunciation/sentence-audio/:sentence', async (req, res) => {
   try {
     const { sentence } = req.params;
@@ -143,11 +143,9 @@ app.get('/api/pronunciation/sentence-audio/:sentence', async (req, res) => {
     // 清理特殊字符（保留字母、数字、空格、基本标点）
     cleanSentence = cleanSentence.replace(/[^a-zA-Z0-9\s.,!?-]/g, '');
     
-    // 限制句子长度（有道 TTS 限制在 60 字符以内更稳定）
-    if (cleanSentence.length > 60) {
-      // 找到最后一个空格，避免截断单词
-      const lastSpace = cleanSentence.lastIndexOf(' ', 60);
-      cleanSentence = cleanSentence.substring(0, lastSpace > 0 ? lastSpace : 60);
+    // 限制句子长度（Google TTS 限制在 200 字符）
+    if (cleanSentence.length > 200) {
+      cleanSentence = cleanSentence.substring(0, 200);
     }
     
     // 生成缓存文件名（使用 MD5 哈希避免特殊字符问题）
@@ -164,17 +162,19 @@ app.get('/api/pronunciation/sentence-audio/:sentence', async (req, res) => {
       return res.sendFile(audioPath);
     }
     
-    // 本地没有，从有道 TTS 获取（使用英音 type=1）
-    console.log(`[Sentence Audio] Fetching: "${cleanSentence}"`);
+    // 本地没有，从 Google TTS 获取（使用英语）
+    console.log(`[Sentence Audio] Fetching from Google: "${cleanSentence}"`);
     
-    const youdaoUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(cleanSentence)}&type=1`;
-    const response = await axios.get(youdaoUrl, {
+    // Google Translate TTS API（无需 API key）
+    const googleUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(cleanSentence)}&tl=en&client=tw-ob`;
+    
+    const response = await axios.get(googleUrl, {
       responseType: 'arraybuffer',
       timeout: 15000,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         'Accept': 'audio/mpeg, audio/*;q=0.9, */*;q=0.8',
-        'Referer': 'https://dict.youdao.com'
+        'Referer': 'https://translate.google.com'
       }
     });
     
