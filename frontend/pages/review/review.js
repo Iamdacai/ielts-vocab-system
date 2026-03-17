@@ -304,7 +304,9 @@ Page({
       
       // 等待一小段时间再播放，避免 play/pause 冲突
       setTimeout(() => {
-        const audioUrl = `${app.globalData.apiUrl}/pronunciation/word-audio/${encodeURIComponent(word)}`;
+        // 📝 生产环境使用后端 API，开发阶段可用有道直链测试
+        // const audioUrl = `${app.globalData.apiUrl}/pronunciation/word-audio/${encodeURIComponent(word)}`;
+        const audioUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=2`;
         console.log('播放单词发音:', audioUrl);
         audioContext.src = audioUrl;
         audioContext.play();
@@ -328,7 +330,9 @@ Page({
       
       // 等待一小段时间再播放，避免 play/pause 冲突
       setTimeout(() => {
-        const audioUrl = `${app.globalData.apiUrl}/pronunciation/sentence-audio/${encodeURIComponent(currentWord.example)}`;
+        // 📝 生产环境使用后端 API，开发阶段可用有道直链测试
+        // const audioUrl = `${app.globalData.apiUrl}/pronunciation/sentence-audio/${encodeURIComponent(currentWord.example)}`;
+        const audioUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(currentWord.example)}&type=2`;
         console.log('播放例句发音:', audioUrl);
         audioContext.src = audioUrl;
         audioContext.play();
