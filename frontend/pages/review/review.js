@@ -181,15 +181,15 @@ Page({
           session: {
             id: session.id,
             sessionDate: session.sessionDate,
-            plannedWords: session.planned_words,
-            completedWords: session.completed_words,
+            plannedWords: session.planned_words || session.plannedWords,
+            completedWords: session.completed_words || session.completedWords,
             status: session.status
           },
           words,
-          totalWords: session.planned_words || words.length || 0,
+          totalWords: session.planned_words || session.plannedWords || words.length || 0,
           currentIndex: 0,
           counts: {
-            mastered: session.completed_words || 0,
+            mastered: session.completed_words || session.completedWords || 0,
             pending: pendingCount,
             unknown: 0
           }
@@ -464,11 +464,18 @@ Page({
       if (res.statusCode === 200) {
         const { session: updatedSession } = res.data;
         
+        console.log('后端返回的 updatedSession:', updatedSession);
+        
         const { counts, words } = this.data;
         const newCounts = { ...counts };
         
+        // 🆕 统一字段名（兼容下划线和驼峰）
+        const completedWords = updatedSession.completed_words || updatedSession.completedWords;
+        const plannedWords = updatedSession.planned_words || updatedSession.plannedWords;
+        const sessionId = updatedSession.id || this.data.session.id;
+        
         if (isCorrect) {
-          newCounts.mastered = updatedSession.completed_words;
+          newCounts.mastered = completedWords;
         } else {
           newCounts.unknown++;
         }
@@ -479,12 +486,21 @@ Page({
             : w
         );
         
+        // 🆕 确保 session.id 始终存在
         this.setData({
-          session: updatedSession,
+          session: {
+            id: sessionId,
+            sessionDate: updatedSession.sessionDate || this.data.session.sessionDate,
+            plannedWords: plannedWords,
+            completedWords: completedWords,
+            status: updatedSession.status || this.data.session.status
+          },
           counts: newCounts,
           words: updatedWords,
           currentIndex: this.data.currentIndex + 1
         });
+        
+        console.log('更新后的 session:', this.data.session);
         
         this.showNextWord();
       }
