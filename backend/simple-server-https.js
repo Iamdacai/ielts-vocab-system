@@ -125,39 +125,66 @@ app.get('/api/pronunciation/word-audio/:word', async (req, res) => {
 
 // 🆕 例句音频动态路由（从有道 TTS 获取）
 app.get('/api/pronunciation/sentence-audio/:sentence', async (req, res) => {
-  const { sentence } = req.params;
-  const cleanSentence = decodeURIComponent(sentence).trim();
-  
-  // 例句太长，只取前 50 个字符作为缓存文件名
-  const cacheName = cleanSentence.substring(0, 50).replace(/[^a-zA-Z0-9]/g, '_');
-  const audioPath = path.join(__dirname, 'audio', `sentence_${cacheName}.mp3`);
-  
-  // 先检查本地是否有缓存
-  if (fs.existsSync(audioPath)) {
-    console.log(`[Sentence Audio] Cache hit: ${audioPath}`);
-    res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Accept-Ranges', 'bytes');
-    return res.sendFile(audioPath);
-  }
-  
-  // 本地没有，从有道 TTS 获取（使用英音）
-  console.log(`[Sentence Audio] Cache miss, fetching from Youdao: ${cleanSentence.substring(0, 30)}...`);
   try {
-    // 有道 TTS 支持长文本，但需要截断到合理长度
-    const truncatedSentence = cleanSentence.substring(0, 200);
-    const youdaoUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(truncatedSentence)}&type=1`;
+    const { sentence } = req.params;
+    // 先解码 URL，再清理
+    let cleanSentence = decodeURIComponent(sentence).trim();
+    
+    // 去掉可能的中文翻译部分（如果有）
+    if (cleanSentence.includes('%E5')) {  // 中文字符的 URL 编码开始
+      cleanSentence = cleanSentence.split('%E5')[0].trim();
+    }
+    // 如果还有中文，尝试用空格分割取第一部分
+    const chineseMatch = cleanSentence.match(/[\u4e00-\u9fa5]/);
+    if (chineseMatch) {
+      // 找到中文字符位置，截取之前的英文部分
+      const chineseIndex = cleanSentence.search(/[\u4e00-\u9fa5]/);
+      if (chineseIndex > 0) {
+        cleanSentence = cleanSentence.substring(0, chineseIndex).trim();
+      }
+    }
+    
+    // 限制句子长度（有道 TTS 限制）
+    if (cleanSentence.length > 100) {
+      cleanSentence = cleanSentence.substring(0, 100);
+    }
+    
+    // 生成缓存文件名（使用 MD5 哈希避免特殊字符问题）
+    const crypto = require('crypto');
+    const hash = crypto.createHash('md5').update(cleanSentence).digest('hex');
+    const audioPath = path.join(__dirname, 'audio', `sentence_${hash}.mp3`);
+    
+    // 先检查本地是否有缓存
+    if (fs.existsSync(audioPath)) {
+      console.log(`[Sentence Audio] Cache hit: ${audioPath}`);
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Accept-Ranges', 'bytes');
+      return res.sendFile(audioPath);
+    }
+    
+    // 本地没有，从有道 TTS 获取（使用英音 type=1）
+    console.log(`[Sentence Audio] Fetching: "${cleanSentence}"`);
+    
+    const youdaoUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(cleanSentence)}&type=1`;
     const response = await axios.get(youdaoUrl, {
       responseType: 'arraybuffer',
       timeout: 15000,
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'audio/mpeg, audio/*;q=0.9, */*;q=0.8',
+        'Referer': 'https://dict.youdao.com'
       }
     });
     
+    // 检查响应是否是有效的音频数据
+    if (!response.data || response.data.byteLength === 0) {
+      throw new Error('Empty audio response');
+    }
+    
     // 保存到本地缓存
     fs.writeFileSync(audioPath, response.data);
-    console.log(`[Sentence Audio] Cached: ${audioPath}`);
+    console.log(`[Sentence Audio] Cached: ${audioPath} (${response.data.byteLength} bytes)`);
     
     // 返回音频
     res.setHeader('Content-Type', 'audio/mpeg');
@@ -166,11 +193,12 @@ app.get('/api/pronunciation/sentence-audio/:sentence', async (req, res) => {
     res.send(response.data);
     
   } catch (error) {
-    console.error(`[Sentence Audio] Fetch failed: ${error.message}`);
+    console.error(`[Sentence Audio] Error: ${error.message}`);
+    // 返回一个友好的错误响应，而不是 500
     res.status(500).json({ 
       error: 'TTS service unavailable',
-      sentence: cleanSentence.substring(0, 50),
-      message: '例句发音服务暂不可用'
+      message: error.message,
+      tip: '请检查句子是否只包含英文'
     });
   }
 });
