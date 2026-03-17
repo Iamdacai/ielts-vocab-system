@@ -52,9 +52,16 @@
 }
 
 .word-header {
-  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 30rpx;
   position: relative;
+}
+
+.word-main {
+  flex: 1;
+  text-align: center;
 }
 
 .word-text {
@@ -70,26 +77,26 @@
   font-family: monospace;
 }
 
-/* 🆕 播放按钮 */
-.audio-play-btn {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 40rpx;
+/* 🆕 单词发音小喇叭图标 */
+.word-audio-icon {
+  font-size: 44rpx;
   cursor: pointer;
   padding: 10rpx;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 50%;
-  width: 60rpx;
-  height: 60rpx;
+  width: 70rpx;
+  height: 70rpx;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  margin-left: 20rpx;
 }
 
-.audio-play-btn:active {
-  background: rgba(255, 255, 255, 0.2);
+/* 图标点击效果 */
+.icon-hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+  transform: scale(1.1);
 }
 
 /* 🆕 词库和分类标签 */
@@ -178,10 +185,32 @@
   margin-bottom: 20rpx;
 }
 
+.example-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15rpx;
+}
+
 .example-title {
   font-size: 24rpx;
   color: #9ca3af;
-  margin-bottom: 10rpx;
+  font-weight: bold;
+}
+
+/* 🆕 例句发音小喇叭图标 */
+.example-audio-icon {
+  font-size: 40rpx;
+  cursor: pointer;
+  padding: 8rpx;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  width: 64rpx;
+  height: 64rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .example-text {
@@ -195,22 +224,6 @@
   font-size: 26rpx;
   color: #9ca3af;
   line-height: 1.5;
-}
-
-.audio-buttons {
-  display: flex;
-  gap: 20rpx;
-  margin-top: 20rpx;
-}
-
-.audio-button {
-  flex: 1;
-  background: #374151;
-  color: white;
-  border: none;
-  border-radius: 12rpx;
-  padding: 16rpx;
-  font-size: 24rpx;
 }
 
 /* 同义替换 */
