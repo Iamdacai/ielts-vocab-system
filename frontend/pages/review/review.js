@@ -145,6 +145,8 @@ Page({
     try {
       const res = await getTodaySession();
       
+      console.log('获取复习课响应:', res);
+      
       if (res.statusCode === 200) {
         const data = res.data;
         
@@ -159,12 +161,30 @@ Page({
         
         // 进入复习模式
         const { session, words } = data;
+        
+        console.log('session 对象:', session);
+        console.log('session.id:', session?.id);
+        
+        if (!session || !session.id) {
+          wx.showToast({
+            title: '复习课数据错误',
+            icon: 'error'
+          });
+          return;
+        }
+        
         const pendingCount = words.filter(w => w.item_status === 'pending').length;
         
         this.setData({
           isReviewing: true,
           hasSession: true,
-          session,
+          session: {
+            id: session.id,
+            sessionDate: session.sessionDate,
+            plannedWords: session.planned_words,
+            completedWords: session.completed_words,
+            status: session.status
+          },
           words,
           totalWords: session.planned_words || words.length || 0,
           currentIndex: 0,
@@ -174,6 +194,8 @@ Page({
             unknown: 0
           }
         });
+        
+        console.log('当前 session:', this.data.session);
         
         if (words.length > 0) {
           this.showNextWord();
@@ -411,8 +433,15 @@ Page({
   async saveProgress(result) {
     const { currentWord, session } = this.data;
 
-    if (!currentWord || !session) {
+    console.log('saveProgress - session:', session);
+    console.log('saveProgress - currentWord:', currentWord);
+
+    if (!currentWord || !session || !session.id) {
       console.error('保存进度失败：currentWord 或 session 为空');
+      wx.showToast({
+        title: '保存失败，请重试',
+        icon: 'error'
+      });
       return;
     }
 
@@ -421,7 +450,16 @@ Page({
     const nextStage = calculateNextStage(currentStage, isCorrect);
 
     try {
+      console.log('提交答案:', {
+        sessionId: session.id,
+        wordId: currentWord.id,
+        result,
+        nextStage
+      });
+      
       const res = await submitAnswer(session.id, currentWord.id, result, nextStage);
+      
+      console.log('提交答案响应:', res);
       
       if (res.statusCode === 200) {
         const { session: updatedSession } = res.data;
@@ -452,6 +490,10 @@ Page({
       }
     } catch (err) {
       console.error('保存进度失败:', err);
+      wx.showToast({
+        title: '保存失败',
+        icon: 'error'
+      });
     }
   },
 
