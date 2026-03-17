@@ -92,6 +92,12 @@ Page({
       if (res.statusCode === 200) {
         const { wheelData, todaySession, stats } = res.data;
         
+        // 计算进度百分比
+        let progressPercent = 0;
+        if (todaySession.plannedWords > 0) {
+          progressPercent = Math.round(todaySession.completedWords / todaySession.plannedWords * 100);
+        }
+        
         // 计算九宫格位置（圆圈布局）
         const wheelDataWithPos = wheelData.map((item, index) => {
           const angle = (index * 360 / 8) - 90; // 从顶部开始
@@ -111,6 +117,7 @@ Page({
           wheelData: wheelDataWithPos,
           todaySession,
           stats,
+          progressPercent,
           loading: false
         });
         
