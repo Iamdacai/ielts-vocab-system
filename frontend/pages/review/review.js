@@ -298,17 +298,17 @@ Page({
       return;
     }
 
-    if (this.data.isPlaying) {
-      audioContext.stop();
-    }
-
     try {
-      // 🆕 开发阶段使用有道 TTS 直链（避免域名校验问题）
-      // 生产环境使用后端 API: ${app.globalData.apiUrl}/pronunciation/word-audio/${encodeURIComponent(word)}
-      const audioUrl = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=2`;
-      console.log('播放单词发音:', audioUrl);
-      audioContext.src = audioUrl;
-      audioContext.play();
+      // 🆕 先停止当前播放，再设置新 URL
+      audioContext.stop();
+      
+      // 等待一小段时间再播放，避免 play/pause 冲突
+      setTimeout(() => {
+        const audioUrl = `${app.globalData.apiUrl}/pronunciation/word-audio/${encodeURIComponent(word)}`;
+        console.log('播放单词发音:', audioUrl);
+        audioContext.src = audioUrl;
+        audioContext.play();
+      }, 100);
     } catch (error) {
       console.error('播放失败:', error);
       wx.showToast({ title: '播放失败', icon: 'error' });
@@ -322,13 +322,17 @@ Page({
     const { currentWord, audioContext } = this.data;
     if (!currentWord || !currentWord.example || !audioContext) return;
 
-    if (this.data.isPlaying) {
-      audioContext.stop();
-    }
-
     try {
-      audioContext.src = `${app.globalData.apiUrl}/pronunciation/sentence-audio/${encodeURIComponent(currentWord.example)}`;
-      audioContext.play();
+      // 🆕 先停止当前播放，再设置新 URL
+      audioContext.stop();
+      
+      // 等待一小段时间再播放，避免 play/pause 冲突
+      setTimeout(() => {
+        const audioUrl = `${app.globalData.apiUrl}/pronunciation/sentence-audio/${encodeURIComponent(currentWord.example)}`;
+        console.log('播放例句发音:', audioUrl);
+        audioContext.src = audioUrl;
+        audioContext.play();
+      }, 100);
     } catch (error) {
       console.error('播放失败:', error);
       wx.showToast({ title: '播放失败', icon: 'error' });
