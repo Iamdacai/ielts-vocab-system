@@ -1,4 +1,4 @@
-<!--pages/index/index.wxml - 优化版：九宫格可视化-->
+<!--pages/index/index.wxml - 简化版-->
 <view class="container">
   <!-- 顶部导航栏 -->
   <view class="header">
@@ -16,94 +16,67 @@
   </view>
 
   <view wx:else class="dashboard-section">
-    <!-- 九宫格记忆轮 - 🆕 圆圈布局 -->
-    <view class="card memory-wheel-card">
-      <view class="card-title">📊 记忆九宫格</view>
-      <view class="wheel-container">
-        <view class="memory-wheel-circle">
-          <!-- 8 个阶段圆圈 -->
-          <block wx:for="{{memoryWheelData}}" wx:key="id">
-            <view 
-              class="stage-circle"
-              style="background: {{item.color}}; transform: {{item.transform}};"
-              bindtap="showStageDetail"
-              data-stage="{{item}}">
-              <view class="stage-count">{{item.count}}</view>
-              <view class="stage-label">{{item.label}}</view>
-            </view>
-          </block>
-          
-          <!-- 中心按钮 -->
-          <view class="center-button" bindtap="startReview">
-            <view class="center-text">START</view>
-            <view class="center-subtitle">{{dueWordsCount}}词待复习</view>
-          </view>
+    <!-- 用户信息卡片 -->
+    <view class="card user-card">
+      <view class="user-info">
+        <view class="user-avatar">👤</view>
+        <view class="user-details">
+          <view class="user-name">{{userInfo.nickName || '同学'}}</view>
+          <view class="user-level">雅思备考中</view>
         </view>
       </view>
     </view>
 
-    <!-- 🆕 学习数据概览 -->
+    <!-- 核心统计 -->
     <view class="card">
-      <view class="card-title">📊 学习数据</view>
-      <view class="data-grid">
-        <view class="data-item">
-          <view class="data-icon">📚</view>
+      <view class="card-title">📊 学习概览</view>
+      <view class="data-grid-compact">
+        <view class="data-item-compact">
           <view class="data-value">{{stats.total_words}}</view>
-          <view class="data-label">总词汇量</view>
+          <view class="data-label">总词汇</view>
         </view>
-        <view class="data-item">
-          <view class="data-icon">✅</view>
+        <view class="data-item-compact">
           <view class="data-value success-color">{{stats.mastered_words}}</view>
           <view class="data-label">已掌握</view>
         </view>
-        <view class="data-item">
-          <view class="data-icon">📖</view>
-          <view class="data-value primary-color">{{stats.learning_words}}</view>
-          <view class="data-label">学习中</view>
-        </view>
-        <view class="data-item">
-          <view class="data-icon">⏰</view>
-          <view class="data-value warning-color">{{dueWordsCount}}</view>
+        <view class="data-item-compact">
+          <view class="data-value primary-color">{{dueWordsCount}}</view>
           <view class="data-label">待复习</view>
         </view>
-        <view class="data-item">
-          <view class="data-icon">📊</view>
-          <view class="data-value info-color">{{todayStats.reviewWords}}</view>
-          <view class="data-label">今日复习</view>
+      </view>
+    </view>
+
+    <!-- 今日任务 -->
+    <view class="card">
+      <view class="card-title">📅 今日任务</view>
+      <view class="task-list">
+        <view class="task-item">
+          <view class="task-icon">📖</view>
+          <view class="task-info">
+            <view class="task-title">新词学习</view>
+            <view class="task-desc">目标：{{todayStats.newWords}} 个</view>
+          </view>
+          <button class="task-button primary" bindtap="navigateToLearning">开始</button>
         </view>
-        <view class="data-item">
-          <view class="data-icon">💯</view>
-          <view class="data-value highlight-color">{{stats.avg_mastery_score}}</view>
-          <view class="data-label">平均分</view>
+        <view class="task-item">
+          <view class="task-icon">🔁</view>
+          <view class="task-info">
+            <view class="task-title">复习巩固</view>
+            <view class="task-desc">{{dueWordsCount}} 个待复习</view>
+          </view>
+          <button class="task-button warning" bindtap="navigateToReview">
+            {{dueWordsCount > 0 ? '开始' : '已完成'}}
+          </button>
         </view>
       </view>
     </view>
 
-    <!-- 学习统计 -->
+    <!-- 快捷操作 -->
     <view class="card">
-      <view class="card-title">📈 今日学习</view>
-      <view class="stats-grid">
-        <view class="stat-item">
-          <view class="stat-number primary-color">{{todayStats.newWords}}</view>
-          <view class="stat-label">新学单词</view>
-        </view>
-        <view class="stat-item">
-          <view class="stat-number warning-color">{{todayStats.reviewWords}}</view>
-          <view class="stat-label">待复习</view>
-        </view>
-        <view class="stat-item">
-          <view class="stat-number success-color">{{todayStats.masteredWords}}</view>
-          <view class="stat-label">已掌握</view>
-        </view>
-      </view>
-    </view>
-
-    <!-- 快捷操作 - 🆕 横向排列 -->
-    <view class="card">
-      <view class="card-title">🚀 开始学习</view>
+      <view class="card-title">🚀 快捷入口</view>
       <view class="action-buttons-row">
         <button class="action-button-small primary" bindtap="navigateToLearning">
-          🟢 新词
+          🟢 新词学习
         </button>
         <button class="action-button-small warning" bindtap="navigateToReview">
           🟠 复习
@@ -114,14 +87,15 @@
       </view>
     </view>
 
-    <!-- 功能特色 -->
+    <!-- 学习进度 -->
     <view class="card">
-      <view class="card-title">✨ 功能特色</view>
-      <view class="feature-list">
-        <view class="feature-item">🎯 九宫格艾宾浩斯记忆法</view>
-        <view class="feature-item">📚 剑桥雅思 1-18 完整词汇</view>
-        <view class="feature-item">🔊 智能发音评测</view>
-        <view class="feature-item">📊 个性化学习报告</view>
+      <view class="card-title">📈 掌握率</view>
+      <view class="mastery-section">
+        <view class="mastery-value">{{masteryRate}}%</view>
+        <view class="mastery-bar">
+          <view class="mastery-fill" style="width: {{masteryRate}}%"></view>
+        </view>
+        <view class="mastery-desc">已掌握 {{stats.mastered_words}} / 总计 {{stats.total_words}}</view>
       </view>
     </view>
   </view>

@@ -1,161 +1,293 @@
-<!--pages/review/review.wxml - 剪纸盒风格-->
+<!--pages/review/review.wxml - 复习课管理系统 v2.0-->
 <view class="container">
-  <!-- 顶部进度 -->
-  <view class="header">
-    <view class="progress-info">
-      <text class="progress-text">剪纸盒复习</text>
-      <text class="progress-count">{{currentIndex + 1}} / {{totalWords}}</text>
+  
+  <!-- 模式 1: 九宫格总览模式（默认）-->
+  <view wx:if="{{!isReviewing}}" class="overview-mode">
+    <!-- 导航栏 -->
+    <view class="nav-bar">
+      <view class="back-btn" bindtap="goBack">← 返回</view>
+      <view class="page-title">复习课管理</view>
+      <view class="placeholder"></view>
     </view>
-    <view class="progress-bar">
-      <view class="progress-fill" style="width: {{progress}}%"></view>
-    </view>
-  </view>
-
-  <!-- 单词卡片 -->
-  <view wx:if="{{currentWord}}" class="word-card">
-    <view class="word-header">
-      <view class="word-text">{{currentWord.word}}</view>
-      <view class="word-phonetic">{{currentWord.phonetic}}</view>
-      
-      <!-- 🆕 播放按钮 -->
-      <view class="audio-play-btn" bindtap="playWordAudio">
-        🔊
-      </view>
-    </view>
-
-    <!-- 短语标记 -->
-    <view wx:if="{{currentWord.is_phrase}}" class="phrase-badge">
-      📝 短语
-    </view>
-
-    <!-- 🆕 提示：点击"不认识"查看释义 -->
-    <view wx:if="{{!showAnswer}}" class="hint-section">
-      <view class="hint-icon">🤔</view>
-      <view class="hint-text">这个单词你认识吗？</view>
-      <view class="hint-subtext">如果不认识，请点击下方"✗ 不认识"按钮</view>
-    </view>
-
-    <!-- 🆕 释义和例句（点击"不认识"后显示） -->
-    <view wx:if="{{showAnswer}}" class="answer-section">
-      <!-- 释义 -->
-      <view class="translation-section">
-        <view class="translation-title">📖 释义</view>
-        <view class="translation-text">{{currentWord.translation}}</view>
-        <view wx:if="{{currentWord.pos}}" class="pos-tag">{{currentWord.pos}}</view>
-      </view>
-
-      <!-- 例句（全部显示） -->
-      <view wx:if="{{currentWord.examples && currentWord.examples.length > 0}}" class="example-section">
-        <view class="example-title">💬 例句</view>
-        <view wx:for="{{currentWord.examples}}" wx:key="*this" class="example-item">
-          <view class="example-text">{{item}}</view>
+    
+    <!-- 九宫格总览区 -->
+    <view class="wheel-section">
+      <view class="section-title">📊 记忆九宫格</view>
+      <view class="wheel-container">
+        <!-- 九宫格圆圈布局 -->
+        <view class="wheel-center">
+          <view class="center-text">{{stats.totalWords}}</view>
+          <view class="center-label">总单词</view>
         </view>
         
-        <!-- 发音按钮 -->
-        <view class="audio-buttons">
-          <button class="audio-button" bindtap="playWordAudio">
-            🔈 单词发音
-          </button>
-          <button wx:if="{{currentWord.example}}" class="audio-button" bindtap="playExampleAudio">
-            🔈 例句发音
-          </button>
+        <!-- 8 个阶段圆圈 -->
+        <view wx:for="{{wheelData}}" wx:key="id" 
+              class="wheel-node"
+              style="transform: {{item.transform}}; background: {{item.color}};">
+          <view class="node-count">{{item.count}}</view>
+          <view class="node-label">{{item.label}}</view>
+        </view>
+      </view>
+      
+      <!-- 图例 -->
+      <view class="wheel-legend">
+        <view class="legend-item">
+          <view class="legend-dot" style="background: #ef4444;"></view>
+          <text>新学</text>
+        </view>
+        <view class="legend-item">
+          <view class="legend-dot" style="background: #f59e0b;"></view>
+          <text>复习中</text>
+        </view>
+        <view class="legend-item">
+          <view class="legend-dot" style="background: #22c55e;"></view>
+          <text>已掌握</text>
         </view>
       </view>
     </view>
     
-    <!-- 🆕 发音练习 -->
-    <view class="pronunciation-practice">
-      <button class="practice-button" bindtap="startPronunciationPractice">
-        🎤 跟读练习
-      </button>
-      <view wx:if="{{isRecording}}" class="recording-status">
-        <view class="recording-indicator"></view>
-        <text>正在录音... {{recordingTime}}s</text>
+    <!-- 今日复习课信息区 -->
+    <view class="session-section">
+      <view class="section-title">📅 今日复习计划</view>
+      
+      <view wx:if="{{todaySession.hasSession}}" class="session-card">
+        <view class="session-header">
+          <view class="session-status {{todaySession.status}}">
+            {{todaySession.status === 'pending' ? '未开始' : todaySession.status === 'in_progress' ? '进行中' : '已完成'}}
+          </view>
+          <view class="session-date">{{today}}</view>
+        </view>
+        
+        <view class="session-info">
+          <view class="info-row">
+            <text class="info-label">待复习单词：</text>
+            <text class="info-value highlight">{{todaySession.plannedWords - todaySession.completedWords}} 个</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">已完成：</text>
+            <text class="info-value">{{todaySession.completedWords}} / {{todaySession.plannedWords}}</text>
+          </view>
+          <view class="info-row">
+            <text class="info-label">预计时长：</text>
+            <text class="info-value">{{todaySession.estimatedMinutes}} 分钟</text>
+          </view>
+        </view>
+        
+        <!-- 进度条 -->
+        <view wx:if="{{todaySession.plannedWords > 0}}" class="session-progress">
+          <view class="progress-bar">
+            <view class="progress-fill" style="width: {{todaySession.completedWords / todaySession.plannedWords * 100}}%"></view>
+          </view>
+          <view class="progress-text">{{Math.round(todaySession.completedWords / todaySession.plannedWords * 100)}}%</view>
+        </view>
+        
+        <!-- 开始复习按钮 -->
+        <button wx:if="{{todaySession.status !== 'completed'}}" 
+                class="start-button" 
+                bindtap="startReview">
+          {{todaySession.status === 'pending' ? '开始复习' : '继续复习'}}
+        </button>
+        
+        <!-- 已完成提示 -->
+        <view wx:if="{{todaySession.status === 'completed'}}" class="complete-message">
+          🎉 今天复习任务已完成！
+        </view>
       </view>
-      <view wx:if="{{pronunciationResult}}" class="pronunciation-result">
-        <view class="score-display">
-          <text class="score-number">{{pronunciationResult.score}}</text>
-          <text class="score-label">分</text>
-        </view>
-        <view class="feedback-text">{{pronunciationResult.feedback}}</view>
-        <view class="score-details" wx:if="{{pronunciationResult.accuracy}}">
-          <text>准确度：{{pronunciationResult.accuracy}}</text>
-          <text wx:if="{{pronunciationResult.fluency}}"> | 流利度：{{pronunciationResult.fluency}}</text>
-        </view>
-        <button class="retry-button" bindtap="startPronunciationPractice">
-          🔄 重新练习
+      
+      <view wx:else class="session-card empty">
+        <view class="empty-icon">🎉</view>
+        <view class="empty-text">太棒了！今天没有待复习的单词</view>
+        <button class="learn-button" bindtap="goToLearning">
+          去学习新词
         </button>
       </view>
     </view>
-
-    <!-- 同义替换 -->
-    <view wx:if="{{currentWord.synonyms && currentWord.synonyms.length > 0}}" class="synonyms-section">
-      <view class="synonyms-title">📚 同义替换</view>
-      <view class="synonyms-list">
-        <block wx:for="{{currentWord.synonyms}}" wx:key="*this">
-          <view class="synonym-item">{{item}}</view>
-        </block>
-      </view>
-    </view>
-  </view>
-
-  <!-- 剪纸盒判断按钮 -->
-  <view class="paper-cut-actions">
-    <view class="action-buttons">
-      <button class="action-button unknown" bindtap="handleUnknown">
-        ✗ 不认识
-      </button>
-      <button class="action-button known" bindtap="handleKnown">
-        ✓ 认识
-      </button>
-    </view>
     
-    <view class="hint-text">
-      💡 认识选✓，不认识选✗，系统会自动安排复习
-    </view>
-  </view>
-
-  <!-- 三箱统计 -->
-  <view class="three-boxes">
-    <view class="box mastered">
-      <view class="box-icon">✅</view>
-      <view class="box-count">{{counts.mastered}}</view>
-      <view class="box-label">已掌握</view>
-    </view>
-    <view class="box pending">
-      <view class="box-icon">⏳</view>
-      <view class="box-count">{{counts.pending}}</view>
-      <view class="box-label">待定</view>
-    </view>
-    <view class="box unknown">
-      <view class="box-icon">❌</view>
-      <view class="box-count">{{counts.unknown}}</view>
-      <view class="box-label">生词</view>
-    </view>
-  </view>
-
-  <!-- 完成提示 -->
-  <view wx:if="{{showComplete}}" class="complete-modal">
-    <view class="complete-content">
-      <view class="complete-icon">🎉</view>
-      <view class="complete-title">完成！</view>
-      <view class="complete-stats">
-        <view class="complete-stat">
-          <view class="stat-value">{{totalWords}}</view>
-          <view class="stat-label">复习单词</view>
-        </view>
-        <view class="complete-stat">
-          <view class="stat-value success-color">{{counts.mastered}}</view>
+    <!-- 历史统计（可选）-->
+    <view class="stats-section">
+      <view class="section-title">📈 学习统计</view>
+      <view class="stats-grid">
+        <view class="stat-card">
+          <view class="stat-value">{{stats.masteredWords}}</view>
           <view class="stat-label">已掌握</view>
         </view>
-        <view class="complete-stat">
-          <view class="stat-value warning-color">{{counts.unknown}}</view>
-          <view class="stat-label">需强化</view>
+        <view class="stat-card">
+          <view class="stat-value">{{stats.masteryRate}}%</view>
+          <view class="stat-label">掌握率</view>
+        </view>
+        <view class="stat-card">
+          <view class="stat-value">{{todaySession.plannedWords}}</view>
+          <view class="stat-label">今日复习</view>
         </view>
       </view>
-      <button class="complete-button" bindtap="finishReview">
-        完成本次复习
-      </button>
     </view>
   </view>
+  
+  <!-- 模式 2: 复习答题模式 -->
+  <view wx:if="{{isReviewing}}" class="reviewing-mode">
+    <!-- 顶部进度 -->
+    <view class="header">
+      <view class="progress-info">
+        <text class="progress-text">剪纸盒复习</text>
+        <text class="progress-count">{{currentIndex + 1}} / {{totalWords}}</text>
+      </view>
+      <view class="progress-bar">
+        <view class="progress-fill" style="width: {{progress}}%"></view>
+      </view>
+    </view>
+
+    <!-- 单词卡片 -->
+    <view wx:if="{{currentWord}}" class="word-card">
+      <view class="word-header">
+        <view class="word-text">{{currentWord.word}}</view>
+        <view class="word-phonetic">{{currentWord.phonetic}}</view>
+        
+        <!-- 播放按钮 -->
+        <view class="audio-play-btn" bindtap="playWordAudio">
+          🔊
+        </view>
+      </view>
+
+      <!-- 短语标记 -->
+      <view wx:if="{{currentWord.is_phrase}}" class="phrase-badge">
+        📝 短语
+      </view>
+
+      <!-- 提示：点击"不认识"查看释义 -->
+      <view wx:if="{{!showAnswer}}" class="hint-section">
+        <view class="hint-icon">🤔</view>
+        <view class="hint-text">这个单词你认识吗？</view>
+        <view class="hint-subtext">如果不认识，请点击下方"✗ 不认识"按钮</view>
+      </view>
+
+      <!-- 释义和例句（点击"不认识"后显示） -->
+      <view wx:if="{{showAnswer}}" class="answer-section">
+        <!-- 释义 -->
+        <view class="translation-section">
+          <view class="translation-title">📖 释义</view>
+          <view class="translation-text">{{currentWord.translation}}</view>
+          <view wx:if="{{currentWord.pos}}" class="pos-tag">{{currentWord.pos}}</view>
+        </view>
+
+        <!-- 例句 -->
+        <view wx:if="{{currentWord.examples && currentWord.examples.length > 0}}" class="example-section">
+          <view class="example-title">💬 例句</view>
+          <view wx:for="{{currentWord.examples}}" wx:key="*this" class="example-item">
+            <view class="example-text">{{item}}</view>
+          </view>
+          
+          <!-- 发音按钮 -->
+          <view class="audio-buttons">
+            <button class="audio-button" bindtap="playWordAudio">
+              🔈 单词发音
+            </button>
+            <button wx:if="{{currentWord.example}}" class="audio-button" bindtap="playExampleAudio">
+              🔈 例句发音
+            </button>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 发音练习 -->
+      <view class="pronunciation-practice">
+        <button class="practice-button" bindtap="startPronunciationPractice">
+          🎤 跟读练习
+        </button>
+        <view wx:if="{{isRecording}}" class="recording-status">
+          <view class="recording-indicator"></view>
+          <text>正在录音... {{recordingTime}}s</text>
+        </view>
+        <view wx:if="{{pronunciationResult}}" class="pronunciation-result">
+          <view class="score-display">
+            <text class="score-number">{{pronunciationResult.score}}</text>
+            <text class="score-label">分</text>
+          </view>
+          <view class="feedback-text">{{pronunciationResult.feedback}}</view>
+          <view class="score-details" wx:if="{{pronunciationResult.accuracy}}">
+            <text>准确度：{{pronunciationResult.accuracy}}</text>
+            <text wx:if="{{pronunciationResult.fluency}}"> | 流利度：{{pronunciationResult.fluency}}</text>
+          </view>
+          <button class="retry-button" bindtap="startPronunciationPractice">
+            🔄 重新练习
+          </button>
+        </view>
+      </view>
+
+      <!-- 同义替换 -->
+      <view wx:if="{{currentWord.synonyms && currentWord.synonyms.length > 0}}" class="synonyms-section">
+        <view class="synonyms-title">📚 同义替换</view>
+        <view class="synonyms-list">
+          <block wx:for="{{currentWord.synonyms}}" wx:key="*this">
+            <view class="synonym-item">{{item}}</view>
+          </block>
+        </view>
+      </view>
+    </view>
+
+    <!-- 剪纸盒判断按钮 -->
+    <view class="paper-cut-actions">
+      <view class="action-buttons">
+        <button class="action-button unknown" bindtap="handleUnknown">
+          ✗ 不认识
+        </button>
+        <button class="action-button known" bindtap="handleKnown">
+          ✓ 认识
+        </button>
+      </view>
+      
+      <view class="hint-text">
+        💡 认识选✓，不认识选✗，系统会自动安排复习
+      </view>
+    </view>
+
+    <!-- 三箱统计 -->
+    <view class="three-boxes">
+      <view class="box mastered">
+        <view class="box-icon">✅</view>
+        <view class="box-count">{{counts.mastered}}</view>
+        <view class="box-label">已掌握</view>
+      </view>
+      <view class="box pending">
+        <view class="box-icon">⏳</view>
+        <view class="box-count">{{counts.pending}}</view>
+        <view class="box-label">待定</view>
+      </view>
+      <view class="box unknown">
+        <view class="box-icon">❌</view>
+        <view class="box-count">{{counts.unknown}}</view>
+        <view class="box-label">生词</view>
+      </view>
+    </view>
+
+    <!-- 完成提示 -->
+    <view wx:if="{{showComplete}}" class="complete-modal">
+      <view class="complete-content">
+        <view class="complete-icon">🎉</view>
+        <view class="complete-title">完成！</view>
+        <view class="complete-stats">
+          <view class="complete-stat">
+            <view class="stat-value">{{totalWords}}</view>
+            <view class="stat-label">复习单词</view>
+          </view>
+          <view class="complete-stat">
+            <view class="stat-value success-color">{{counts.mastered}}</view>
+            <view class="stat-label">已掌握</view>
+          </view>
+          <view class="complete-stat">
+            <view class="stat-value warning-color">{{counts.unknown}}</view>
+            <view class="stat-label">需强化</view>
+          </view>
+        </view>
+        <button class="complete-button" bindtap="finishReview">
+          完成本次复习
+        </button>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 加载中 -->
+  <view wx:if="{{loading}}" class="loading-container">
+    <view class="loading-text">加载中...</view>
+  </view>
+  
 </view>

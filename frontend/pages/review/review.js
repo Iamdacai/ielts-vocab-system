@@ -1,22 +1,41 @@
-// pages/review/review.js - 复习课模式
+// pages/review/review.js - 复习课管理系统 v2.0
 const app = getApp();
-import { calculateNextStage, calculateNextReviewDate } from '../../utils/memoryWheel';
+import { calculateNextStage, calculateNextReviewDate, REVIEW_STAGES } from '../../utils/memoryWheel';
 import { getTodaySession, submitAnswer } from '../../utils/reviewSession';
 
 Page({
   data: {
-    // 复习课信息
+    // 模式切换
+    isReviewing: false,  // false=九宫格模式，true=答题模式
+    loading: true,
+    today: '',
+    
+    // 九宫格数据
+    wheelData: [],
+    stats: {
+      totalWords: 0,
+      masteredWords: 0,
+      masteryRate: 0
+    },
+    
+    // 今日复习课
+    todaySession: {
+      hasSession: false,
+      plannedWords: 0,
+      completedWords: 0,
+      status: 'none',
+      estimatedMinutes: 0
+    },
+    
+    // 复习答题模式数据
     session: null,
     hasSession: false,
-
-    // 单词列表
     words: [],
     currentWord: null,
     currentIndex: 0,
     totalWords: 0,
     progress: 0,
-    loading: true,
-
+    
     // 音频和录音
     audioContext: null,
     isPlaying: false,
@@ -25,24 +44,180 @@ Page({
     recordingTimer: null,
     recorderManager: null,
     pronunciationResult: null,
-
+    
     // 界面状态
     showComplete: false,
     reviewResults: [],
-    showAnswer: false,  // 是否显示答案
-
+    showAnswer: false,
+    
     // 复习课统计
     counts: {
-      correct: 0,
-      wrong: 0,
-      pending: 0
+      mastered: 0,
+      pending: 0,
+      unknown: 0
     }
   },
 
   onLoad() {
+    // 设置今日日期
+    const today = new Date();
+    this.setData({
+      today: `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+    });
+    
     this.initAudio();
     this.initRecorder();
-    this.loadReviewSession();
+    this.loadDashboard();
+  },
+
+  /**
+   * 加载复习页面 Dashboard（九宫格 + 今日复习课）
+   */
+  async loadDashboard() {
+    wx.showLoading({ title: '加载中...' });
+    
+    try {
+      const res = await new Promise((resolve, reject) => {
+        wx.request({
+          url: `${app.globalData.apiUrl}/review/dashboard`,
+          method: 'GET',
+          header: {
+            'Authorization': `Bearer ${wx.getStorageSync('token')}`
+          },
+          success: resolve,
+          fail: reject
+        });
+      });
+      
+      if (res.statusCode === 200) {
+        const { wheelData, todaySession, stats } = res.data;
+        
+        // 计算九宫格位置（圆圈布局）
+        const wheelDataWithPos = wheelData.map((item, index) => {
+          const angle = (index * 360 / 8) - 90; // 从顶部开始
+          const radius = 120; // 圆圈中心到页面中心的距离
+          const radian = angle * Math.PI / 180;
+          const centerX = 150 + radius * Math.cos(radian);
+          const centerY = 150 + radius * Math.sin(radian);
+          const transform = `translate(${centerX - 40}px, ${centerY - 40}px)`;
+          
+          return {
+            ...item,
+            transform
+          };
+        });
+        
+        this.setData({
+          wheelData: wheelDataWithPos,
+          todaySession,
+          stats,
+          loading: false
+        });
+        
+        wx.hideLoading();
+      } else {
+        throw new Error('加载失败');
+      }
+    } catch (err) {
+      console.error('加载 Dashboard 失败:', err);
+      this.setData({ loading: false });
+      wx.hideLoading();
+      wx.showToast({
+        title: '加载失败',
+        icon: 'error'
+      });
+    }
+  },
+
+  /**
+   * 开始复习
+   */
+  async startReview() {
+    wx.showLoading({ title: '进入复习...' });
+    
+    try {
+      const res = await getTodaySession();
+      
+      if (res.statusCode === 200) {
+        const data = res.data;
+        
+        if (!data.hasSession) {
+          wx.showModal({
+            title: '太棒了！',
+            content: '今天没有待复习的单词',
+            showCancel: false
+          });
+          return;
+        }
+        
+        // 进入复习模式
+        const { session, words } = data;
+        const pendingCount = words.filter(w => w.item_status === 'pending').length;
+        
+        this.setData({
+          isReviewing: true,
+          hasSession: true,
+          session,
+          words,
+          totalWords: session.planned_words || words.length || 0,
+          currentIndex: 0,
+          counts: {
+            mastered: session.completed_words || 0,
+            pending: pendingCount,
+            unknown: 0
+          }
+        });
+        
+        if (words.length > 0) {
+          this.showNextWord();
+        }
+        
+        wx.hideLoading();
+      } else {
+        throw new Error('加载复习课失败');
+      }
+    } catch (err) {
+      console.error('开始复习失败:', err);
+      wx.hideLoading();
+      wx.showToast({
+        title: '加载失败',
+        icon: 'error'
+      });
+    }
+  },
+
+  /**
+   * 返回九宫格模式
+   */
+  goBack() {
+    if (this.data.isReviewing) {
+      // 如果在复习模式中，确认是否退出
+      wx.showModal({
+        title: '确认退出',
+        content: '退出后复习进度将自动保存，下次可以继续',
+        success: (res) => {
+          if (res.confirm) {
+            this.setData({
+              isReviewing: false
+            });
+            // 重新加载 Dashboard
+            this.loadDashboard();
+          }
+        }
+      });
+    } else {
+      // 返回上一页
+      wx.navigateBack();
+    }
+  },
+
+  /**
+   * 跳转到学习页面
+   */
+  goToLearning() {
+    wx.navigateTo({
+      url: '/pages/learning/learning'
+    });
   },
 
   /**
@@ -63,67 +238,6 @@ Page({
     });
 
     this.setData({ audioContext });
-  },
-
-  /**
-   * 加载复习课
-   */
-  async loadReviewSession() {
-    wx.showLoading({ title: '加载中...' });
-    
-    try {
-      const res = await getTodaySession();
-      
-      if (res.statusCode === 200) {
-        const data = res.data;
-        
-        if (!data.hasSession) {
-          // 没有复习课
-          this.setData({ loading: false, hasSession: false });
-          wx.showModal({
-            title: '太棒了！',
-            content: '今天没有待复习的单词',
-            showCancel: false,
-            success: () => wx.navigateBack()
-          });
-          return;
-        }
-        
-        // 有复习课
-        const { session, words } = data;
-        const pendingCount = words.filter(w => w.item_status === 'pending').length;
-        
-        this.setData({
-          hasSession: true,
-          session,
-          words,
-          totalWords: session.planned_words || words.length || 0,
-          currentIndex: 0,
-          loading: false,
-          counts: {
-            correct: session.completed_words || 0,
-            wrong: 0,
-            pending: pendingCount
-          }
-        });
-        
-        if (words.length > 0) {
-          this.showNextWord();
-        }
-        
-        wx.hideLoading();
-      } else {
-        throw new Error('加载失败');
-      }
-    } catch (err) {
-      console.error('加载复习课失败:', err);
-      this.setData({ loading: false });
-      wx.hideLoading();
-      wx.showToast({
-        title: '加载失败',
-        icon: 'error'
-      });
-    }
   },
 
   /**
@@ -154,7 +268,7 @@ Page({
   },
 
   /**
-   * 播放单词发音 - 🆕 修复：确保正确获取 cleanWord
+   * 播放单词发音
    */
   playWordAudio() {
     const { currentWord, audioContext } = this.data;
@@ -205,6 +319,7 @@ Page({
 
     try {
       audioContext.src = `${app.globalData.apiUrl}/pronunciation/sentence-audio/${encodeURIComponent(currentWord.example)}`;
+      audioContext.play();
     } catch (error) {
       console.error('播放失败:', error);
       wx.showToast({ title: '播放失败', icon: 'error' });
@@ -212,31 +327,27 @@ Page({
   },
 
   /**
-   * 🆕 处理认识 - 如果已显示答案，可以直接记录结果
+   * 处理认识
    */
   handleKnown() {
     const { showAnswer } = this.data;
 
     if (showAnswer) {
-      // 已显示答案，直接记录
       this.recordResult('known');
     } else {
-      // 未显示答案，认为认识，直接下一个
       this.recordResult('known');
     }
   },
 
   /**
-   * 🆕 处理不认识 - 先显示答案，再次点击才记录结果
+   * 处理不认识
    */
   handleUnknown() {
     const { showAnswer } = this.data;
 
     if (!showAnswer) {
-      // 第一次点击：显示答案
       this.setData({ showAnswer: true });
     } else {
-      // 第二次点击：记录结果并进入下一个单词
       this.recordResult('unknown');
     }
   },
@@ -245,9 +356,8 @@ Page({
    * 记录学习结果
    */
   recordResult(result) {
-    const { currentWord, currentIndex, words, counts } = this.data;
+    const { currentWord, counts } = this.data;
 
-    // 添加 null 检查
     if (!currentWord) {
       console.error('currentWord is null');
       return;
@@ -276,14 +386,10 @@ Page({
 
     // 记录到后端
     this.saveProgress(result);
-
-    // 下一个单词
-    this.setData({ currentIndex: currentIndex + 1 });
-    this.showNextWord();
   },
 
   /**
-   * 保存学习进度（复习课模式）
+   * 保存学习进度
    */
   async saveProgress(result) {
     const { currentWord, session } = this.data;
@@ -293,7 +399,6 @@ Page({
       return;
     }
 
-    // 计算下一阶段
     const currentStage = currentWord.stage || 0;
     const isCorrect = result === 'known';
     const nextStage = calculateNextStage(currentStage, isCorrect);
@@ -304,17 +409,15 @@ Page({
       if (res.statusCode === 200) {
         const { session: updatedSession } = res.data;
         
-        // 更新界面统计
         const { counts, words } = this.data;
         const newCounts = { ...counts };
         
         if (isCorrect) {
-          newCounts.correct = updatedSession.completedWords;
+          newCounts.mastered = updatedSession.completed_words;
         } else {
-          newCounts.wrong++;
+          newCounts.unknown++;
         }
         
-        // 更新单词状态
         const updatedWords = words.map(w => 
           w.id === currentWord.id 
             ? { ...w, item_status: isCorrect ? 'correct' : 'wrong', result }
@@ -324,10 +427,11 @@ Page({
         this.setData({
           session: updatedSession,
           counts: newCounts,
-          words: updatedWords
+          words: updatedWords,
+          currentIndex: this.data.currentIndex + 1
         });
         
-        console.log(`[复习课] 进度：${updatedSession.completedWords}/${updatedSession.plannedWords}`);
+        this.showNextWord();
       }
     } catch (err) {
       console.error('保存进度失败:', err);
@@ -351,21 +455,16 @@ Page({
     });
 
     setTimeout(() => {
-      wx.navigateBack();
+      this.setData({
+        isReviewing: false,
+        showComplete: false
+      });
+      this.loadDashboard();
     }, 1500);
   },
 
-  onUnload() {
-    if (this.data.audioContext) {
-      this.data.audioContext.destroy();
-    }
-    if (this.data.recorderManager) {
-      this.data.recorderManager.stop();
-    }
-  },
-
   /**
-   * 🆕 初始化录音管理器
+   * 初始化录音管理器
    */
   initRecorder() {
     const recorderManager = wx.getRecorderManager();
@@ -400,7 +499,7 @@ Page({
   },
 
   /**
-   * 🆕 开始录音计时
+   * 开始录音计时
    */
   startRecordingTimer() {
     const timer = setInterval(() => {
@@ -417,7 +516,7 @@ Page({
   },
 
   /**
-   * 🆕 停止录音计时
+   * 停止录音计时
    */
   stopRecordingTimer() {
     if (this.data.recordingTimer) {
@@ -427,7 +526,7 @@ Page({
   },
 
   /**
-   * 🆕 开始发音练习
+   * 开始发音练习
    */
   startPronunciationPractice() {
     const { currentWord, recorderManager, isRecording } = this.data;
@@ -479,7 +578,7 @@ Page({
   },
 
   /**
-   * 🆕 停止发音练习
+   * 停止发音练习
    */
   stopPronunciationPractice() {
     const { recorderManager } = this.data;
@@ -494,7 +593,7 @@ Page({
   },
 
   /**
-   * 🆕 上传发音进行评分
+   * 上传发音进行评分
    */
   uploadPronunciation(tempFilePath) {
     const { currentWord } = this.data;
@@ -567,5 +666,14 @@ Page({
         });
       }
     });
+  },
+
+  onUnload() {
+    if (this.data.audioContext) {
+      this.data.audioContext.destroy();
+    }
+    if (this.data.recorderManager) {
+      this.data.recorderManager.stop();
+    }
   }
 });

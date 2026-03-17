@@ -1,13 +1,5 @@
-// pages/index/index.js - 优化版：九宫格可视化
+// pages/index/index.js - 简化版
 const app = getApp();
-import { 
-  countWordsByStage, 
-  getDueWords, 
-  calculateMasteryRate,
-  calculateArcPath,
-  getSectorCenter,
-  REVIEW_STAGES
-} from '../../utils/memoryWheel';
 
 Page({
   data: {
@@ -102,76 +94,6 @@ Page({
       if (statsRes.statusCode === 200) {
         const stats = statsRes.data;
         
-        // 加载单词数据用于九宫格
-        const wordsRes = await new Promise((resolve, reject) => {
-          wx.request({
-            url: `${app.globalData.apiUrl}/words/all`,
-            method: 'GET',
-            header: {
-              'Authorization': `Bearer ${app.globalData.token}`
-            },
-            success: resolve,
-            fail: reject
-          });
-        });
-
-        let wheelData = [];
-        let dueCount = 0;
-        let masteryRate = 0;
-
-        if (wordsRes.statusCode === 200) {
-          const words = wordsRes.data.words || wordsRes.data || [];
-          
-          // 计算九宫格数据（圆圈布局）
-          const stageCounts = countWordsByStage(words);
-          wheelData = stageCounts.map((stage, index) => {
-            // 计算圆圈位置（围绕中心点 160rpx 半径的圆）
-            const angle = (index * 360 / 8) - 90; // 从顶部开始
-            const radius = 125; // 圆圈中心到页面中心的距离
-            const radian = angle * Math.PI / 180;
-            const centerX = 160 + radius * Math.cos(radian);
-            const centerY = 160 + radius * Math.sin(radian);
-            const transform = `translate(${centerX - 35}px, ${centerY - 35}px)`;
-            
-            return {
-              id: stage.id,
-              color: stage.color,
-              count: stage.count,
-              label: stage.label,
-              transform,
-              angle,
-              radius
-            };
-          });
-
-          // 计算待复习数量
-          const dueWords = getDueWords(words);
-          dueCount = dueWords.length;
-
-          // 计算掌握率
-          masteryRate = calculateMasteryRate(words);
-        } else {
-          // API 请求失败时，初始化空的九宫格数据（圆圈布局）
-          wheelData = REVIEW_STAGES.map((stage, index) => {
-            const angle = (index * 360 / 8) - 90;
-            const radius = 125;
-            const radian = angle * Math.PI / 180;
-            const centerX = 160 + radius * Math.cos(radian);
-            const centerY = 160 + radius * Math.sin(radian);
-            const transform = `translate(${centerX - 35}px, ${centerY - 35}px)`;
-            
-            return {
-              id: stage.id,
-              color: stage.color,
-              count: 0,
-              label: stage.label,
-              transform,
-              angle,
-              radius
-            };
-          });
-        }
-
         // 🆕 从后端统计数据中获取今日学习数据
         const todayStats = {
           newWords: stats.today_new_words || 0,
@@ -179,14 +101,18 @@ Page({
           masteredWords: stats.mastered_words || 0
         };
         
-        // 🆕 使用后端返回的待复习单词数（更准确）
-        const finalDueCount = stats.due_words_count !== undefined ? stats.due_words_count : dueCount;
+        // 🆕 使用后端返回的待复习单词数
+        const dueCount = stats.due_words_count || 0;
+        
+        // 🆕 计算掌握率
+        const totalWords = stats.total_words || 0;
+        const masteredWords = stats.mastered_words || 0;
+        const masteryRate = totalWords > 0 ? Math.round((masteredWords / totalWords) * 100) : 0;
         
         this.setData({
           stats,
-          todayStats,  // 🆕 更新今日学习统计
-          memoryWheelData: wheelData,
-          dueWordsCount: finalDueCount,  // 🆕 使用后端数据
+          todayStats,
+          dueWordsCount: dueCount,
           masteryRate,
           loading: false
         });
@@ -258,16 +184,10 @@ Page({
   },
 
   startReview() {
-    if (this.data.dueWordsCount > 0) {
-      wx.navigateTo({
-        url: '/pages/review/review'
-      });
-    } else {
-      wx.showToast({
-        title: '太棒了！没有待复习的单词',
-        icon: 'success'
-      });
-    }
+    // 直接跳转到复习页面（显示九宫格）
+    wx.navigateTo({
+      url: '/pages/review/review'
+    });
   },
 
   navigateToLearning() {

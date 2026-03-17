@@ -527,6 +527,116 @@ app.post('/api/words/progress', async (req, res) => {
 
 // 🆕 复习课管理 API
 
+// 🆕 复习页面 Dashboard 接口（九宫格 + 今日复习课）
+app.get('/api/review/dashboard', async (req, res) => {
+  try {
+    const db = await initializeDatabase();
+    const userId = 1; // 默认用户 ID
+    
+    // 1. 获取所有单词的进度数据
+    const words = await db.all(`
+      SELECT 
+        w.id,
+        w.word,
+        w.phonetic,
+        w.part_of_speech,
+        w.definition,
+        w.example_sentences,
+        p.stage,
+        p.next_review_at,
+        p.mastery_score
+      FROM ielts_words w
+      LEFT JOIN user_word_progress p ON w.id = p.word_id AND p.user_id = ?
+      WHERE p.user_id = ? OR p.user_id IS NULL
+    `, [userId, userId]);
+    
+    // 2. 计算九宫格数据（8 个阶段）
+    const REVIEW_STAGES = [
+      { id: 0, label: '新学', days: 0, color: '#ef4444' },
+      { id: 1, label: '第 1 天', days: 1, color: '#f59e0b' },
+      { id: 2, label: '第 2 天', days: 2, color: '#f59e0b' },
+      { id: 3, label: '第 4 天', days: 4, color: '#f59e0b' },
+      { id: 4, label: '第 7 天', days: 7, color: '#f59e0b' },
+      { id: 5, label: '第 15 天', days: 15, color: '#22c55e' },
+      { id: 6, label: '第 21 天', days: 21, color: '#22c55e' },
+      { id: 7, label: '已掌握', days: 30, color: '#22c55e' },
+    ];
+    
+    const wheelData = REVIEW_STAGES.map(stage => ({
+      id: stage.id,
+      label: stage.label,
+      color: stage.color,
+      count: words.filter(w => (w.stage || 0) === stage.id).length
+    }));
+    
+    // 3. 获取今日复习课
+    const today = new Date().toISOString().split('T')[0];
+    const session = await db.get(`
+      SELECT * FROM review_sessions
+      WHERE user_id = ? AND session_date = ?
+    `, [userId, today]);
+    
+    // 4. 计算待复习单词数（今天需要复习的）
+    const todayStats = await db.get(`
+      SELECT COUNT(*) as count FROM user_word_progress
+      WHERE user_id = ? 
+        AND next_review_at <= datetime('now', 'start of day')
+        AND mastery_score < 75
+    `, [userId]);
+    
+    const dueWordsCount = todayStats ? todayStats.count : 0;
+    
+    // 5. 计算统计数据
+    const totalWords = words.length;
+    const masteredWords = words.filter(w => (w.stage || 0) >= 5).length;
+    const masteryRate = totalWords > 0 ? Math.round((masteredWords / totalWords) * 100) : 0;
+    
+    // 6. 构建今日复习课信息
+    let todaySession = {
+      hasSession: false,
+      plannedWords: 0,
+      completedWords: 0,
+      status: 'none',
+      estimatedMinutes: 0
+    };
+    
+    if (session) {
+      todaySession = {
+        hasSession: true,
+        plannedWords: session.planned_words || 0,
+        completedWords: session.completed_words || 0,
+        status: session.status || 'pending',
+        estimatedMinutes: Math.ceil((session.planned_words - session.completed_words) * 20 / 60) // 每个单词 20 秒
+      };
+    } else if (dueWordsCount > 0) {
+      todaySession = {
+        hasSession: true,
+        plannedWords: dueWordsCount,
+        completedWords: 0,
+        status: 'pending',
+        estimatedMinutes: Math.ceil(dueWordsCount * 20 / 60)
+      };
+    }
+    
+    res.json({
+      wheelData,
+      todaySession,
+      stats: {
+        totalWords,
+        masteredWords,
+        masteryRate
+      }
+    });
+    
+  } catch (error) {
+    console.error('获取复习页面数据失败:', error);
+    res.status(500).json({ 
+      error: '获取复习页面数据失败',
+      message: error.message 
+    });
+  }
+});
+
 // 获取今日复习课
 app.get('/api/review/sessions/today', async (req, res) => {
   try {

@@ -1,9 +1,344 @@
-/* pages/review/review.wxss - 剪纸盒风格 */
+/* pages/review/review.wxss - 复习课管理系统 v2.0 */
 .container {
   padding: 20rpx;
   background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
   min-height: 100vh;
 }
+
+/* ========== 九宫格总览模式 ========== */
+.overview-mode {
+  padding-bottom: 40rpx;
+}
+
+/* 导航栏 */
+.nav-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 10rpx;
+  margin-bottom: 20rpx;
+}
+
+.back-btn {
+  font-size: 28rpx;
+  color: #22c55e;
+  font-weight: bold;
+}
+
+.page-title {
+  font-size: 32rpx;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.placeholder {
+  width: 100rpx;
+}
+
+/* 九宫格区域 */
+.wheel-section {
+  background: #1f2937;
+  border-radius: 24rpx;
+  padding: 40rpx 20rpx;
+  margin-bottom: 30rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.3);
+}
+
+.section-title {
+  font-size: 32rpx;
+  color: #ffffff;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 30rpx;
+}
+
+.wheel-container {
+  position: relative;
+  width: 300rpx;
+  height: 300rpx;
+  margin: 0 auto;
+}
+
+.wheel-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 120rpx;
+  height: 120rpx;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 12rpx rgba(59, 130, 246, 0.3);
+  z-index: 10;
+}
+
+.center-text {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.center-label {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 4rpx;
+}
+
+.wheel-node {
+  position: absolute;
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease;
+}
+
+.wheel-node:active {
+  transform: scale(0.95);
+}
+
+.node-count {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #ffffff;
+  line-height: 1;
+}
+
+.node-label {
+  font-size: 20rpx;
+  color: rgba(255, 255, 255, 0.9);
+  margin-top: 4rpx;
+  white-space: nowrap;
+}
+
+.wheel-legend {
+  display: flex;
+  justify-content: center;
+  gap: 40rpx;
+  margin-top: 30rpx;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  font-size: 24rpx;
+  color: #9ca3af;
+}
+
+.legend-dot {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+}
+
+/* 今日复习课区域 */
+.session-section {
+  margin-bottom: 30rpx;
+}
+
+.session-card {
+  background: #1f2937;
+  border-radius: 24rpx;
+  padding: 30rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.3);
+}
+
+.session-card.empty {
+  text-align: center;
+  padding: 60rpx 30rpx;
+}
+
+.empty-icon {
+  font-size: 100rpx;
+  margin-bottom: 20rpx;
+}
+
+.empty-text {
+  font-size: 32rpx;
+  color: #ffffff;
+  margin-bottom: 30rpx;
+}
+
+.session-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.session-status {
+  font-size: 24rpx;
+  padding: 8rpx 20rpx;
+  border-radius: 50rpx;
+  font-weight: bold;
+}
+
+.session-status.pending {
+  background: #f59e0b;
+  color: #000;
+}
+
+.session-status.in_progress {
+  background: #3b82f6;
+  color: #fff;
+}
+
+.session-status.completed {
+  background: #22c55e;
+  color: #fff;
+}
+
+.session-date {
+  font-size: 24rpx;
+  color: #9ca3af;
+}
+
+.session-info {
+  margin-bottom: 20rpx;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12rpx 0;
+  border-bottom: 1rpx solid rgba(255, 255, 255, 0.1);
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-size: 28rpx;
+  color: #9ca3af;
+}
+
+.info-value {
+  font-size: 28rpx;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.info-value.highlight {
+  color: #f59e0b;
+}
+
+.session-progress {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 16rpx;
+  background: #374151;
+  border-radius: 8rpx;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #22c55e 0%, #16a34a 100%);
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 24rpx;
+  color: #22c55e;
+  font-weight: bold;
+  min-width: 60rpx;
+}
+
+.start-button {
+  width: 100%;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 50rpx;
+  padding: 28rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+  box-shadow: 0 4rpx 12rpx rgba(245, 158, 11, 0.3);
+}
+
+.start-button:active {
+  transform: scale(0.98);
+}
+
+.complete-message {
+  text-align: center;
+  font-size: 32rpx;
+  color: #22c55e;
+  font-weight: bold;
+  padding: 20rpx;
+}
+
+.learn-button {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 50rpx;
+  padding: 24rpx 60rpx;
+  font-size: 30rpx;
+  font-weight: bold;
+}
+
+/* 统计区域 */
+.stats-section {
+  margin-bottom: 30rpx;
+}
+
+.stats-grid {
+  display: flex;
+  gap: 20rpx;
+}
+
+.stat-card {
+  flex: 1;
+  background: #1f2937;
+  border-radius: 20rpx;
+  padding: 30rpx 20rpx;
+  text-align: center;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.2);
+}
+
+.stat-value {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #22c55e;
+  margin-bottom: 8rpx;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  color: #9ca3af;
+}
+
+/* 加载中 */
+.loading-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+
+.loading-text {
+  font-size: 32rpx;
+  color: #9ca3af;
+}
+
+/* ========== 复习答题模式（原有样式保留） ========== */
 
 /* 头部进度 */
 .header {
