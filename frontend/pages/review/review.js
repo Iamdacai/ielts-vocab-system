@@ -65,9 +65,37 @@ Page({
       today: `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
     });
     
+    this.checkLoginStatus();
     this.initAudio();
     this.initRecorder();
-    this.loadDashboard();
+  },
+
+  /**
+   * 🆕 检查登录状态
+   */
+  checkLoginStatus() {
+    const token = wx.getStorageSync('token');
+    if (!token) {
+      wx.showModal({
+        title: '请先登录',
+        content: '需要登录后才能进行复习',
+        showCancel: false,
+        success: () => {
+          wx.switchTab({
+            url: '/pages/index/index'
+          });
+        }
+      });
+      return false;
+    }
+    return true;
+  },
+
+  onShow() {
+    // 页面显示时检查登录状态并加载数据
+    if (this.checkLoginStatus()) {
+      this.loadDashboard();
+    }
   },
 
   /**

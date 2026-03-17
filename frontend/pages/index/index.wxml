@@ -1,4 +1,4 @@
-<!--pages/index/index.wxml - 简化版-->
+<!--pages/index/index.wxml - 登录后显示功能-->
 <view class="container">
   <!-- 顶部导航栏 -->
   <view class="header">
@@ -6,15 +6,23 @@
     <view class="subtitle">每天 15 分钟，雅思 7+ 不是梦</view>
   </view>
 
+  <!-- 登录前：只显示登录按钮 -->
   <view wx:if="{{!hasLogin}}" class="login-section card">
     <view class="login-icon">📚</view>
     <view class="title">欢迎使用雅思背单词</view>
     <view class="subtitle">基于艾宾浩斯遗忘曲线的科学记忆系统</view>
+    <view class="features-preview">
+      <view class="feature-item">✅ 艾宾浩斯遗忘曲线复习</view>
+      <view class="feature-item">✅ 剑桥雅思 1-18 完整词汇</view>
+      <view class="feature-item">✅ 智能发音评测</view>
+      <view class="feature-item">✅ 个性化学习报告</view>
+    </view>
     <button class="login-button" bindtap="handleLogin">
       微信登录开始学习
     </button>
   </view>
 
+  <!-- 登录后：显示完整功能 -->
   <view wx:else class="dashboard-section">
     <!-- 用户信息卡片 -->
     <view class="card user-card">

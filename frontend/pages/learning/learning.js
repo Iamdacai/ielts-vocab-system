@@ -40,14 +40,40 @@ Page({
   },
 
   onLoad() {
+    this.checkLoginStatus();
     this.initAudio();
     this.initRecorder();
     this.startDurationTimer();
-    this.loadNewWords();
+  },
+
+  /**
+   * 🆕 检查登录状态
+   */
+  checkLoginStatus() {
+    const token = wx.getStorageSync('token');
+    if (!token) {
+      wx.showModal({
+        title: '请先登录',
+        content: '需要登录后才能学习新词',
+        showCancel: false,
+        success: () => {
+          wx.switchTab({
+            url: '/pages/index/index'
+          });
+        }
+      });
+      return false;
+    }
+    return true;
   },
 
   onShow() {
     // 页面显示时继续计时
+    if (!this.checkLoginStatus()) {
+      return;
+    }
+    this.loadNewWords();
+  },
     if (!this.data.showDurationModal && !this.data.showComplete) {
       this.startDurationTimer();
     }

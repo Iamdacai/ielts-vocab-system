@@ -43,12 +43,31 @@
 /* 登录区域 */
 .login-section {
   text-align: center;
-  padding: 80rpx 40rpx;
+  padding: 60rpx 40rpx;
 }
 
 .login-icon {
   font-size: 120rpx;
   margin-bottom: 30rpx;
+}
+
+.features-preview {
+  margin: 40rpx 0;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16rpx;
+  padding: 30rpx;
+}
+
+.feature-item {
+  font-size: 28rpx;
+  color: #ffffff;
+  padding: 12rpx 0;
+  border-bottom: 1rpx solid rgba(255, 255, 255, 0.1);
+}
+
+.feature-item:last-child {
+  border-bottom: none;
 }
 
 .login-button {
