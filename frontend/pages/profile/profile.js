@@ -92,6 +92,13 @@ Page({
   },
 
   /**
+   * 🆕 阻止事件冒泡
+   */
+  handleStopPropagation() {
+    // 空函数，仅用于阻止事件冒泡
+  },
+
+  /**
    * 显示复位确认弹窗
    */
   goToReset() {
