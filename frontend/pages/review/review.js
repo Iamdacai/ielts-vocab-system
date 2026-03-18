@@ -131,20 +131,20 @@ Page({
           progressPercent = Math.round(todaySession.completedWords / todaySession.plannedWords * 100);
         }
         
-        // 计算九宫格位置（圆圈布局）- 🆕 使用 rpx 单位
+        // 计算九宫格位置（圆圈布局）- 🆕 缩小一半尺寸
         const wheelDataWithPos = wheelData.map((item, index) => {
           // 8 个阶段均匀分布在圆周上
           const angle = (index * 360 / 8) - 90; // 从顶部 12 点方向开始，顺时针
-          const radius = 220; // 圆圈中心到页面中心的距离（rpx）
+          const radius = 110; // 🆕 缩小一半（原 220rpx）
           const radian = angle * Math.PI / 180;
           
-          // 计算圆心坐标（页面中心 300rpx, 300rpx）
-          const centerX = 300 + radius * Math.cos(radian);
-          const centerY = 300 + radius * Math.sin(radian);
+          // 计算圆心坐标（页面中心 150rpx, 150rpx）🆕 缩小一半
+          const centerX = 150 + radius * Math.cos(radian);
+          const centerY = 150 + radius * Math.sin(radian);
           
           // 使用 left/top 定位（rpx 单位）
-          const left = centerX - 80; // 80rpx 是圆圈半径
-          const top = centerY - 80;
+          const left = centerX - 40; // 🆕 40rpx 是圆圈半径（原 80rpx）
+          const top = centerY - 40;
           
           return {
             ...item,
