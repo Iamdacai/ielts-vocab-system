@@ -219,11 +219,17 @@ Page({
   },
 
   /**
-   * 加载新词
+   * 🆕 加载新词（使用配置的每日新词数量）
    */
   loadNewWords() {
+    // 🆕 从本地存储获取配置
+    const userConfig = wx.getStorageSync('userConfig');
+    const dailyCount = userConfig?.daily_new_words_count || 20;
+    
+    console.log('[学习配置] 每日新词数量:', dailyCount);
+    
     wx.request({
-      url: `${app.globalData.apiUrl}/words/new`,
+      url: `${app.globalData.apiUrl}/words/new?count=${dailyCount}`,
       method: 'GET',
       header: {
         'Authorization': `Bearer ${app.globalData.token}`
@@ -236,6 +242,8 @@ Page({
             totalWords: words.length,
             loading: false
           });
+          
+          console.log('[加载新词] 成功，数量:', words.length);
           
           if (words.length > 0) {
             this.showNextWord();
@@ -255,6 +263,7 @@ Page({
             setTimeout(() => wx.navigateBack(), 1500);
           }
         } else {
+          console.error('[加载新词] 失败:', res);
           this.setData({ loading: false });
           wx.showToast({
             title: '加载失败',
@@ -263,7 +272,7 @@ Page({
         }
       },
       fail: (err) => {
-        console.error('加载失败:', err);
+        console.error('[加载新词] 网络错误:', err);
         this.setData({ loading: false });
         wx.showToast({
           title: '网络错误',
