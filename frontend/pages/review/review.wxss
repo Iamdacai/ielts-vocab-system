@@ -54,8 +54,8 @@
 
 .wheel-container {
   position: relative;
-  width: 600rpx;
-  height: 600rpx;
+  width: 300rpx;  /* 🆕 缩小一半 */
+  height: 300rpx;
   margin: 0 auto;
 }
 
@@ -64,8 +64,8 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 160rpx;
-  height: 160rpx;
+  width: 80rpx;  /* 🆕 缩小一半 */
+  height: 80rpx;
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   border-radius: 50%;
   display: flex;
@@ -77,21 +77,21 @@
 }
 
 .center-text {
-  font-size: 40rpx;
+  font-size: 24rpx;  /* 🆕 缩小字体 */
   font-weight: bold;
   color: #ffffff;
 }
 
 .center-label {
-  font-size: 22rpx;
+  font-size: 14rpx;  /* 🆕 缩小字体 */
   color: rgba(255, 255, 255, 0.8);
-  margin-top: 4rpx;
+  margin-top: 2rpx;
 }
 
 .wheel-node {
   position: absolute;
-  width: 160rpx;
-  height: 160rpx;
+  width: 80rpx;  /* 🆕 缩小一半 */
+  height: 80rpx;
   border-radius: 50%;
   display: flex;
   flex-direction: column;
@@ -106,16 +106,16 @@
 }
 
 .node-count {
-  font-size: 32rpx;
+  font-size: 20rpx;  /* 🆕 缩小字体 */
   font-weight: bold;
   color: #ffffff;
   line-height: 1;
 }
 
 .node-label {
-  font-size: 20rpx;
+  font-size: 12rpx;  /* 🆕 缩小字体 */
   color: rgba(255, 255, 255, 0.9);
-  margin-top: 4rpx;
+  margin-top: 2rpx;
   white-space: nowrap;
 }
 

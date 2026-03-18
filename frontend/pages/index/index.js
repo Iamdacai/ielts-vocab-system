@@ -253,21 +253,30 @@ Page({
   },
 
   navigateToLearning() {
-    if (!this.data.hasLogin) {
-      wx.showToast({ title: '请先登录', icon: 'none' });
-      return;
-    }
-    wx.navigateTo({ url: '/pages/learning/learning' });
+    wx.showLoading({ title: '加载中...' });
+    wx.navigateTo({ 
+      url: '/pages/learning/learning',
+      fail: (err) => {
+        wx.hideLoading();
+        console.error('跳转失败:', err);
+        wx.showToast({ title: '页面不存在', icon: 'error' });
+      }
+    });
   },
 
   navigateToReview() {
-    if (!this.data.hasLogin) {
-      wx.showToast({ title: '请先登录', icon: 'none' });
-      return;
-    }
+    wx.showLoading({ title: '加载中...' });
     if (this.data.dueWordsCount > 0) {
-      wx.navigateTo({ url: '/pages/review/review' });
+      wx.navigateTo({ 
+        url: '/pages/review/review',
+        fail: (err) => {
+          wx.hideLoading();
+          console.error('跳转失败:', err);
+          wx.showToast({ title: '页面不存在', icon: 'error' });
+        }
+      });
     } else {
+      wx.hideLoading();
       wx.showToast({ title: '没有待复习的单词', icon: 'none' });
     }
   },
