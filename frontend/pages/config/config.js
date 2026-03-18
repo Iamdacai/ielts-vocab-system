@@ -267,6 +267,15 @@ Page({
       title: '保存中...'
     });
     
+    // 🆕 构建正确的配置数据格式
+    const configData = {
+      weekly_new_words_days: this.data.config.weekly_new_words_days,
+      daily_new_words_count: parseInt(this.data.config.daily_new_words_count) || 20,
+      review_time: this.data.config.review_time || '20:00'
+    };
+    
+    console.log('保存配置:', configData);
+    
     wx.request({
       url: `${app.globalData.apiUrl}/config`,
       method: 'POST',
@@ -274,7 +283,7 @@ Page({
         'Authorization': `Bearer ${app.globalData.token}`,
         'Content-Type': 'application/json'
       },
-      data: this.data.config,
+      data: configData,
       success: (res) => {
         wx.hideLoading();
         if (res.statusCode === 200) {
@@ -282,7 +291,11 @@ Page({
             title: '保存成功',
             icon: 'success'
           });
+          
+          // 🆕 保存成功后更新全局配置
+          wx.setStorageSync('userConfig', configData);
         } else {
+          console.error('保存配置失败:', res);
           wx.showToast({
             title: '保存失败',
             icon: 'error'
