@@ -6,8 +6,8 @@ let dbPromise = null;
 
 async function initializeDatabase() {
   if (!dbPromise) {
-    // 使用 scripts 目录中的数据库文件
-    const dbPath = path.join(__dirname, 'scripts', 'ielts_vocab.db');
+    // 使用 backend 目录中的数据库文件
+    const dbPath = path.join(__dirname, 'ielts_vocab.db');
     console.log('[DB] 使用数据库文件:', dbPath);
     
     dbPromise = (async () => {
