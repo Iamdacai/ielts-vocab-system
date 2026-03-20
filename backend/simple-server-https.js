@@ -262,13 +262,35 @@ app.post('/api/auth/login', (req, res) => {
   });
 });
 
-// 简化的配置
-app.get('/api/config', (req, res) => {
-  res.json({
-    weekly_new_words_days: [1,2,3,4,5,6,7],
-    daily_new_words_count: 20,
-    review_time: '20:00'
-  });
+// 🆕 获取用户配置
+app.get('/api/config', async (req, res) => {
+  try {
+    const db = await initializeDatabase();
+    const userId = 1;
+    
+    const config = await db.get('SELECT * FROM user_configs WHERE user_id = ?', [userId]);
+    
+    if (config) {
+      res.json({
+        weekly_new_words_days: JSON.parse(config.weekly_new_words_days || '[1,2,3,4,5,6,7]'),
+        daily_new_words_count: config.daily_new_words_count || 20,
+        review_time: config.review_time || '20:00'
+      });
+    } else {
+      // 默认配置
+      res.json({
+        weekly_new_words_days: [1,2,3,4,5,6,7],
+        daily_new_words_count: 20,
+        review_time: '20:00'
+      });
+    }
+  } catch (error) {
+    console.error('[配置] 获取失败:', error);
+    res.status(500).json({
+      error: '获取配置失败',
+      message: error.message
+    });
+  }
 });
 
 // 🆕 保存用户配置
@@ -277,67 +299,35 @@ app.post('/api/config', async (req, res) => {
     const db = await initializeDatabase();
     const { weekly_new_words_days, daily_new_words_count, review_time } = req.body;
     
-    // 默认用户 ID（后续改为从 token 获取）
+    // 默认用户 ID
     const userId = 1;
+    const daysStr = JSON.stringify(weekly_new_words_days || [1,2,3,4,5,6,7]);
+    const count = parseInt(daily_new_words_count) || 20;
+    const time = review_time || '20:00';
     
-    // 检查是否已有配置
-    const existing = await new Promise((resolve, reject) => {
-      db.get('SELECT * FROM user_configs WHERE user_id = ?', [userId], (err, row) => {
-        if (err) reject(err);
-        else resolve(row);
-      });
-    });
+    console.log('[配置] 保存配置:', { userId, days: weekly_new_words_days, count, time });
     
-    if (existing) {
-      // 更新现有配置
-      await new Promise((resolve, reject) => {
-        db.run(
-          `UPDATE user_configs 
-           SET weekly_new_words_days = ?, 
-               daily_new_words_count = ?, 
-               review_time = ?,
-               updated_at = CURRENT_TIMESTAMP
-           WHERE user_id = ?`,
-          [
-            JSON.stringify(weekly_new_words_days || [1,2,3,4,5,6,7]),
-            daily_new_words_count || 20,
-            review_time || '20:00',
-            userId
-          ],
-          (err) => {
-            if (err) reject(err);
-            else resolve();
-          }
-        );
-      });
-    } else {
-      // 插入新配置
-      await new Promise((resolve, reject) => {
-        db.run(
-          `INSERT INTO user_configs (user_id, weekly_new_words_days, daily_new_words_count, review_time)
-           VALUES (?, ?, ?, ?)`,
-          [
-            userId,
-            JSON.stringify(weekly_new_words_days || [1,2,3,4,5,6,7]),
-            daily_new_words_count || 20,
-            review_time || '20:00'
-          ],
-          (err) => {
-            if (err) reject(err);
-            else resolve();
-          }
-        );
-      });
-    }
+    // 使用 INSERT OR REPLACE 简化逻辑
+    await db.run(`
+      INSERT OR REPLACE INTO user_configs 
+      (user_id, weekly_new_words_days, daily_new_words_count, review_time, created_at, updated_at)
+      VALUES (?, ?, ?, ?, 
+        COALESCE((SELECT created_at FROM user_configs WHERE user_id = ?), CURRENT_TIMESTAMP),
+        CURRENT_TIMESTAMP)
+    `, [userId, daysStr, count, time, userId]);
     
-    console.log(`[配置] 用户 ${userId} 保存了配置:`, req.body);
+    console.log(`[配置] 用户 ${userId} 保存配置成功`);
     
     res.json({
       success: true,
-      config: req.body
+      config: {
+        weekly_new_words_days,
+        daily_new_words_count: count,
+        review_time: time
+      }
     });
   } catch (error) {
-    console.error('保存配置失败:', error);
+    console.error('[配置] 保存失败:', error);
     res.status(500).json({
       error: '保存配置失败',
       message: error.message
