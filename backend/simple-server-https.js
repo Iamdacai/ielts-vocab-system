@@ -518,7 +518,10 @@ async function enrichWordWithYoudao(word) {
 app.get('/api/words/new', async (req, res) => {
   try {
     const db = await initializeDatabase();
-    const words = await db.all('SELECT * FROM ielts_words ORDER BY RANDOM() LIMIT 10');
+    
+    // ✅ 读取 count 参数，支持前端动态配置每日新词数量
+    const count = parseInt(req.query.count) || 20;
+    const words = await db.all('SELECT * FROM ielts_words ORDER BY RANDOM() LIMIT ?', [count]);
     
     // 处理字段映射和 example_sentences（安全解析 JSON）
     let processedWords = words.map(word => {
