@@ -699,15 +699,15 @@ app.get('/api/review/dashboard', async (req, res) => {
         w.part_of_speech,
         w.definition,
         w.example_sentences,
-        p.stage,
         p.next_review_at,
-        p.mastery_score
+        p.mastery_score,
+        p.review_count
       FROM ielts_words w
       LEFT JOIN user_word_progress p ON w.id = p.word_id AND p.user_id = ?
       WHERE p.user_id = ? OR p.user_id IS NULL
     `, [userId, userId]);
     
-    // 2. 计算九宫格数据（8 个阶段）
+    // 2. 计算九宫格数据（根据掌握分数计算阶段）
     const REVIEW_STAGES = [
       { id: 0, label: '新学', days: 0, color: '#ef4444' },
       { id: 1, label: '第 1 天', days: 1, color: '#f59e0b' },
@@ -719,11 +719,20 @@ app.get('/api/review/dashboard', async (req, res) => {
       { id: 7, label: '已掌握', days: 30, color: '#22c55e' },
     ];
     
+    // 根据 mastery_score 计算阶段：0=新学，1-4=学习中，5-7=已掌握
+    const calculateStage = (score, reviewCount) => {
+      if (!score || score === 0) return 0; // 新学
+      if (score >= 75) return 5; // 已掌握
+      if (reviewCount >= 4) return 4;
+      if (reviewCount >= 2) return 2;
+      return 1;
+    };
+    
     const wheelData = REVIEW_STAGES.map(stage => ({
       id: stage.id,
       label: stage.label,
       color: stage.color,
-      count: words.filter(w => (w.stage || 0) === stage.id).length
+      count: words.filter(w => calculateStage(w.mastery_score, w.review_count) === stage.id).length
     }));
     
     // 3. 获取今日复习课
@@ -745,7 +754,7 @@ app.get('/api/review/dashboard', async (req, res) => {
     
     // 5. 计算统计数据
     const totalWords = words.length;
-    const masteredWords = words.filter(w => (w.stage || 0) >= 5).length;
+    const masteredWords = words.filter(w => calculateStage(w.mastery_score, w.review_count) >= 5).length;
     const masteryRate = totalWords > 0 ? Math.round((masteredWords / totalWords) * 100) : 0;
     
     // 6. 构建今日复习课信息
