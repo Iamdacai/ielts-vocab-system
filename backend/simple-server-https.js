@@ -1737,6 +1737,9 @@ app.post('/api/users/reset-progress', async (req, res) => {
     const sessionsCount = (await db.get('SELECT COUNT(*) as count FROM review_sessions WHERE user_id = ?', [userId]))?.count || 0;
     const pronunciationCount = (await db.get('SELECT COUNT(*) as count FROM pronunciation_practice_records WHERE user_id = ?', [userId]))?.count || 0;
     
+    // 🆕 统计配置数据
+    const configExists = await db.get('SELECT 1 FROM user_configs WHERE user_id = ?', [userId]);
+    
     // 删除数据（使用事务）
     await db.run('BEGIN TRANSACTION');
     await db.run('DELETE FROM user_word_progress WHERE user_id = ?', [userId]);
@@ -1744,12 +1747,17 @@ app.post('/api/users/reset-progress', async (req, res) => {
     await db.run('DELETE FROM review_sessions WHERE user_id = ?', [userId]);
     await db.run('DELETE FROM review_session_items WHERE session_id IN (SELECT id FROM review_sessions WHERE user_id = ?)', [userId]);
     await db.run('DELETE FROM pronunciation_practice_records WHERE user_id = ?', [userId]);
+    // 🆕 重置用户配置为默认值
+    await db.run(`
+      INSERT OR REPLACE INTO user_configs (user_id, weekly_new_words_days, daily_new_words_count, review_time, created_at, updated_at)
+      VALUES (?, '[1,2,3,4,5,6,7]', 20, '20:00', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    `, [userId]);
     await db.run('COMMIT');
     
     // 记录复位日志
     await db.run(
       'INSERT INTO system_logs (admin_id, action, details, created_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)',
-      [userId, 'reset_progress', JSON.stringify({ reason, resetCount: { words: wordProgressCount, records: recordsCount, sessions: sessionsCount, pronunciation: pronunciationCount } })]
+      [userId, 'reset_progress', JSON.stringify({ reason, resetCount: { words: wordProgressCount, records: recordsCount, sessions: sessionsCount, pronunciation: pronunciationCount }, configReset: !!configExists })]
     );
     
     console.log(`[复位] 用户 ${userId} 复位了学习进度`);

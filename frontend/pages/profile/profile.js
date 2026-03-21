@@ -154,16 +154,39 @@ Page({
             icon: 'success'
           });
           
-          // 更新本地统计
-          this.setData({
-            'stats.masteredWords': 0,
-            'stats.practiceCount': 0,
-            'userInfo.totalWords': 0,
-            'userInfo.studyDays': 0
-          });
+          // 🆕 清除本地存储的 userInfo 和配置缓存
+          wx.removeStorageSync('userInfo');
+          wx.removeStorageSync('userConfig');
           
-          // 保存到本地存储
-          wx.setStorageSync('userInfo', this.data.userInfo);
+          // 🆕 重新加载用户信息和配置
+          setTimeout(() => {
+            // 重新从 app.js 加载用户信息
+            const app = getApp();
+            if (app.globalData.userInfo) {
+              // 清零统计数据
+              app.globalData.userInfo.totalWords = 0;
+              app.globalData.userInfo.studyDays = 0;
+              wx.setStorageSync('userInfo', app.globalData.userInfo);
+              this.setData({ 
+                userInfo: app.globalData.userInfo,
+                'stats.masteredWords': 0,
+                'stats.practiceCount': 0
+              });
+            }
+            
+            // 提示用户重新进入首页以刷新统计数据
+            wx.showModal({
+              title: '提示',
+              content: '学习进度已复位，建议重新进入首页以刷新统计数据',
+              showCancel: false,
+              success: () => {
+                // 跳转到首页
+                wx.reLaunch({
+                  url: '/pages/index/index'
+                });
+              }
+            });
+          }, 500);
         } else {
           wx.showToast({
             title: res.data.message || '复位失败',
