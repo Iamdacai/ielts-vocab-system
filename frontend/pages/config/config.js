@@ -28,27 +28,28 @@ Page({
   async onLoad() {
     this.loadUserInfo();
     await this.checkLoginStatus();
-    await this.loadLibraries();
   },
-
-  // 🆕 onShow 时重新检查登录状态（解决手动登录后页面未刷新问题）
+  
+  // 🆕 onShow 时加载词库和配置（确保登录状态已准备好）
   async onShow() {
     const token = wx.getStorageSync('token');
     const userInfo = wx.getStorageSync('userInfo');
     
-    // 如果之前未登录，现在已登录，重新加载配置
-    if (token && userInfo) {
-      // 更新全局状态（确保 app.globalData 同步）
-      if (!app.globalData.hasLogin) {
-        app.globalData.token = token;
-        app.globalData.userInfo = userInfo;
-        app.globalData.hasLogin = true;
-      }
-      
-      // 如果之前没有用户信息，重新加载
-      if (!this.data.userInfo) {
-        this.loadUserInfo();
+    // 确保全局状态已设置
+    if (token && userInfo && !app.globalData.hasLogin) {
+      app.globalData.token = token;
+      app.globalData.userInfo = userInfo;
+      app.globalData.hasLogin = true;
+    }
+    
+    // 如果已登录，加载词库和配置
+    if (app.globalData.hasLogin && app.globalData.token) {
+      // 只在 libraries 为空时加载（避免重复加载）
+      if (this.data.libraries.length === 0) {
         await this.loadLibraries();
+      }
+      // 只在 loading 时加载配置（避免重复加载）
+      if (this.data.loading) {
         this.loadConfig();
       }
     }
@@ -119,16 +120,36 @@ Page({
   // 🆕 加载词库列表
   async loadLibraries() {
     try {
-      const res = await wx.request({
-        url: `${app.globalData.apiUrl}/words/libraries`,
-        method: 'GET',
-        header: {
-          'Authorization': `Bearer ${app.globalData.token}`
-        }
+      console.log('[词库] 开始加载词库列表...');
+      console.log('[词库] API 地址:', app.globalData.apiUrl);
+      console.log('[词库] Token:', app.globalData.token ? '存在' : '不存在');
+      
+      const res = await new Promise((resolve, reject) => {
+        wx.request({
+          url: `${app.globalData.apiUrl}/words/libraries`,
+          method: 'GET',
+          header: {
+            'Authorization': `Bearer ${app.globalData.token}`
+          },
+          success: resolve,
+          fail: reject
+        });
       });
+      
+      console.log('[词库] 响应状态码:', res.statusCode);
+      console.log('[词库] 响应数据:', res.data);
       
       if (res.statusCode === 200) {
         const libraries = res.data;
+        
+        if (!libraries || libraries.length === 0) {
+          console.warn('[词库] 词库列表为空');
+          wx.showToast({
+            title: '词库列表为空',
+            icon: 'none'
+          });
+          return;
+        }
         
         // 🆕 从后端获取用户已选的词库，如果没有则默认全选
         const selectedLibraries = this.data.config.vocab_library || libraries.map(lib => lib.id);
@@ -144,13 +165,26 @@ Page({
           'config.vocab_library': selectedLibraries
         });
         
+        console.log('[词库] 加载成功，词库数量:', librariesWithSelected.length);
+        console.log('[词库] 已选词库:', selectedLibraries);
+        
         // 加载分类（如果有选中的词库）
         if (selectedLibraries.length > 0) {
           this.loadCategories();
         }
+      } else {
+        console.error('[词库] 加载失败，状态码:', res.statusCode);
+        wx.showToast({
+          title: '加载失败：' + res.statusCode,
+          icon: 'none'
+        });
       }
     } catch (err) {
-      console.error('加载词库列表失败:', err);
+      console.error('[词库] 加载异常:', err);
+      wx.showToast({
+        title: '网络错误',
+        icon: 'none'
+      });
     }
   },
   
