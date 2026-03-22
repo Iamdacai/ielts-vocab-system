@@ -4,16 +4,16 @@ Page({
   data: {
     userInfo: null,
     config: {
-      vocab_library: 'cambridge',  // 🆕 默认词库
-      vocab_category: '',          // 🆕 词汇分类
+      vocab_library: ['cambridge'],  // 🆕 默认词库（数组，支持多选）
+      vocab_category: '',            // 🆕 词汇分类
       weekly_new_words_days: [1, 2, 3, 4, 5, 6, 7],
       daily_new_words_count: 20,
       review_time: '20:00'
     },
     loading: true,
-    libraries: [],                 // 🆕 词库列表
-    categories: [],                // 🆕 分类列表
-    categoryIndex: 0,              // 🆕 当前选中的分类索引
+    libraries: [],                   // 🆕 词库列表
+    categories: [],                  // 🆕 分类列表
+    categoryIndex: 0,                // 🆕 当前选中的分类索引
     daysOfWeek: [
       { value: 1, name: '周一', selected: true },
       { value: 2, name: '周二', selected: true },
@@ -128,13 +128,26 @@ Page({
       });
       
       if (res.statusCode === 200) {
+        const libraries = res.data;
+        
+        // 🆕 从后端获取用户已选的词库，如果没有则默认全选
+        const selectedLibraries = this.data.config.vocab_library || libraries.map(lib => lib.id);
+        
+        // 🆕 为每个词库添加 selected 状态
+        const librariesWithSelected = libraries.map(lib => ({
+          ...lib,
+          selected: selectedLibraries.includes(lib.id)
+        }));
+        
         this.setData({ 
-          libraries: res.data,
-          'config.vocab_library': res.data[0]?.id || 'cambridge'
+          libraries: librariesWithSelected,
+          'config.vocab_library': selectedLibraries
         });
         
-        // 加载默认词库的分类
-        this.loadCategories();
+        // 加载分类（如果有选中的词库）
+        if (selectedLibraries.length > 0) {
+          this.loadCategories();
+        }
       }
     } catch (err) {
       console.error('加载词库列表失败:', err);
@@ -143,11 +156,12 @@ Page({
   
   // 🆕 加载分类列表
   async loadCategories() {
-    const library = this.data.config.vocab_library;
+    // 🆕 获取第一个选中的词库（用于加载分类）
+    const firstLibrary = this.data.config.vocab_library[0] || 'cambridge';
     
     try {
       const res = await wx.request({
-        url: `${app.globalData.apiUrl}/words/categories?source=${library === 'zhenjing' ? '真经' : '剑桥'}`,
+        url: `${app.globalData.apiUrl}/words/categories?source=${firstLibrary === 'zhenjing' ? '真经' : '剑桥'}`,
         method: 'GET',
         header: {
           'Authorization': `Bearer ${app.globalData.token}`
@@ -211,20 +225,51 @@ Page({
     });
   },
 
-  // 🆕 选择词库
-  selectLibrary(e) {
+  // 🆕 切换词库选择（支持多选）
+  toggleLibrary(e) {
     const libraryId = e.currentTarget.dataset.id;
-    console.log('选择词库:', libraryId);
+    const selectedLibraries = this.data.config.vocab_library || [];
+    
+    // 切换选中状态
+    const index = selectedLibraries.indexOf(libraryId);
+    let newSelected;
+    
+    if (index > -1) {
+      // 已选中，取消选中
+      newSelected = selectedLibraries.filter(id => id !== libraryId);
+    } else {
+      // 未选中，添加
+      newSelected = [...selectedLibraries, libraryId];
+    }
+    
+    // 🆕 至少保留一个词库
+    if (newSelected.length === 0) {
+      wx.showToast({
+        title: '至少选择一个词库',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    // 更新 libraries 数组的 selected 状态
+    const updatedLibraries = this.data.libraries.map(lib => ({
+      ...lib,
+      selected: newSelected.includes(lib.id)
+    }));
+    
     this.setData({
-      'config.vocab_library': libraryId,
+      libraries: updatedLibraries,
+      'config.vocab_library': newSelected,
       'config.vocab_category': ''  // 重置分类选择
     });
+    
+    console.log('已选词库:', newSelected);
     
     // 重新加载分类列表
     this.loadCategories();
     
     wx.showToast({
-      title: '已切换词库',
+      title: `已选择 ${newSelected.length} 个词库`,
       icon: 'success',
       duration: 1500
     });
@@ -292,6 +337,8 @@ Page({
     
     // 🆕 构建正确的配置数据格式
     const configData = {
+      vocab_library: this.data.config.vocab_library,  // 🆕 词库数组
+      vocab_category: this.data.config.vocab_category,
       weekly_new_words_days: this.data.config.weekly_new_words_days,
       daily_new_words_count: parseInt(this.data.config.daily_new_words_count) || 20,
       review_time: this.data.config.review_time || '20:00'

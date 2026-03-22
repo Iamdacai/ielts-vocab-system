@@ -66,7 +66,7 @@
   margin-bottom: 40rpx;
 }
 
-/* 🆕 词库选择器样式 */
+/* 🆕 词库选择器样式（支持多选）*/
 .library-selector {
   display: flex;
   flex-direction: column;
@@ -81,6 +81,9 @@
   background: #fff;
   transition: all 0.3s;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
 }
 
 .library-item:active {
@@ -92,6 +95,40 @@
   border-color: #007AFF;
   background: #f0f7ff;
   box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
+}
+
+/* 🆕 复选框样式 */
+.library-checkbox {
+  flex-shrink: 0;
+  width: 48rpx;
+  height: 48rpx;
+}
+
+.checkbox-icon {
+  width: 100%;
+  height: 100%;
+  border: 3rpx solid #ddd;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  background: #fff;
+}
+
+.checkbox-icon.checked {
+  background: #007AFF;
+  border-color: #007AFF;
+}
+
+.checkbox-icon text {
+  color: #fff;
+  font-size: 28rpx;
+  font-weight: bold;
+}
+
+.library-info {
+  flex: 1;
 }
 
 .library-name {
@@ -111,6 +148,17 @@
   font-size: 24rpx;
   color: #007AFF;
   font-weight: 500;
+}
+
+/* 🆕 已选词库提示 */
+.selected-hint {
+  margin-top: 15rpx;
+  padding: 15rpx;
+  background: #f0f7ff;
+  border-radius: 12rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: #007AFF;
 }
 
 /* 🆕 分类选择器样式 */
