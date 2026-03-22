@@ -31,6 +31,29 @@ Page({
     await this.loadLibraries();
   },
 
+  // 🆕 onShow 时重新检查登录状态（解决手动登录后页面未刷新问题）
+  async onShow() {
+    const token = wx.getStorageSync('token');
+    const userInfo = wx.getStorageSync('userInfo');
+    
+    // 如果之前未登录，现在已登录，重新加载配置
+    if (token && userInfo) {
+      // 更新全局状态（确保 app.globalData 同步）
+      if (!app.globalData.hasLogin) {
+        app.globalData.token = token;
+        app.globalData.userInfo = userInfo;
+        app.globalData.hasLogin = true;
+      }
+      
+      // 如果之前没有用户信息，重新加载
+      if (!this.data.userInfo) {
+        this.loadUserInfo();
+        await this.loadLibraries();
+        this.loadConfig();
+      }
+    }
+  },
+
   /**
    * 🆕 加载用户信息
    */
