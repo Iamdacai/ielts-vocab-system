@@ -202,6 +202,10 @@ Page({
             icon: 'success'
           });
           
+          // 🆕 清除本地缓存（管理员复位后）
+          wx.removeStorageSync('ielts_vocab_progress');
+          wx.removeStorageSync('userConfig');
+          
           // 重新加载统计
           this.loadStats();
           this.loadUsers();

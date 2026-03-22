@@ -154,9 +154,10 @@ Page({
             icon: 'success'
           });
           
-          // 🆕 清除本地存储的 userInfo 和配置缓存
+          // 🆕 清除本地存储的 userInfo、配置缓存和学习进度缓存
           wx.removeStorageSync('userInfo');
           wx.removeStorageSync('userConfig');
+          wx.removeStorageSync('ielts_vocab_progress');  // 🆕 清除本地学习进度缓存
           
           // 🆕 重新加载用户信息和配置
           setTimeout(() => {
