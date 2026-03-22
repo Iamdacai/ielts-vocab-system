@@ -15,7 +15,7 @@ from datetime import datetime
 MY_IELTS_DIR = Path('/home/admin/.openclaw/workspace/my-ielts/src/pages/vocabulary')
 VOCAB_SYSTEM_DIR = Path('/home/admin/.openclaw/workspace/git-repos/ielts-vocab-system')
 OUTPUT_DIR = VOCAB_SYSTEM_DIR / 'vocabulary' / 'ielts-materials'
-DB_PATH = VOCAB_SYSTEM_DIR / 'backend' / 'scripts' / 'ielts_vocab.db'
+DB_PATH = VOCAB_SYSTEM_DIR / 'backend' / 'ielts_vocab.db'
 
 # 确保输出目录存在
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
