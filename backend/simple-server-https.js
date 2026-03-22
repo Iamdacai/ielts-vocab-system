@@ -1113,37 +1113,38 @@ app.get('/api/words/all', async (req, res) => {
   }
 });
 
-// 🆕 获取词库列表
+// 🆕 获取词库列表 - 🆕 使用 frequency_level 区分真经词库
 app.get('/api/words/libraries', async (req, res) => {
   try {
     const db = await initializeDatabase();
     
-    // 查询所有词库来源
-    const libraries = await db.all(`
-      SELECT 
-        source,
-        COUNT(*) as word_count,
-        COUNT(DISTINCT category) as category_count
-      FROM ielts_words
-      WHERE source IS NOT NULL
-      GROUP BY source
-      ORDER BY word_count DESC
+    // 🆕 查询剑桥词库（cambridge_book 1-18）
+    const cambridgeCount = await db.get(`
+      SELECT COUNT(*) as count FROM ielts_words 
+      WHERE cambridge_book BETWEEN 1 AND 18
     `);
     
-    // 添加默认词库信息
+    // 🆕 查询真经词库（frequency_level 为 'high', 'medium', 'low'）
+    const zhenjingCount = await db.get(`
+      SELECT COUNT(*) as count, COUNT(DISTINCT frequency_level) as category_count 
+      FROM ielts_words 
+      WHERE frequency_level IN ('high', 'medium', 'low')
+    `);
+    
+    // 构建词库列表
     const result = [
       {
         id: 'cambridge',
         name: '剑桥雅思 1-18',
         description: '基于剑桥雅思真题 1-18',
-        word_count: libraries.find(l => l.source?.includes('剑桥'))?.word_count || 0
+        word_count: cambridgeCount?.count || 0
       },
       {
         id: 'zhenjing',
         name: '雅思词汇真经',
         description: '刘洪波著，按 22 个场景主题分类',
-        word_count: libraries.find(l => l.source?.includes('真经'))?.word_count || 0,
-        category_count: libraries.find(l => l.source?.includes('真经'))?.category_count || 0
+        word_count: zhenjingCount?.count || 0,
+        category_count: zhenjingCount?.category_count || 0
       }
     ];
     
@@ -1154,41 +1155,51 @@ app.get('/api/words/libraries', async (req, res) => {
   }
 });
 
-// 🆕 获取分类列表（按词库）
+// 🆕 获取分类列表（按词库）- 🆕 使用 frequency_level 作为分类
 app.get('/api/words/categories', async (req, res) => {
   try {
     const { source } = req.query;
     const db = await initializeDatabase();
     
+    // 🆕 真经词库按 frequency_level 分类
     let query = `
       SELECT 
-        category,
+        frequency_level as category,
         COUNT(*) as word_count,
         MIN(id) as first_word_id
       FROM ielts_words
-      WHERE category IS NOT NULL AND category != ''
+      WHERE frequency_level IN ('high', 'medium', 'low')
     `;
     
     let params = [];
     
-    if (source) {
-      query += ' AND source LIKE ?';
-      params.push(`%${source}%`);
+    // 🆕 如果是剑桥词库，只查询 cambridge_book 1-18 的单词
+    if (source === 'cambridge') {
+      query += ' AND cambridge_book BETWEEN 1 AND 18';
     }
     
     query += `
-      GROUP BY category
+      GROUP BY frequency_level
       ORDER BY 
-        SUBSTR(category, 1, 2),
-        word_count DESC
+        CASE frequency_level
+          WHEN 'high' THEN 1
+          WHEN 'medium' THEN 2
+          WHEN 'low' THEN 3
+        END
     `;
     
     const categories = await db.all(query, params);
     
-    // 格式化分类名称（去掉编号）
+    // 格式化分类名称
+    const categoryNames = {
+      'high': '高频词汇',
+      'medium': '中频词汇',
+      'low': '低频词汇'
+    };
+    
     const result = categories.map(cat => ({
       id: cat.category,
-      name: cat.category.replace(/^\d+_/, ''),
+      name: categoryNames[cat.category] || cat.category,
       word_count: cat.word_count,
       has_audio: true
     }));
