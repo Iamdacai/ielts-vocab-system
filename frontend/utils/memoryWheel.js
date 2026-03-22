@@ -3,16 +3,16 @@
  * 基于艾宾浩斯遗忘曲线的 8 阶段复习系统
  */
 
-// 8 个复习阶段配置
+// 8 个复习阶段配置 - 🆕 新词从第二天开始复习（符合主流单词 APP 设计）
 export const REVIEW_STAGES = [
-  { id: 0, label: '新学', days: 0, color: '#ef4444' },     // 红色
-  { id: 1, label: '第 1 天', days: 1, color: '#f59e0b' },   // 黄色
-  { id: 2, label: '第 2 天', days: 2, color: '#f59e0b' },   // 黄色
-  { id: 3, label: '第 4 天', days: 4, color: '#f59e0b' },   // 黄色
-  { id: 4, label: '第 7 天', days: 7, color: '#f59e0b' },   // 黄色
-  { id: 5, label: '第 15 天', days: 15, color: '#22c55e' }, // 绿色
-  { id: 6, label: '第 21 天', days: 21, color: '#22c55e' }, // 绿色
-  { id: 7, label: '已掌握', days: 30, color: '#22c55e' },   // 绿色
+  { id: 0, label: '新学', days: 1, color: '#ef4444' },     // 🆕 红色：明天复习（原 0 天）
+  { id: 1, label: '第 1 天', days: 2, color: '#f59e0b' },   // 🆕 黄色：后天复习（原 1 天）
+  { id: 2, label: '第 2 天', days: 4, color: '#f59e0b' },   // 🆕 黄色：4 天后（原 2 天）
+  { id: 3, label: '第 4 天', days: 7, color: '#f59e0b' },   // 🆕 黄色：7 天后（原 4 天）
+  { id: 4, label: '第 7 天', days: 15, color: '#f59e0b' },  // 🆕 黄色：15 天后（原 7 天）
+  { id: 5, label: '第 15 天', days: 21, color: '#22c55e' }, // 🆕 绿色：21 天后（原 15 天）
+  { id: 6, label: '第 21 天', days: 30, color: '#22c55e' }, // 🆕 绿色：30 天后（原 21 天）
+  { id: 7, label: '已掌握', days: 30, color: '#22c55e' },   // 绿色：保持 30 天
 ];
 
 /**

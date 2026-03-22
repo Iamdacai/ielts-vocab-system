@@ -707,16 +707,16 @@ app.get('/api/review/dashboard', async (req, res) => {
       WHERE p.user_id = ? OR p.user_id IS NULL
     `, [userId, userId]);
     
-    // 2. 计算九宫格数据（根据掌握分数计算阶段）
+    // 2. 计算九宫格数据（根据掌握分数计算阶段）- 🆕 新词从第二天开始复习
     const REVIEW_STAGES = [
-      { id: 0, label: '新学', days: 0, color: '#ef4444' },
-      { id: 1, label: '第 1 天', days: 1, color: '#f59e0b' },
-      { id: 2, label: '第 2 天', days: 2, color: '#f59e0b' },
-      { id: 3, label: '第 4 天', days: 4, color: '#f59e0b' },
-      { id: 4, label: '第 7 天', days: 7, color: '#f59e0b' },
-      { id: 5, label: '第 15 天', days: 15, color: '#22c55e' },
-      { id: 6, label: '第 21 天', days: 21, color: '#22c55e' },
-      { id: 7, label: '已掌握', days: 30, color: '#22c55e' },
+      { id: 0, label: '新学', days: 1, color: '#ef4444' },     // 🆕 明天复习（原 0 天）
+      { id: 1, label: '第 1 天', days: 2, color: '#f59e0b' },   // 🆕 后天复习（原 1 天）
+      { id: 2, label: '第 2 天', days: 4, color: '#f59e0b' },   // 🆕 4 天后（原 2 天）
+      { id: 3, label: '第 4 天', days: 7, color: '#f59e0b' },   // 🆕 7 天后（原 4 天）
+      { id: 4, label: '第 7 天', days: 15, color: '#f59e0b' },  // 🆕 15 天后（原 7 天）
+      { id: 5, label: '第 15 天', days: 21, color: '#22c55e' }, // 🆕 21 天后（原 15 天）
+      { id: 6, label: '第 21 天', days: 30, color: '#22c55e' }, // 🆕 30 天后（原 21 天）
+      { id: 7, label: '已掌握', days: 30, color: '#22c55e' },   // 保持 30 天
     ];
     
     // 根据 mastery_score 计算阶段：0=新学，1-4=学习中，5-7=已掌握
@@ -935,9 +935,9 @@ app.post('/api/review/sessions/:sessionId/answer', async (req, res) => {
     const userId = 1;
     const now = new Date().toISOString();
     
-    // 计算下次复习时间（基于阶段）
-    const REVIEW_STAGES = [0, 1, 2, 4, 7, 15, 21, 30];
-    const daysToAdd = REVIEW_STAGES[stage] || 0;
+    // 计算下次复习时间（基于阶段）- 🆕 新词从第二天开始复习
+    const REVIEW_STAGES = [1, 2, 4, 7, 15, 21, 30, 30];  // 🆕 阶段 0 改为 1 天（明天复习）
+    const daysToAdd = REVIEW_STAGES[stage] || 1;
     const nextReviewDate = new Date();
     nextReviewDate.setDate(nextReviewDate.getDate() + daysToAdd);
     
