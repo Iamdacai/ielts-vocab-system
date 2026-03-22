@@ -254,7 +254,8 @@ Page({
 
   navigateToLearning() {
     wx.showLoading({ title: '加载中...' });
-    wx.navigateTo({ 
+    // 🆕 学习页是 tabBar 页面，使用 switchTab
+    wx.switchTab({ 
       url: '/pages/learning/learning',
       fail: (err) => {
         wx.hideLoading();
@@ -267,7 +268,8 @@ Page({
   navigateToReview() {
     wx.showLoading({ title: '加载中...' });
     if (this.data.dueWordsCount > 0) {
-      wx.navigateTo({ 
+      // 🆕 复习页是 tabBar 页面，使用 switchTab
+      wx.switchTab({ 
         url: '/pages/review/review',
         fail: (err) => {
           wx.hideLoading();
