@@ -1698,7 +1698,7 @@ app.post('/api/users/profile', authenticateToken, async (req, res) => {
  */
 app.post('/api/users/reset-progress', async (req, res) => {
   try {
-    // 🆕 开发环境支持简单认证（允许 test token 或无 token）
+    // 🆕 从 token 中获取用户 ID（使用正确的 JWT_SECRET）
     let userId = 1; // 默认用户 ID
     
     // 尝试从 header 获取 token
@@ -1708,16 +1708,26 @@ app.post('/api/users/reset-progress', async (req, res) => {
     if (token) {
       try {
         const jwt = require('jsonwebtoken');
-        const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret';
+        // 🆕 使用 process.env.JWT_SECRET（与 auth-wechat.js 一致）
+        const JWT_SECRET = process.env.JWT_SECRET || 'ielts_vocab_dev_secret_2026_change_in_production';
         const decoded = jwt.verify(token, JWT_SECRET);
-        userId = decoded.userId || 1;
+        userId = decoded.userId || decoded.openid ? 1 : 1; // 优先使用 userId
+        console.log('[复位] Token 解析成功，userId:', userId);
       } catch (err) {
-        // token 无效，使用默认用户 ID（开发环境）
-        console.log('[复位] Token 无效，使用默认用户 ID');
+        // token 无效，记录错误
+        console.error('[复位] Token 解析失败:', err.message);
+        return res.status(401).json({ 
+          error: 'Token 无效',
+          message: '请重新登录后再试'
+        });
       }
     } else {
-      // 无 token，使用默认用户 ID（开发环境）
-      console.log('[复位] 无 token，使用默认用户 ID');
+      // 无 token，返回错误
+      console.log('[复位] 缺少 token');
+      return res.status(401).json({ 
+        error: '缺少认证',
+        message: '请先登录'
+      });
     }
     
     const { confirm, reason } = req.body;

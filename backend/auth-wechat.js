@@ -14,7 +14,7 @@ const APP_SECRET = process.env.WECHAT_APP_SECRET;
 const LOGIN_URL = 'https://api.weixin.qq.com/sns/jscode2session';
 
 // JWT 配置
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+const JWT_SECRET = process.env.JWT_SECRET || 'ielts_vocab_dev_secret_2026_change_in_production';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 // 管理员配置
