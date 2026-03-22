@@ -1212,11 +1212,12 @@ app.get('/api/words/categories', async (req, res) => {
 });
 
 // 🆕 获取统计数据（首页用）
-app.get('/api/stats', async (req, res) => {
+app.get('/api/stats', authenticateToken, async (req, res) => {
   try {
     const db = await initializeDatabase();
+    const userId = req.user.userId;
     
-    // 获取总单词数
+    // 获取总单词数（全局）
     const totalResult = await db.get('SELECT COUNT(*) as count FROM ielts_words');
     const total_words = totalResult.count || 0;
     
@@ -1231,54 +1232,54 @@ app.get('/api/stats', async (req, res) => {
     const todayNewResult = await db.get(`
       SELECT COUNT(DISTINCT word_id) as count 
       FROM learning_records 
-      WHERE action_type = 'new' 
+      WHERE user_id = ? AND action_type = 'new' 
       AND created_at >= ? AND created_at < ?
-    `, [todayStart, todayEnd]);
+    `, [userId, todayStart, todayEnd]);
     const today_new_words = todayNewResult?.count || 0;
     
     // 统计今日复习单词数
     const todayReviewResult = await db.get(`
       SELECT COUNT(DISTINCT word_id) as count 
       FROM learning_records 
-      WHERE action_type = 'review' 
+      WHERE user_id = ? AND action_type = 'review' 
       AND created_at >= ? AND created_at < ?
-    `, [todayStart, todayEnd]);
+    `, [userId, todayStart, todayEnd]);
     const today_review_words = todayReviewResult?.count || 0;
     
-    // 统计已掌握单词数（mastery_score >= 75）
+    // 🆕 统计已掌握单词数（mastery_score >= 75，按用户过滤）
     const masteredResult = await db.get(`
       SELECT COUNT(*) as count 
       FROM user_word_progress 
-      WHERE mastery_score >= 75
-    `);
+      WHERE user_id = ? AND mastery_score >= 75
+    `, [userId]);
     const mastered_words = masteredResult?.count || 0;
     
-    // 统计学习中单词数（mastery_score < 75 且有记录）
+    // 🆕 统计学习中单词数（mastery_score < 75 且有记录，按用户过滤）
     const learningResult = await db.get(`
       SELECT COUNT(*) as count 
       FROM user_word_progress 
-      WHERE mastery_score < 75 AND mastery_score > 0
-    `);
+      WHERE user_id = ? AND mastery_score < 75 AND mastery_score > 0
+    `, [userId]);
     const learning_words = learningResult?.count || 0;
     
-    // 计算平均掌握率
+    // 🆕 计算平均掌握率（按用户过滤）
     const avgResult = await db.get(`
       SELECT AVG(mastery_score) as avg_score 
       FROM user_word_progress 
-      WHERE mastery_score > 0
-    `);
+      WHERE user_id = ? AND mastery_score > 0
+    `, [userId]);
     const avg_mastery_score = avgResult?.avg_score ? Math.round(avgResult.avg_score) : 0;
     
     // 计算掌握率百分比
     const masteryRate = total_words > 0 ? Math.round((mastered_words / total_words) * 100) : 0;
     
-    // 🆕 计算待复习单词数（user_word_progress 表中 next_review_at <= 现在 且 mastery_score < 75）
+    // 🆕 计算待复习单词数（user_word_progress 表中 next_review_at <= 现在 且 mastery_score < 75，按用户过滤）
     const now = new Date().toISOString();
     const dueResult = await db.get(`
       SELECT COUNT(*) as count 
       FROM user_word_progress 
-      WHERE next_review_at <= ? AND mastery_score < 75
-    `, [now]);
+      WHERE user_id = ? AND next_review_at <= ? AND mastery_score < 75
+    `, [userId, now]);
     const due_words_count = dueResult?.count || 0;
     
     res.json({

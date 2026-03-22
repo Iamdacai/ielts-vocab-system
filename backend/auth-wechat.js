@@ -20,7 +20,7 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 // 管理员配置
 const ADMIN_OPENID = process.env.ADMIN_OPENID;
 
-const dbPath = path.join(__dirname, 'scripts', 'ielts_vocab.db');
+const dbPath = path.join(__dirname, 'ielts_vocab.db');
 
 /**
  * 获取数据库连接

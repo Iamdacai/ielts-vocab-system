@@ -275,8 +275,10 @@ Page({
         }
       });
     } else {
-      // 返回上一页
-      wx.navigateBack();
+      // 🆕 tabBar 页面，使用 switchTab 返回首页
+      wx.switchTab({
+        url: '/pages/index/index'
+      });
     }
   },
 
@@ -284,7 +286,8 @@ Page({
    * 跳转到学习页面
    */
   goToLearning() {
-    wx.navigateTo({
+    // 🆕 tabBar 页面，使用 switchTab
+    wx.switchTab({
       url: '/pages/learning/learning'
     });
   },
