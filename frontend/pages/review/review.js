@@ -131,6 +131,18 @@ Page({
           progressPercent = Math.round(todaySession.completedWords / todaySession.plannedWords * 100);
         }
         
+        // 🆕 高对比度颜色方案（8 个阶段）
+        const colorScheme = [
+          { bgColor: '#dc2626', shadowColor: 'rgba(220, 38, 38, 0.5)' },   // 新学 - 鲜红色
+          { bgColor: '#ea580c', shadowColor: 'rgba(234, 88, 12, 0.5)' },   // 第 1 天 - 亮橙色
+          { bgColor: '#d97706', shadowColor: 'rgba(217, 119, 6, 0.5)' },   // 第 2 天 - 深黄色
+          { bgColor: '#ca8a04', shadowColor: 'rgba(202, 138, 4, 0.5)' },   // 第 4 天 - 金黄色
+          { bgColor: '#65a30d', shadowColor: 'rgba(101, 163, 13, 0.5)' },  // 第 7 天 - 草绿色
+          { bgColor: '#16a34a', shadowColor: 'rgba(22, 163, 74, 0.5)' },   // 第 15 天 - 深绿色
+          { bgColor: '#0891b2', shadowColor: 'rgba(8, 145, 178, 0.5)' },   // 第 21 天 - 青蓝色
+          { bgColor: '#7c3aed', shadowColor: 'rgba(124, 58, 237, 0.5)' }   // 已掌握 - 紫色
+        ];
+        
         // 计算九宫格位置（紧凑环形布局）
         const wheelDataWithPos = wheelData.map((item, index) => {
           // 8 个阶段均匀分布在圆周上，从顶部 12 点方向开始，顺时针
@@ -149,7 +161,9 @@ Page({
           return {
             ...item,
             left: `${left}rpx`,
-            top: `${top}rpx`
+            top: `${top}rpx`,
+            bgColor: colorScheme[index].bgColor,
+            shadowColor: colorScheme[index].shadowColor
           };
         });
         

@@ -16,10 +16,10 @@
       
       <!-- 圆环形九宫格 -->
       <view class="circular-wheel">
-        <!-- 8 个花瓣格子 -->
+        <!-- 8 个圆形格子 - 使用高对比度颜色 -->
         <view wx:for="{{wheelData}}" wx:key="id" wx:if="{{index < 8}}"
               class="wheel-segment"
-              style="background: linear-gradient(135deg, {{item.color}} 0%, {{item.color}}dd 100%);">
+              style="background: {{item.bgColor}}; box-shadow: 0 4rpx 16rpx {{item.shadowColor}};">
           <view class="segment-content">
             <view class="segment-count">{{item.count}}</view>
             <view class="segment-label">{{item.label}}</view>
