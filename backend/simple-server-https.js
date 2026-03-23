@@ -1166,15 +1166,15 @@ app.get('/api/words/libraries', async (req, res) => {
   try {
     const db = await initializeDatabase();
     
-    // 🆕 查询剑桥词库（cambridge_book 1-18）
+    // 🆕 查询剑桥词库（cambridge_book 1-18）- 使用 COUNT(DISTINCT word) 统计不重复单词数
     const cambridgeCount = await db.get(`
-      SELECT COUNT(*) as count FROM ielts_words 
+      SELECT COUNT(DISTINCT word) as count FROM ielts_words 
       WHERE cambridge_book BETWEEN 1 AND 18
     `);
     
-    // 🆕 查询真经词库（frequency_level 为 'high', 'medium', 'low'）
+    // 🆕 查询真经词库（frequency_level 为 'high', 'medium', 'low'）- 使用 COUNT(DISTINCT word)
     const zhenjingCount = await db.get(`
-      SELECT COUNT(*) as count, COUNT(DISTINCT frequency_level) as category_count 
+      SELECT COUNT(DISTINCT word) as count, COUNT(DISTINCT frequency_level) as category_count 
       FROM ielts_words 
       WHERE frequency_level IN ('high', 'medium', 'low')
     `);
@@ -1195,6 +1195,8 @@ app.get('/api/words/libraries', async (req, res) => {
         category_count: zhenjingCount?.category_count || 0
       }
     ];
+    
+    console.log('[词库] 词库统计:', result);
     
     res.json(result);
   } catch (error) {
@@ -1290,8 +1292,8 @@ app.get('/api/stats', authenticateToken, async (req, res) => {
       whereClause = 'cambridge_book BETWEEN 1 AND 18';
     }
     
-    // 获取总单词数（按用户选择的词库过滤）
-    const totalResult = await db.get(`SELECT COUNT(*) as count FROM ielts_words WHERE ${whereClause}`);
+    // 🆕 获取总单词数（按用户选择的词库过滤，使用 COUNT(DISTINCT word) 统计不重复单词）
+    const totalResult = await db.get(`SELECT COUNT(DISTINCT word) as count FROM ielts_words WHERE ${whereClause}`);
     const total_words = totalResult.count || 0;
     
     // 获取今日日期范围
