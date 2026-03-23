@@ -763,22 +763,27 @@ app.get('/api/review/dashboard', authenticateToken, async (req, res) => {
       whereClause = 'cambridge_book BETWEEN 1 AND 18';
     }
     
-    // 1. 获取所有单词的进度数据（按词库过滤）
+    // 1. 获取所有单词的进度数据（按词库过滤）- 🆕 使用 DISTINCT 按 word 去重
     const words = await db.all(`
       SELECT 
-        w.id,
+        MIN(w.id) as id,
         w.word,
         w.phonetic,
         w.part_of_speech,
         w.definition,
         w.example_sentences,
-        p.next_review_at,
-        p.mastery_score,
-        p.review_count
+        MAX(p.next_review_at) as next_review_at,
+        MAX(p.mastery_score) as mastery_score,
+        MAX(p.review_count) as review_count
       FROM ielts_words w
-      LEFT JOIN user_word_progress p ON w.id = p.word_id AND p.user_id = ?
-      WHERE (${whereClause}) AND (p.user_id = ? OR p.user_id IS NULL)
-    `, [...params, userId, userId]);
+      LEFT JOIN (
+        SELECT word_id, user_id, next_review_at, mastery_score, review_count
+        FROM user_word_progress
+        WHERE user_id = ?
+      ) p ON w.id = p.word_id
+      WHERE (${whereClause})
+      GROUP BY w.word
+    `, [userId]);
     
     // 2. 计算九宫格数据（根据掌握分数和下次复习时间计算阶段）
     const REVIEW_STAGES = [
