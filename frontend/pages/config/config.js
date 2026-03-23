@@ -391,13 +391,20 @@ Page({
       success: (res) => {
         wx.hideLoading();
         if (res.statusCode === 200) {
-          wx.showToast({
-            title: '保存成功',
-            icon: 'success'
-          });
-          
           // 🆕 保存成功后更新全局配置
           wx.setStorageSync('userConfig', configData);
+          
+          wx.showModal({
+            title: '保存成功',
+            content: '词库配置已保存，返回首页查看更新的统计数据',
+            showCancel: false,
+            success: () => {
+              // 🆕 跳转到首页，让首页重新加载统计数据
+              wx.switchTab({
+                url: '/pages/index/index'
+              });
+            }
+          });
         } else {
           console.error('保存配置失败:', res);
           wx.showToast({
