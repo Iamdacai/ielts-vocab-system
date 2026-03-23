@@ -52,53 +52,90 @@
   margin-bottom: 30rpx;
 }
 
-/* ========== 圆环形九宫格布局 ========== */
+/* ========== 圆环形九宫格布局 - 水滴形花瓣 ========== */
 .circular-wheel {
   position: relative;
-  width: 560rpx;
-  height: 560rpx;
+  width: 600rpx;
+  height: 600rpx;
   margin: 40rpx auto;
   border-radius: 50%;
   background: linear-gradient(180deg, #1a2930 0%, #0d1418 100%);
   box-shadow: 
-    0 8rpx 32rpx rgba(0, 0, 0, 0.4),
+    0 8rpx 32rpx rgba(0, 0, 0, 0.5),
     inset 0 4rpx 16rpx rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* 花瓣格子 */
+/* 花瓣格子 - 水滴形 */
 .wheel-segment {
   position: absolute;
-  width: 120rpx;
-  height: 140rpx;
-  border-radius: 60rpx 60rpx 20rpx 20rpx;
+  width: 100rpx;
+  height: 180rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  padding-top: 16rpx;
+  justify-content: center;
   box-shadow: 
-    0 4rpx 12rpx rgba(0, 0, 0, 0.3),
-    inset 0 2rpx 8rpx rgba(255, 255, 255, 0.2);
+    0 4rpx 16rpx rgba(0, 0, 0, 0.4),
+    inset 0 2rpx 8rpx rgba(255, 255, 255, 0.25);
   transition: all 0.3s ease;
+  /* 水滴形状：上圆下尖 */
+  border-radius: 50% 50% 10% 10%;
+  transform-origin: center bottom;
 }
 
 .wheel-segment:active {
-  transform: scale(0.95);
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.2);
+  transform: scale(0.92);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.3);
 }
 
-/* 8 个花瓣位置定位 */
-.wheel-segment:nth-child(1) { top: 20rpx; left: 50%; margin-left: -60rpx; }  /* 12 点 */
-.wheel-segment:nth-child(2) { top: 50rpx; right: 60rpx; }  /* 1:30 */
-.wheel-segment:nth-child(3) { top: 50%; margin-top: -70rpx; right: 20rpx; }  /* 3 点 */
-.wheel-segment:nth-child(4) { bottom: 50rpx; right: 60rpx; }  /* 4:30 */
-.wheel-segment:nth-child(5) { bottom: 20rpx; left: 50%; margin-left: -60rpx; }  /* 6 点 */
-.wheel-segment:nth-child(6) { bottom: 50rpx; left: 60rpx; }  /* 7:30 */
-.wheel-segment:nth-child(7) { top: 50%; margin-top: -70rpx; left: 20rpx; }  /* 9 点 */
-.wheel-segment:nth-child(8) { top: 50rpx; left: 60rpx; }  /* 10:30 */
+/* 8 个花瓣位置 - 辐射状排列 */
+.wheel-segment:nth-child(1) { 
+  top: 10rpx; 
+  left: 50%; 
+  margin-left: -50rpx;
+  transform: rotate(0deg);
+}
+.wheel-segment:nth-child(2) { 
+  top: 55rpx; 
+  right: 55rpx; 
+  transform: rotate(45deg);
+}
+.wheel-segment:nth-child(3) { 
+  top: 50%; 
+  margin-top: -90rpx; 
+  right: 10rpx; 
+  transform: rotate(90deg);
+}
+.wheel-segment:nth-child(4) { 
+  bottom: 55rpx; 
+  right: 55rpx; 
+  transform: rotate(135deg);
+}
+.wheel-segment:nth-child(5) { 
+  bottom: 10rpx; 
+  left: 50%; 
+  margin-left: -50rpx;
+  transform: rotate(180deg);
+}
+.wheel-segment:nth-child(6) { 
+  bottom: 55rpx; 
+  left: 55rpx; 
+  transform: rotate(225deg);
+}
+.wheel-segment:nth-child(7) { 
+  top: 50%; 
+  margin-top: -90rpx; 
+  left: 10rpx; 
+  transform: rotate(270deg);
+}
+.wheel-segment:nth-child(8) { 
+  top: 55rpx; 
+  left: 55rpx; 
+  transform: rotate(315deg);
+}
 
 /* 花瓣内容（反向旋转保持文字水平）*/
 .segment-content {
@@ -108,21 +145,24 @@
   justify-content: center;
   width: 100%;
   height: 100%;
+  /* 反向旋转抵消花瓣旋转，保持文字水平 */
+  transform: inherit;
+  transform-origin: center bottom;
 }
 
 .segment-count {
-  font-size: 44rpx;
+  font-size: 40rpx;
   font-weight: bold;
   color: #ffffff;
-  text-shadow: 0 3rpx 6rpx rgba(0, 0, 0, 0.4);
+  text-shadow: 0 3rpx 6rpx rgba(0, 0, 0, 0.5);
   line-height: 1;
-  margin-bottom: 6rpx;
+  margin-bottom: 8rpx;
 }
 
 .segment-label {
-  font-size: 22rpx;
+  font-size: 20rpx;
   color: rgba(255, 255, 255, 0.95);
-  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.3);
+  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.4);
   white-space: nowrap;
 }
 
@@ -133,8 +173,8 @@
 }
 
 .center-button {
-  width: 160rpx;
-  height: 160rpx;
+  width: 180rpx;
+  height: 180rpx;
   border-radius: 50%;
   background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
   display: flex;
@@ -142,32 +182,33 @@
   align-items: center;
   justify-content: center;
   box-shadow: 
-    0 6rpx 24rpx rgba(255, 107, 107, 0.4),
-    inset 0 4rpx 12rpx rgba(255, 255, 255, 0.3),
-    0 0 0 8rpx rgba(255, 107, 107, 0.2);
+    0 8rpx 32rpx rgba(255, 107, 107, 0.5),
+    inset 0 4rpx 16rpx rgba(255, 255, 255, 0.3),
+    0 0 0 10rpx rgba(255, 107, 107, 0.15);
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .center-button:active {
-  transform: scale(0.95);
+  transform: scale(0.92);
   box-shadow: 
-    0 4rpx 16rpx rgba(255, 107, 107, 0.3),
+    0 4rpx 16rpx rgba(255, 107, 107, 0.4),
     inset 0 2rpx 8rpx rgba(255, 255, 255, 0.2);
 }
 
 .center-text {
-  font-size: 28rpx;
+  font-size: 32rpx;
   font-weight: bold;
   color: #ffffff;
-  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.3);
-  margin-bottom: 4rpx;
+  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.4);
+  margin-bottom: 6rpx;
+  letter-spacing: 2rpx;
 }
 
 .center-icon {
-  font-size: 36rpx;
+  font-size: 40rpx;
   color: #ffffff;
-  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.3);
+  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.4);
 }
 
 /* 紧凑型图例 */
