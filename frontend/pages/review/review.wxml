@@ -13,28 +13,54 @@
     <!-- 九宫格总览区 -->
     <view class="wheel-section">
       <view class="section-title">📊 记忆九宫格</view>
-      <view class="wheel-container">
-        <!-- 中心圆圈 -->
-        <view class="wheel-center">
-          <view class="center-text">{{stats.totalWords}}</view>
-          <view class="center-label">总单词</view>
-        </view>
-        
-        <!-- 8 个阶段圆圈（环形布局）-->
-        <view wx:for="{{wheelData}}" wx:key="id" 
-              class="wheel-node"
-              style="left: {{item.left}}; top: {{item.top}}; background: {{item.color}};">
-          <view class="node-count">{{item.count}}</view>
-          <view class="node-label">{{item.label}}</view>
+      
+      <!-- 3x3 九宫格布局 -->
+      <view class="grid-3x3">
+        <!-- 第一行 -->
+        <view wx:for="{{wheelData}}" wx:key="id" wx:if="{{index < 3}}"
+              class="grid-cell"
+              style="background: linear-gradient(135deg, {{item.color}} 0%, {{item.color}}dd 100%);">
+          <view class="cell-count">{{item.count}}</view>
+          <view class="cell-label">{{item.label}}</view>
         </view>
       </view>
       
-      <!-- 图例 -->
-      <view class="wheel-legend">
-        <view wx:for="{{wheelData}}" wx:key="id" class="legend-item">
-          <view class="legend-dot" style="background: {{item.color}};"></view>
-          <text>{{item.label}}: {{item.count}}</text>
+      <view class="grid-3x3">
+        <!-- 第二行（中间是总数）-->
+        <view wx:for="{{wheelData}}" wx:key="id" wx:if="{{index >= 3 && index < 6}}"
+              class="grid-cell"
+              style="background: linear-gradient(135deg, {{item.color}} 0%, {{item.color}}dd 100%);">
+          <view wx:if="{{index !== 4}}" class="cell-count">{{item.count}}</view>
+          <view wx:if="{{index !== 4}}" class="cell-label">{{item.label}}</view>
+          
+          <!-- 中心显示总数 -->
+          <view wx:if="{{index === 4}}" class="cell-center">
+            <view class="center-count">{{stats.totalWords}}</view>
+            <view class="center-label">总单词</view>
+          </view>
         </view>
+      </view>
+      
+      <view class="grid-3x3">
+        <!-- 第三行 -->
+        <view wx:for="{{wheelData}}" wx:key="id" wx:if="{{index >= 6}}"
+              class="grid-cell"
+              style="background: linear-gradient(135deg, {{item.color}} 0%, {{item.color}}dd 100%);">
+          <view class="cell-count">{{item.count}}</view>
+          <view class="cell-label">{{item.label}}</view>
+        </view>
+      </view>
+      
+      <!-- 简化的图例 -->
+      <view class="wheel-legend-compact">
+        <view class="legend-tag" style="background: #ef4444;">新学</view>
+        <view class="legend-tag" style="background: #f97316;">第 1 天</view>
+        <view class="legend-tag" style="background: #f59e0b;">第 2 天</view>
+        <view class="legend-tag" style="background: #eab308;">第 4 天</view>
+        <view class="legend-tag" style="background: #84cc16;">第 7 天</view>
+        <view class="legend-tag" style="background: #22c55e;">第 15 天</view>
+        <view class="legend-tag" style="background: #10b981;">第 21 天</view>
+        <view class="legend-tag" style="background: #06b6d4;">已掌握</view>
       </view>
     </view>
     
