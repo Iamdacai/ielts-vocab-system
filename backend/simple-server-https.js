@@ -733,12 +733,37 @@ app.post('/api/words/progress', async (req, res) => {
 // 🆕 复习课管理 API
 
 // 🆕 复习页面 Dashboard 接口（九宫格 + 今日复习课）
-app.get('/api/review/dashboard', async (req, res) => {
+app.get('/api/review/dashboard', authenticateToken, async (req, res) => {
   try {
     const db = await initializeDatabase();
-    const userId = 1; // 默认用户 ID
+    const userId = req.user.userId;
     
-    // 1. 获取所有单词的进度数据
+    // 🆕 获取用户词库配置
+    const config = await db.get('SELECT vocab_library, vocab_category FROM user_configs WHERE user_id = ?', [userId]);
+    const selectedLibraries = config?.vocab_library ? JSON.parse(config.vocab_library) : ['cambridge'];
+    const selectedCategory = config?.vocab_category || '';
+    
+    console.log('[九宫格] 用户词库配置:', selectedLibraries, '分类:', selectedCategory);
+    
+    // 🆕 构建词库过滤条件
+    let whereClause = '';
+    const params = [];
+    
+    if (selectedLibraries.includes('cambridge') && selectedLibraries.includes('zhenjing')) {
+      // 两个词库都选了，不过滤
+      whereClause = '1=1';
+    } else if (selectedLibraries.includes('cambridge')) {
+      // 只选剑桥
+      whereClause = 'cambridge_book BETWEEN 1 AND 18';
+    } else if (selectedLibraries.includes('zhenjing')) {
+      // 只选真经
+      whereClause = "frequency_level IN ('high', 'medium', 'low')";
+    } else {
+      // 默认剑桥
+      whereClause = 'cambridge_book BETWEEN 1 AND 18';
+    }
+    
+    // 1. 获取所有单词的进度数据（按词库过滤）
     const words = await db.all(`
       SELECT 
         w.id,
@@ -752,8 +777,8 @@ app.get('/api/review/dashboard', async (req, res) => {
         p.review_count
       FROM ielts_words w
       LEFT JOIN user_word_progress p ON w.id = p.word_id AND p.user_id = ?
-      WHERE p.user_id = ? OR p.user_id IS NULL
-    `, [userId, userId]);
+      WHERE (${whereClause}) AND (p.user_id = ? OR p.user_id IS NULL)
+    `, [...params, userId, userId]);
     
     // 2. 计算九宫格数据（根据掌握分数计算阶段）- 🆕 新词从第二天开始复习
     const REVIEW_STAGES = [
