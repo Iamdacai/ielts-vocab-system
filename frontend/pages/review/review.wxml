@@ -20,7 +20,7 @@
           <view class="center-label">总单词</view>
         </view>
         
-        <!-- 8 个阶段圆圈 -->
+        <!-- 8 个阶段圆圈（环形布局）-->
         <view wx:for="{{wheelData}}" wx:key="id" 
               class="wheel-node"
               style="left: {{item.left}}; top: {{item.top}}; background: {{item.color}};">
@@ -31,17 +31,9 @@
       
       <!-- 图例 -->
       <view class="wheel-legend">
-        <view class="legend-item">
-          <view class="legend-dot" style="background: #ef4444;"></view>
-          <text>新学</text>
-        </view>
-        <view class="legend-item">
-          <view class="legend-dot" style="background: #f59e0b;"></view>
-          <text>复习中</text>
-        </view>
-        <view class="legend-item">
-          <view class="legend-dot" style="background: #22c55e;"></view>
-          <text>已掌握</text>
+        <view wx:for="{{wheelData}}" wx:key="id" class="legend-item">
+          <view class="legend-dot" style="background: {{item.color}};"></view>
+          <text>{{item.label}}: {{item.count}}</text>
         </view>
       </view>
     </view>
