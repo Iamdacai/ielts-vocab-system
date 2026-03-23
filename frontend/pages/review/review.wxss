@@ -54,8 +54,8 @@
 
 .wheel-container {
   position: relative;
-  width: 600rpx;
-  height: 600rpx;
+  width: 500rpx;
+  height: 500rpx;
   margin: 0 auto;
 }
 

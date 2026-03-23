@@ -131,16 +131,16 @@ Page({
           progressPercent = Math.round(todaySession.completedWords / todaySession.plannedWords * 100);
         }
         
-        // 计算九宫格位置（扇形布局）- 🆕 增大半径，让圆圈更分散
+        // 计算九宫格位置（紧凑环形布局）
         const wheelDataWithPos = wheelData.map((item, index) => {
           // 8 个阶段均匀分布在圆周上，从顶部 12 点方向开始，顺时针
           const angle = (index * 360 / 8) - 90;
-          const radius = 240; // 🆕 增大半径（原 110rpx），让圆圈更分散
+          const radius = 160; // 🆕 缩小半径，让圆圈更紧凑
           const radian = angle * Math.PI / 180;
           
-          // 计算圆心坐标（容器中心 300rpx, 300rpx）
-          const centerX = 300 + radius * Math.cos(radian);
-          const centerY = 300 + radius * Math.sin(radian);
+          // 计算圆心坐标（容器中心 250rpx, 250rpx）
+          const centerX = 250 + radius * Math.cos(radian);
+          const centerY = 250 + radius * Math.sin(radian);
           
           // 使用 left/top 定位（rpx 单位），减去圆圈半径 65rpx
           const left = centerX - 65;
