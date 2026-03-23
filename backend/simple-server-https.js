@@ -780,32 +780,42 @@ app.get('/api/review/dashboard', authenticateToken, async (req, res) => {
       WHERE (${whereClause}) AND (p.user_id = ? OR p.user_id IS NULL)
     `, [...params, userId, userId]);
     
-    // 2. 计算九宫格数据（根据掌握分数计算阶段）- 🆕 新词从第二天开始复习
+    // 2. 计算九宫格数据（根据掌握分数和下次复习时间计算阶段）
     const REVIEW_STAGES = [
-      { id: 0, label: '新学', days: 1, color: '#ef4444' },     // 🆕 明天复习（原 0 天）
-      { id: 1, label: '第 1 天', days: 2, color: '#f59e0b' },   // 🆕 后天复习（原 1 天）
-      { id: 2, label: '第 2 天', days: 4, color: '#f59e0b' },   // 🆕 4 天后（原 2 天）
-      { id: 3, label: '第 4 天', days: 7, color: '#f59e0b' },   // 🆕 7 天后（原 4 天）
-      { id: 4, label: '第 7 天', days: 15, color: '#f59e0b' },  // 🆕 15 天后（原 7 天）
-      { id: 5, label: '第 15 天', days: 21, color: '#22c55e' }, // 🆕 21 天后（原 15 天）
-      { id: 6, label: '第 21 天', days: 30, color: '#22c55e' }, // 🆕 30 天后（原 21 天）
-      { id: 7, label: '已掌握', days: 30, color: '#22c55e' },   // 保持 30 天
+      { id: 0, label: '新学', days: 0, color: '#ef4444' },     // 未开始学习
+      { id: 1, label: '第 1 天', days: 1, color: '#f59e0b' },   // 1 天后复习
+      { id: 2, label: '第 2 天', days: 2, color: '#f59e0b' },   // 2 天后复习
+      { id: 3, label: '第 4 天', days: 4, color: '#f59e0b' },   // 4 天后复习
+      { id: 4, label: '第 7 天', days: 7, color: '#f59e0b' },   // 7 天后复习
+      { id: 5, label: '第 15 天', days: 15, color: '#22c55e' }, // 15 天后复习
+      { id: 6, label: '第 21 天', days: 21, color: '#22c55e' }, // 21 天后复习
+      { id: 7, label: '已掌握', days: 30, color: '#22c55e' },   // 已掌握
     ];
     
-    // 根据 mastery_score 计算阶段：0=新学，1-4=学习中，5-7=已掌握
-    const calculateStage = (score, reviewCount) => {
-      if (!score || score === 0) return 0; // 新学
-      if (score >= 75) return 5; // 已掌握
-      if (reviewCount >= 4) return 4;
-      if (reviewCount >= 2) return 2;
-      return 1;
+    // 根据 mastery_score 和 next_review_at 计算阶段
+    const calculateStage = (score, reviewCount, nextReviewAt) => {
+      if (!score || score === 0) return 0; // 新学（未学习）
+      if (score >= 75) return 7; // 已掌握
+      
+      // 根据复习次数和下次复习时间计算阶段
+      const now = new Date();
+      const reviewDate = nextReviewAt ? new Date(nextReviewAt) : now;
+      const daysUntilReview = Math.ceil((reviewDate - now) / (1000 * 60 * 60 * 24));
+      
+      if (daysUntilReview <= 1) return 1; // 第 1 天（明天复习）
+      if (daysUntilReview <= 2) return 2; // 第 2 天
+      if (daysUntilReview <= 4) return 3; // 第 4 天
+      if (daysUntilReview <= 7) return 4; // 第 7 天
+      if (daysUntilReview <= 15) return 5; // 第 15 天
+      if (daysUntilReview <= 21) return 6; // 第 21 天
+      return 7; // 已掌握
     };
     
     const wheelData = REVIEW_STAGES.map(stage => ({
       id: stage.id,
       label: stage.label,
       color: stage.color,
-      count: words.filter(w => calculateStage(w.mastery_score, w.review_count) === stage.id).length
+      count: words.filter(w => calculateStage(w.mastery_score, w.review_count, w.next_review_at) === stage.id).length
     }));
     
     // 3. 获取今日复习课
@@ -827,7 +837,7 @@ app.get('/api/review/dashboard', authenticateToken, async (req, res) => {
     
     // 5. 计算统计数据
     const totalWords = words.length;
-    const masteredWords = words.filter(w => calculateStage(w.mastery_score, w.review_count) >= 5).length;
+    const masteredWords = words.filter(w => calculateStage(w.mastery_score, w.review_count, w.next_review_at) === 7).length;
     const masteryRate = totalWords > 0 ? Math.round((masteredWords / totalWords) * 100) : 0;
     
     // 6. 构建今日复习课信息
