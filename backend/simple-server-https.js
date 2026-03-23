@@ -785,16 +785,16 @@ app.get('/api/review/dashboard', authenticateToken, async (req, res) => {
       GROUP BY w.word
     `, [userId]);
     
-    // 2. 计算九宫格数据（根据掌握分数和下次复习时间计算阶段）
+    // 2. 计算九宫格数据（根据掌握分数和下次复习时间计算阶段）- 🆕 每个阶段颜色不同
     const REVIEW_STAGES = [
-      { id: 0, label: '新学', days: 0, color: '#ef4444' },     // 未开始学习
-      { id: 1, label: '第 1 天', days: 1, color: '#f59e0b' },   // 1 天后复习
-      { id: 2, label: '第 2 天', days: 2, color: '#f59e0b' },   // 2 天后复习
-      { id: 3, label: '第 4 天', days: 4, color: '#f59e0b' },   // 4 天后复习
-      { id: 4, label: '第 7 天', days: 7, color: '#f59e0b' },   // 7 天后复习
-      { id: 5, label: '第 15 天', days: 15, color: '#22c55e' }, // 15 天后复习
-      { id: 6, label: '第 21 天', days: 21, color: '#22c55e' }, // 21 天后复习
-      { id: 7, label: '已掌握', days: 30, color: '#22c55e' },   // 已掌握
+      { id: 0, label: '新学', days: 0, color: '#ef4444' },     // 红色 - 未开始学习
+      { id: 1, label: '第 1 天', days: 1, color: '#f97316' },   // 橙色 - 1 天后复习
+      { id: 2, label: '第 2 天', days: 2, color: '#f59e0b' },   // 琥珀色 - 2 天后复习
+      { id: 3, label: '第 4 天', days: 4, color: '#eab308' },   // 黄色 - 4 天后复习
+      { id: 4, label: '第 7 天', days: 7, color: '#84cc16' },   // 黄绿色 - 7 天后复习
+      { id: 5, label: '第 15 天', days: 15, color: '#22c55e' }, // 绿色 - 15 天后复习
+      { id: 6, label: '第 21 天', days: 21, color: '#10b981' }, // 翠绿色 - 21 天后复习
+      { id: 7, label: '已掌握', days: 30, color: '#06b6d4' },   // 青色 - 已掌握
     ];
     
     // 根据 mastery_score 和 next_review_at 计算阶段

@@ -54,8 +54,8 @@
 
 .wheel-container {
   position: relative;
-  width: 300rpx;  /* 🆕 缩小一半 */
-  height: 300rpx;
+  width: 600rpx;  /* 🆕 增大容器 */
+  height: 600rpx;
   margin: 0 auto;
 }
 
@@ -64,59 +64,63 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 80rpx;  /* 🆕 缩小一半 */
-  height: 80rpx;
+  width: 140rpx;  /* 🆕 增大中心圆 */
+  height: 140rpx;
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   border-radius: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4rpx 12rpx rgba(59, 130, 246, 0.3);
+  box-shadow: 0 8rpx 24rpx rgba(59, 130, 246, 0.4);
   z-index: 10;
+  border: 4rpx solid rgba(255, 255, 255, 0.2);
 }
 
 .center-text {
-  font-size: 24rpx;  /* 🆕 缩小字体 */
+  font-size: 40rpx;  /* 🆕 增大字体 */
   font-weight: bold;
   color: #ffffff;
 }
 
 .center-label {
-  font-size: 14rpx;  /* 🆕 缩小字体 */
-  color: rgba(255, 255, 255, 0.8);
-  margin-top: 2rpx;
+  font-size: 22rpx;  /* 🆕 增大字体 */
+  color: rgba(255, 255, 255, 0.9);
+  margin-top: 4rpx;
 }
 
 .wheel-node {
   position: absolute;
-  width: 80rpx;  /* 🆕 缩小一半 */
-  height: 80rpx;
+  width: 130rpx;  /* 🆕 增大圆圈 */
+  height: 130rpx;
   border-radius: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.3);
+  box-shadow: 0 6rpx 20rpx rgba(0, 0, 0, 0.4);
   transition: all 0.3s ease;
+  border: 3rpx solid rgba(255, 255, 255, 0.3);
 }
 
 .wheel-node:active {
-  transform: scale(0.95);
+  transform: scale(1.05);
 }
 
 .node-count {
-  font-size: 20rpx;  /* 🆕 缩小字体 */
+  font-size: 36rpx;  /* 🆕 增大字体 */
   font-weight: bold;
   color: #ffffff;
   line-height: 1;
+  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.3);
 }
 
 .node-label {
-  font-size: 12rpx;  /* 🆕 缩小字体 */
-  color: rgba(255, 255, 255, 0.9);
-  margin-top: 2rpx;
+  font-size: 22rpx;  /* 🆕 增大字体 */
+  color: rgba(255, 255, 255, 0.95);
+  margin-top: 4rpx;
   white-space: nowrap;
+  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.3);
 }
 
 .wheel-legend {
