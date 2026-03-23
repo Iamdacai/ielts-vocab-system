@@ -161,6 +161,25 @@
   color: #007AFF;
 }
 
+/* 🆕 权限说明样式 */
+.permission-desc {
+  background: #f8f8f8;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin-top: 15rpx;
+}
+
+.desc-item {
+  font-size: 26rpx;
+  color: #666;
+  line-height: 1.8;
+  margin-bottom: 8rpx;
+}
+
+.desc-item:last-child {
+  margin-bottom: 0;
+}
+
 /* 🆕 分类选择器样式 */
 .category-picker {
   padding: 25rpx;

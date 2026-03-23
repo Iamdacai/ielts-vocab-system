@@ -106,6 +106,20 @@
     
     <button class="button" bindtap="saveConfig">保存配置</button>
     <button class="button" style="background:#666" bindtap="goBackHome">返回首页</button>
+    
+    <!-- 🆕 录音权限说明 -->
+    <view class="config-section" style="margin-top: 40rpx; border-top: 2rpx solid #eee; padding-top: 30rpx;">
+      <view class="subtitle">🎤 录音权限说明</view>
+      <view class="permission-desc">
+        <view class="desc-item">1. 跟读练习功能需要录音权限</view>
+        <view class="desc-item">2. 首次使用会弹出授权对话框</view>
+        <view class="desc-item">3. 点击"允许"即可开始使用</view>
+        <view class="desc-item">4. 如误点"拒绝"，请删除小程序后重新打开</view>
+      </view>
+      <button class="button" style="background:#07c160; margin-top: 20rpx;" bindtap="checkRecordPermission">
+        检查录音权限
+      </button>
+    </view>
   </view>
   
   <view class="card" wx:else>

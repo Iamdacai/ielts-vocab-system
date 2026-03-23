@@ -644,7 +644,7 @@ Page({
   },
 
   /**
-   * 开始发音练习
+   * 🆕 开始发音练习（修复权限申请问题）
    */
   startPronunciationPractice() {
     const { currentWord, recorderManager, isRecording } = this.data;
@@ -664,35 +664,94 @@ Page({
 
     this.setData({ pronunciationResult: null });
 
-    wx.authorize({
-      scope: 'record',
-      success: () => {
-        recorderManager.start({
-          duration: 10000,
-          sampleRate: 16000,
-          numberOfChannels: 1,
-          encodeBitRate: 48000,
-          format: 'mp3'
-        });
-
-        wx.showToast({
-          title: '开始录音',
-          icon: 'success'
-        });
+    // ✅ 先检查权限设置
+    wx.getSetting({
+      success: (res) => {
+        console.log('[录音权限] 当前设置:', res.authSetting);
+        
+        if (res.authSetting['scope.record'] === true) {
+          // 已授权，直接开始录音
+          this.startRecording();
+        } else if (res.authSetting['scope.record'] === false) {
+          // 用户之前拒绝过，引导去设置
+          wx.showModal({
+            title: '录音权限未开启',
+            content: '请开启录音权限以使用跟读练习功能',
+            confirmText: '去设置',
+            success: (modalRes) => {
+              if (modalRes.confirm) {
+                wx.openSetting({
+                  success: (settingRes) => {
+                    if (settingRes.authSetting['scope.record'] === true) {
+                      // 用户在设置中开启了权限
+                      this.startRecording();
+                    }
+                  }
+                });
+              }
+            }
+          });
+        } else {
+          // 从未申请过，直接开始录音（会自动触发微信授权对话框）
+          this.startRecording();
+        }
       },
-      fail: () => {
+      fail: (err) => {
+        console.error('[录音权限] 获取设置失败:', err);
+        // 获取设置失败，尝试直接录音
+        this.startRecording();
+      }
+    });
+  },
+
+  /**
+   * 🆕 开始录音（封装录音启动逻辑）
+   */
+  startRecording() {
+    const { recorderManager } = this.data;
+
+    try {
+      recorderManager.start({
+        duration: 10000,
+        sampleRate: 16000,
+        numberOfChannels: 1,
+        encodeBitRate: 48000,
+        format: 'mp3'
+      });
+
+      wx.showToast({
+        title: '开始录音',
+        icon: 'success'
+      });
+    } catch (err) {
+      console.error('[录音] 启动失败:', err);
+      
+      // 处理权限错误
+      if (err.errMsg && (err.errMsg.includes('auth deny') || err.errMsg.includes('permission denied'))) {
         wx.showModal({
-          title: '需要录音权限',
-          content: '请在设置中允许录音权限，以便进行发音练习',
+          title: '录音权限未开启',
+          content: '请开启录音权限以使用跟读练习功能',
           confirmText: '去设置',
           success: (res) => {
             if (res.confirm) {
-              wx.openSetting();
+              wx.openSetting({
+                success: (settingRes) => {
+                  if (settingRes.authSetting['scope.record'] === true) {
+                    // 用户开启了权限，重试
+                    this.startRecording();
+                  }
+                }
+              });
             }
           }
         });
+      } else {
+        wx.showToast({
+          title: '录音失败，请重试',
+          icon: 'error'
+        });
       }
-    });
+    }
   },
 
   /**

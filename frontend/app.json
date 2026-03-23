@@ -15,6 +15,11 @@
     "navigationBarTitleText": "雅思智能背单词",
     "navigationBarTextStyle": "white"
   },
+  "permission": {
+    "scope.record": {
+      "desc": "用于跟读练习功能，录制您的发音进行智能评分"
+    }
+  },
   "tabBar": {
     "color": "#666666",
     "selectedColor": "#1890ff",

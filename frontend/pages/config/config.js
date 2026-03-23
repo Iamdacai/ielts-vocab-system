@@ -435,5 +435,60 @@ Page({
         });
       }
     });
+  },
+
+  /**
+   * 🆕 检查录音权限
+   */
+  checkRecordPermission() {
+    wx.getSetting({
+      success: (res) => {
+        console.log('[权限检查] 当前设置:', res.authSetting);
+        
+        if (res.authSetting['scope.record'] === true) {
+          wx.showModal({
+            title: '权限已开启',
+            content: '录音权限已开启，可以在跟读练习中使用录音功能',
+            showCancel: false
+          });
+        } else if (res.authSetting['scope.record'] === false) {
+          wx.showModal({
+            title: '权限未开启',
+            content: '录音权限已被拒绝，请在设置中手动开启',
+            confirmText: '去设置',
+            success: (modalRes) => {
+              if (modalRes.confirm) {
+                wx.openSetting({
+                  success: (settingRes) => {
+                    if (settingRes.authSetting['scope.record'] === true) {
+                      wx.showModal({
+                        title: '权限已开启',
+                        content: '录音权限已开启，现在可以使用跟读练习功能',
+                        showCancel: false
+                      });
+                    }
+                  }
+                });
+              }
+            }
+          });
+        } else {
+          // 从未申请过，提示用户去使用功能触发申请
+          wx.showModal({
+            title: '权限未申请',
+            content: '您还未使用过录音功能\n\n请进入复习页面，点击"跟读练习"按钮，微信会弹出授权对话框',
+            showCancel: false,
+            confirmText: '知道了'
+          });
+        }
+      },
+      fail: (err) => {
+        console.error('[权限检查] 失败:', err);
+        wx.showToast({
+          title: '权限检查失败',
+          icon: 'error'
+        });
+      }
+    });
   }
 });
