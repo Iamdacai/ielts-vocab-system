@@ -19,8 +19,8 @@
         <!-- 8 个花瓣格子 -->
         <view wx:for="{{wheelData}}" wx:key="id" wx:if="{{index < 8}}"
               class="wheel-segment"
-              style="background: linear-gradient(135deg, {{item.color}} 0%, {{item.color}}dd 100%); transform: rotate({{index * 45}}deg);">
-          <view class="segment-content" style="transform: rotate(-{{index * 45}}deg);">
+              style="background: linear-gradient(135deg, {{item.color}} 0%, {{item.color}}dd 100%);">
+          <view class="segment-content">
             <view class="segment-count">{{item.count}}</view>
             <view class="segment-label">{{item.label}}</view>
           </view>
