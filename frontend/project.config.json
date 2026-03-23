@@ -39,7 +39,7 @@
     "packNrmRelationList": [],
     "minifyWXSS": true,
     "devToolsConfig": {
-      "disableHttpToHttps": true
+      "disableHttpToHttps": false
     }
   },
   "compileType": "miniprogram",

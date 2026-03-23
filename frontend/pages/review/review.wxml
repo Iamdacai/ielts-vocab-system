@@ -10,44 +10,28 @@
       <view class="placeholder"></view>
     </view>
     
-    <!-- 九宫格总览区 -->
+    <!-- 九宫格总览区 - 圆环形布局 -->
     <view class="wheel-section">
       <view class="section-title">📊 记忆九宫格</view>
       
-      <!-- 3x3 九宫格布局 -->
-      <view class="grid-3x3">
-        <!-- 第一行 -->
-        <view wx:for="{{wheelData}}" wx:key="id" wx:if="{{index < 3}}"
-              class="grid-cell"
-              style="background: linear-gradient(135deg, {{item.color}} 0%, {{item.color}}dd 100%);">
-          <view class="cell-count">{{item.count}}</view>
-          <view class="cell-label">{{item.label}}</view>
-        </view>
-      </view>
-      
-      <view class="grid-3x3">
-        <!-- 第二行（中间是总数）-->
-        <view wx:for="{{wheelData}}" wx:key="id" wx:if="{{index >= 3 && index < 6}}"
-              class="grid-cell"
-              style="background: linear-gradient(135deg, {{item.color}} 0%, {{item.color}}dd 100%);">
-          <view wx:if="{{index !== 4}}" class="cell-count">{{item.count}}</view>
-          <view wx:if="{{index !== 4}}" class="cell-label">{{item.label}}</view>
-          
-          <!-- 中心显示总数 -->
-          <view wx:if="{{index === 4}}" class="cell-center">
-            <view class="center-count">{{stats.totalWords}}</view>
-            <view class="center-label">总单词</view>
+      <!-- 圆环形九宫格 -->
+      <view class="circular-wheel">
+        <!-- 8 个花瓣格子 -->
+        <view wx:for="{{wheelData}}" wx:key="id" wx:if="{{index < 8}}"
+              class="wheel-segment"
+              style="background: linear-gradient(135deg, {{item.color}} 0%, {{item.color}}dd 100%); transform: rotate({{index * 45}}deg);">
+          <view class="segment-content" style="transform: rotate(-{{index * 45}}deg);">
+            <view class="segment-count">{{item.count}}</view>
+            <view class="segment-label">{{item.label}}</view>
           </view>
         </view>
-      </view>
-      
-      <view class="grid-3x3">
-        <!-- 第三行 -->
-        <view wx:for="{{wheelData}}" wx:key="id" wx:if="{{index >= 6}}"
-              class="grid-cell"
-              style="background: linear-gradient(135deg, {{item.color}} 0%, {{item.color}}dd 100%);">
-          <view class="cell-count">{{item.count}}</view>
-          <view class="cell-label">{{item.label}}</view>
+        
+        <!-- 中心 START 按钮 -->
+        <view class="wheel-center" bindtap="startReview">
+          <view class="center-button">
+            <view class="center-text">START</view>
+            <view class="center-icon">▶</view>
+          </view>
         </view>
       </view>
       
