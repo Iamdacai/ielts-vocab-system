@@ -472,36 +472,81 @@ Page({
     // 清除之前的评分结果
     this.setData({ pronunciationResult: null });
     
-    // 请求录音权限
-    wx.authorize({
-      scope: 'record',
-      success: () => {
-        // 开始录音
-        recorderManager.start({
-          duration: 10000, // 最长 10 秒
-          sampleRate: 16000,
-          numberOfChannels: 1,
-          encodeBitRate: 48000,
-          format: 'mp3'
-        });
+    // 🆕 先检查权限状态
+    wx.getSetting({
+      success: (settingRes) => {
+        const authRecord = settingRes.authSetting['scope.record'];
         
-        wx.showToast({
-          title: '开始录音',
-          icon: 'success'
-        });
+        if (authRecord === true) {
+          // 已授权，直接开始录音
+          this.startRecording(recorderManager);
+        } else if (authRecord === false) {
+          // 用户拒绝过，引导去设置
+          wx.showModal({
+            title: '需要录音权限',
+            content: '请在设置中允许录音权限，以便进行发音练习',
+            confirmText: '去设置',
+            cancelText: '取消',
+            success: (modalRes) => {
+              if (modalRes.confirm) {
+                wx.openSetting({
+                  success: (openRes) => {
+                    if (openRes.authSetting['scope.record'] === true) {
+                      // 用户在设置页授权了，开始录音
+                      this.startRecording(recorderManager);
+                    }
+                  }
+                });
+              }
+            }
+          });
+        } else {
+          // 从未授权过，请求授权
+          wx.authorize({
+            scope: 'record',
+            success: () => {
+              this.startRecording(recorderManager);
+            },
+            fail: () => {
+              wx.showModal({
+                title: '需要录音权限',
+                content: '请在设置中允许录音权限，以便进行发音练习',
+                confirmText: '去设置',
+                cancelText: '取消',
+                success: (modalRes) => {
+                  if (modalRes.confirm) {
+                    wx.openSetting();
+                  }
+                }
+              });
+            }
+          });
+        }
       },
       fail: () => {
-        wx.showModal({
-          title: '需要录音权限',
-          content: '请在设置中允许录音权限，以便进行发音练习',
-          confirmText: '去设置',
-          success: (res) => {
-            if (res.confirm) {
-              wx.openSetting();
-            }
-          }
+        wx.showToast({
+          title: '权限检测失败',
+          icon: 'error'
         });
       }
+    });
+  },
+  
+  /**
+   * 🆕 开始录音（封装）
+   */
+  startRecording(recorderManager) {
+    recorderManager.start({
+      duration: 10000, // 最长 10 秒
+      sampleRate: 16000,
+      numberOfChannels: 1,
+      encodeBitRate: 48000,
+      format: 'mp3'
+    });
+    
+    wx.showToast({
+      title: '开始录音',
+      icon: 'success'
     });
   },
 
