@@ -52,31 +52,28 @@
   margin-bottom: 30rpx;
 }
 
-/* ========== 圆环形九宫格 - 胶囊形花瓣 ========== */
+/* ========== 圆环形九宫格 - 水滴形花瓣 ========== */
 .circular-wheel {
   position: relative;
-  width: 520rpx;
-  height: 520rpx;
+  width: 600rpx;
+  height: 600rpx;
   margin: 40rpx auto;
   border-radius: 50%;
   background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
   box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
-/* 胶囊形花瓣 */
+/* 水滴形花瓣 */
 .wheel-segment {
   position: absolute;
-  width: 100rpx;
-  height: 160rpx;
+  width: 110rpx;
+  height: 150rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  /* 胶囊形状：两端半圆 */
-  border-radius: 50rpx;
+  /* 水滴形：上圆下尖 */
+  border-radius: 55rpx 55rpx 30rpx 30rpx;
   box-shadow: 
     0 4rpx 12rpx rgba(0, 0, 0, 0.3),
     inset 0 2rpx 8rpx rgba(255, 255, 255, 0.2);
@@ -85,71 +82,62 @@
 
 .wheel-segment:active {
   transform: scale(0.95);
-  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.2);
 }
 
-/* 8 个花瓣位置 - 围绕中心辐射 */
+/* 8 个花瓣位置 - 围绕中心均匀分布 (半径 240rpx) */
 .wheel-segment:nth-child(1) { 
-  top: 0rpx; 
+  /* 12 点方向 */
   left: 50%; 
-  margin-left: -50rpx;
+  top: 60rpx;
+  margin-left: -55rpx;
 }
 .wheel-segment:nth-child(2) { 
-  top: 45rpx; 
-  right: 45rpx; 
-  transform: rotate(45deg);
+  /* 1:30 方向 */
+  right: 90rpx; 
+  top: 90rpx;
 }
 .wheel-segment:nth-child(3) { 
-  top: 50%; 
-  margin-top: -80rpx; 
-  right: 0rpx; 
-  transform: rotate(90deg);
+  /* 3 点方向 */
+  right: 60rpx;
+  top: 50%;
+  margin-top: -75rpx;
 }
 .wheel-segment:nth-child(4) { 
-  bottom: 45rpx; 
-  right: 45rpx; 
-  transform: rotate(135deg);
+  /* 4:30 方向 */
+  right: 90rpx;
+  bottom: 90rpx;
 }
 .wheel-segment:nth-child(5) { 
-  bottom: 0rpx; 
-  left: 50%; 
-  margin-left: -50rpx;
-  transform: rotate(180deg);
+  /* 6 点方向 */
+  left: 50%;
+  bottom: 60rpx;
+  margin-left: -55rpx;
 }
 .wheel-segment:nth-child(6) { 
-  bottom: 45rpx; 
-  left: 45rpx; 
-  transform: rotate(225deg);
+  /* 7:30 方向 */
+  left: 90rpx;
+  bottom: 90rpx;
 }
 .wheel-segment:nth-child(7) { 
-  top: 50%; 
-  margin-top: -80rpx; 
-  left: 0rpx; 
-  transform: rotate(270deg);
+  /* 9 点方向 */
+  left: 60rpx;
+  top: 50%;
+  margin-top: -75rpx;
 }
 .wheel-segment:nth-child(8) { 
-  top: 45rpx; 
-  left: 45rpx; 
-  transform: rotate(315deg);
+  /* 10:30 方向 */
+  left: 90rpx;
+  top: 90rpx;
 }
 
-/* 花瓣内容 - 反向旋转保持文字水平 */
+/* 花瓣内容 */
 .segment-content {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   width: 100%;
-  height: 100%;
 }
-
-.wheel-segment:nth-child(2) .segment-content { transform: rotate(-45deg); }
-.wheel-segment:nth-child(3) .segment-content { transform: rotate(-90deg); }
-.wheel-segment:nth-child(4) .segment-content { transform: rotate(-135deg); }
-.wheel-segment:nth-child(5) .segment-content { transform: rotate(-180deg); }
-.wheel-segment:nth-child(6) .segment-content { transform: rotate(-225deg); }
-.wheel-segment:nth-child(7) .segment-content { transform: rotate(-270deg); }
-.wheel-segment:nth-child(8) .segment-content { transform: rotate(-315deg); }
 
 .segment-count {
   font-size: 40rpx;
@@ -167,15 +155,18 @@
   white-space: nowrap;
 }
 
-/* 中心 START 按钮 */
+/* 中心 START 按钮 - 绝对居中 */
 .wheel-center {
   position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   z-index: 10;
 }
 
 .center-button {
-  width: 140rpx;
-  height: 140rpx;
+  width: 160rpx;
+  height: 160rpx;
   border-radius: 50%;
   background: linear-gradient(135deg, #ff7b7b 0%, #ff5252 100%);
   display: flex;
@@ -184,7 +175,8 @@
   justify-content: center;
   box-shadow: 
     0 6rpx 24rpx rgba(255, 82, 82, 0.5),
-    inset 0 4rpx 12rpx rgba(255, 255, 255, 0.3);
+    inset 0 4rpx 12rpx rgba(255, 255, 255, 0.3),
+    0 0 0 8rpx rgba(255, 82, 82, 0.15);
   cursor: pointer;
   transition: all 0.25s ease;
 }
@@ -197,7 +189,7 @@
 }
 
 .center-text {
-  font-size: 26rpx;
+  font-size: 28rpx;
   font-weight: bold;
   color: #ffffff;
   text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.4);
@@ -205,7 +197,7 @@
 }
 
 .center-icon {
-  font-size: 32rpx;
+  font-size: 34rpx;
   color: #ffffff;
   text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.4);
 }
