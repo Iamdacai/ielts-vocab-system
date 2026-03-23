@@ -263,10 +263,10 @@ app.post('/api/auth/login', (req, res) => {
 });
 
 // 🆕 获取用户配置
-app.get('/api/config', async (req, res) => {
+app.get('/api/config', authenticateToken, async (req, res) => {
   try {
     const db = await initializeDatabase();
-    const userId = 1;
+    const userId = req.user.userId;
     
     const config = await db.get('SELECT * FROM user_configs WHERE user_id = ?', [userId]);
     
@@ -274,14 +274,18 @@ app.get('/api/config', async (req, res) => {
       res.json({
         weekly_new_words_days: JSON.parse(config.weekly_new_words_days || '[1,2,3,4,5,6,7]'),
         daily_new_words_count: config.daily_new_words_count || 20,
-        review_time: config.review_time || '20:00'
+        review_time: config.review_time || '20:00',
+        vocab_library: config.vocab_library ? JSON.parse(config.vocab_library) : ['cambridge'],
+        vocab_category: config.vocab_category || ''
       });
     } else {
       // 默认配置
       res.json({
         weekly_new_words_days: [1,2,3,4,5,6,7],
         daily_new_words_count: 20,
-        review_time: '20:00'
+        review_time: '20:00',
+        vocab_library: ['cambridge'],
+        vocab_category: ''
       });
     }
   } catch (error) {
@@ -294,27 +298,35 @@ app.get('/api/config', async (req, res) => {
 });
 
 // 🆕 保存用户配置
-app.post('/api/config', async (req, res) => {
+app.post('/api/config', authenticateToken, async (req, res) => {
   try {
     const db = await initializeDatabase();
-    const { weekly_new_words_days, daily_new_words_count, review_time } = req.body;
+    const userId = req.user.userId;
+    const { weekly_new_words_days, daily_new_words_count, review_time, vocab_library, vocab_category } = req.body;
     
-    // 默认用户 ID
-    const userId = 1;
     const daysStr = JSON.stringify(weekly_new_words_days || [1,2,3,4,5,6,7]);
     const count = parseInt(daily_new_words_count) || 20;
     const time = review_time || '20:00';
+    const libraryStr = vocab_library ? JSON.stringify(vocab_library) : '["cambridge"]';
+    const categoryStr = vocab_category || '';
     
-    console.log('[配置] 保存配置:', { userId, days: weekly_new_words_days, count, time });
+    console.log('[配置] 保存配置:', { 
+      userId, 
+      days: weekly_new_words_days, 
+      count, 
+      time,
+      libraries: vocab_library,
+      category: vocab_category
+    });
     
     // 使用 INSERT OR REPLACE 简化逻辑
     await db.run(`
       INSERT OR REPLACE INTO user_configs 
-      (user_id, weekly_new_words_days, daily_new_words_count, review_time, created_at, updated_at)
-      VALUES (?, ?, ?, ?, 
+      (user_id, weekly_new_words_days, daily_new_words_count, review_time, vocab_library, vocab_category, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?,
         COALESCE((SELECT created_at FROM user_configs WHERE user_id = ?), CURRENT_TIMESTAMP),
         CURRENT_TIMESTAMP)
-    `, [userId, daysStr, count, time, userId]);
+    `, [userId, daysStr, count, time, libraryStr, categoryStr, userId]);
     
     console.log(`[配置] 用户 ${userId} 保存配置成功`);
     
@@ -323,7 +335,9 @@ app.post('/api/config', async (req, res) => {
       config: {
         weekly_new_words_days,
         daily_new_words_count: count,
-        review_time: time
+        review_time: time,
+        vocab_library,
+        vocab_category
       }
     });
   } catch (error) {
@@ -505,13 +519,47 @@ async function enrichWordWithYoudao(word) {
 }
 
 // 获取真实新词
-app.get('/api/words/new', async (req, res) => {
+app.get('/api/words/new', authenticateToken, async (req, res) => {
   try {
     const db = await initializeDatabase();
+    const userId = req.user.userId;
+    
+    // 🆕 获取用户词库配置
+    const config = await db.get('SELECT vocab_library, vocab_category FROM user_configs WHERE user_id = ?', [userId]);
+    const selectedLibraries = config?.vocab_library ? JSON.parse(config.vocab_library) : ['cambridge'];
+    const selectedCategory = config?.vocab_category || '';
+    
+    console.log('[新词] 用户词库配置:', selectedLibraries, '分类:', selectedCategory);
+    
+    // 🆕 构建词库过滤条件
+    let whereClause = '';
+    const params = [];
+    
+    if (selectedLibraries.includes('cambridge') && selectedLibraries.includes('zhenjing')) {
+      // 两个词库都选了，不过滤
+      whereClause = '1=1';
+    } else if (selectedLibraries.includes('cambridge')) {
+      // 只选剑桥
+      whereClause = 'cambridge_book BETWEEN 1 AND 18';
+    } else if (selectedLibraries.includes('zhenjing')) {
+      // 只选真经
+      whereClause = "frequency_level IN ('high', 'medium', 'low')";
+    } else {
+      // 默认剑桥
+      whereClause = 'cambridge_book BETWEEN 1 AND 18';
+    }
+    
+    // 🆕 添加分类过滤（仅当真经词库且选择了分类）
+    if (selectedLibraries.includes('zhenjing') && selectedCategory) {
+      whereClause += ` AND frequency_level = ?`;
+      params.push(selectedCategory);
+    }
     
     // ✅ 读取 count 参数，支持前端动态配置每日新词数量
     const count = parseInt(req.query.count) || 20;
-    const words = await db.all('SELECT * FROM ielts_words ORDER BY RANDOM() LIMIT ?', [count]);
+    params.push(count);
+    
+    const words = await db.all(`SELECT * FROM ielts_words WHERE ${whereClause} ORDER BY RANDOM() LIMIT ?`, params);
     
     // 处理字段映射和 example_sentences（安全解析 JSON）
     let processedWords = words.map(word => {
@@ -1217,8 +1265,33 @@ app.get('/api/stats', authenticateToken, async (req, res) => {
     const db = await initializeDatabase();
     const userId = req.user.userId;
     
-    // 获取总单词数（全局）
-    const totalResult = await db.get('SELECT COUNT(*) as count FROM ielts_words');
+    // 🆕 获取用户词库配置
+    const config = await db.get('SELECT vocab_library, vocab_category FROM user_configs WHERE user_id = ?', [userId]);
+    const selectedLibraries = config?.vocab_library ? JSON.parse(config.vocab_library) : ['cambridge'];
+    const selectedCategory = config?.vocab_category || '';
+    
+    console.log('[统计] 用户词库配置:', selectedLibraries, '分类:', selectedCategory);
+    
+    // 🆕 构建词库过滤条件
+    let whereClause = '';
+    const params = [];
+    
+    if (selectedLibraries.includes('cambridge') && selectedLibraries.includes('zhenjing')) {
+      // 两个词库都选了，不过滤
+      whereClause = '1=1';
+    } else if (selectedLibraries.includes('cambridge')) {
+      // 只选剑桥
+      whereClause = 'cambridge_book BETWEEN 1 AND 18';
+    } else if (selectedLibraries.includes('zhenjing')) {
+      // 只选真经
+      whereClause = "frequency_level IN ('high', 'medium', 'low')";
+    } else {
+      // 默认剑桥
+      whereClause = 'cambridge_book BETWEEN 1 AND 18';
+    }
+    
+    // 获取总单词数（按用户选择的词库过滤）
+    const totalResult = await db.get(`SELECT COUNT(*) as count FROM ielts_words WHERE ${whereClause}`);
     const total_words = totalResult.count || 0;
     
     // 获取今日日期范围
