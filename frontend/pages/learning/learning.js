@@ -817,6 +817,7 @@ Page({
    * 跳过学时确认
    */
   skipDuration() {
+    console.log('[跳过] 点击跳过按钮');
     const { sessionId, elapsedSeconds, sessionStats } = this.data;
     
     const progressData = loadProgress();
@@ -834,7 +835,20 @@ Page({
     
     this.saveSessionToBackend(elapsedSeconds, false);
     
-    wx.navigateBack();
+    // 🆕 tabBar 页面，使用 switchTab 返回首页
+    wx.switchTab({
+      url: '/pages/index/index',
+      success: () => {
+        console.log('[跳过] 返回首页成功');
+      },
+      fail: (err) => {
+        console.error('[跳过] 返回首页失败:', err);
+        wx.showToast({
+          title: '返回首页失败',
+          icon: 'error'
+        });
+      }
+    });
   },
 
   /**
@@ -908,8 +922,21 @@ Page({
    * 🆕 结束学习 - 返回首页
    */
   finishLearning() {
-    wx.navigateBack({
-      delta: 1
+    console.log('[结束学习] 点击结束按钮');
+    
+    // 🆕 tabBar 页面，使用 switchTab 返回首页
+    wx.switchTab({
+      url: '/pages/index/index',
+      success: () => {
+        console.log('[结束学习] 返回首页成功');
+      },
+      fail: (err) => {
+        console.error('[结束学习] 返回首页失败:', err);
+        wx.showToast({
+          title: '返回首页失败',
+          icon: 'error'
+        });
+      }
     });
   }
 });
