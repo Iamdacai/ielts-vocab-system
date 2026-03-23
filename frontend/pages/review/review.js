@@ -205,10 +205,15 @@ Page({
         const data = res.data;
         
         if (!data.hasSession) {
+          wx.hideLoading();
           wx.showModal({
             title: '太棒了！',
             content: '今天没有待复习的单词',
-            showCancel: false
+            showCancel: false,
+            success: () => {
+              // 关闭 modal 后重新加载 dashboard
+              this.loadDashboard();
+            }
           });
           return;
         }
@@ -220,6 +225,7 @@ Page({
         console.log('session.id:', session?.id);
         
         if (!session || !session.id) {
+          wx.hideLoading();
           wx.showToast({
             title: '复习课数据错误',
             icon: 'error'
