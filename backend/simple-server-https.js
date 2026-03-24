@@ -2125,3 +2125,66 @@ https.createServer(options, app).listen(PORT, () => {
 });
 
 module.exports = app;
+// 📚 词库 API - 获取整理后的词库列表
+app.get('/api/words/libraries', authenticateToken, (req, res) => {
+  const db = new sqlite3.Database(DB_PATH, sqlite3.OPEN_READONLY);
+  
+  const query = `
+    SELECT 
+      category as id,
+      category as name,
+      CASE 
+        WHEN category LIKE '%雅思%' OR category LIKE '%IELTS%' THEN 'IELTS'
+        WHEN category LIKE '%托福%' OR category LIKE '%TOEFL%' THEN 'TOEFL'
+        WHEN category LIKE '%GRE%' THEN 'GRE'
+        WHEN category LIKE '%考研%' THEN '考研'
+        WHEN category LIKE '%四级%' OR category LIKE '%CET-4%' THEN 'CET4'
+        WHEN category LIKE '%六级%' OR category LIKE '%CET-6%' THEN 'CET6'
+        WHEN category LIKE '%高中%' THEN '高中'
+        WHEN category LIKE '%初中%' THEN '初中'
+        WHEN category LIKE '%小学%' THEN '小学'
+        WHEN category LIKE '%真经%' THEN '真经'
+        ELSE '其他'
+      END as group_name,
+      COUNT(*) as word_count
+    FROM ielts_words
+    WHERE category IS NOT NULL AND category != ''
+    GROUP BY category
+    ORDER BY word_count DESC
+  `;
+  
+  db.all(query, [], (err, rows) => {
+    db.close();
+    if (err) return res.status(500).json({ error: '查询失败' });
+    
+    // 按分组整理
+    const groups = {};
+    rows.forEach(row => {
+      if (!groups[row.group_name]) groups[row.group_name] = [];
+      groups[row.group_name].push({
+        id: row.id,
+        name: row.name,
+        group: row.group_name,
+        word_count: row.word_count
+      });
+    });
+    
+    res.json(groups);
+  });
+});
+
+// 📚 词库分类 API
+app.get('/api/words/categories', authenticateToken, (req, res) => {
+  const { source } = req.query;
+  const db = new sqlite3.Database(DB_PATH, sqlite3.OPEN_READONLY);
+  
+  let query = `SELECT DISTINCT category as id, category as name, COUNT(*) as word_count FROM ielts_words`;
+  if (source === '真经') query += ` WHERE category LIKE '%真经%'`;
+  query += ` GROUP BY category ORDER BY word_count DESC`;
+  
+  db.all(query, [], (err, rows) => {
+    db.close();
+    if (err) return res.status(500).json({ error: '查询失败' });
+    res.json(rows);
+  });
+});
