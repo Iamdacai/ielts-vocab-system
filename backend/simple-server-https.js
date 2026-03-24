@@ -2019,19 +2019,6 @@ app.get('/api/words/libraries', authenticateToken, async (req, res) => {
       SELECT 
         category as id,
         category as name,
-        CASE 
-          WHEN category LIKE '%雅思%' OR category LIKE '%IELTS%' THEN 'IELTS'
-          WHEN category LIKE '%托福%' OR category LIKE '%TOEFL%' THEN 'TOEFL'
-          WHEN category LIKE '%GRE%' THEN 'GRE'
-          WHEN category LIKE '%考研%' THEN '考研'
-          WHEN category LIKE '%四级%' OR category LIKE '%CET-4%' THEN 'CET4'
-          WHEN category LIKE '%六级%' OR category LIKE '%CET-6%' THEN 'CET6'
-          WHEN category LIKE '%高中%' THEN '高中'
-          WHEN category LIKE '%初中%' THEN '初中'
-          WHEN category LIKE '%小学%' THEN '小学'
-          WHEN category LIKE '%真经%' THEN '真经'
-          ELSE '其他'
-        END as group_name,
         COUNT(*) as word_count
       FROM ielts_words
       WHERE category IS NOT NULL AND category != ''
@@ -2041,19 +2028,7 @@ app.get('/api/words/libraries', authenticateToken, async (req, res) => {
     
     const rows = await db.all(query);
     
-    // 按分组整理
-    const groups = {};
-    rows.forEach(row => {
-      if (!groups[row.group_name]) groups[row.group_name] = [];
-      groups[row.group_name].push({
-        id: row.id,
-        name: row.name,
-        group: row.group_name,
-        word_count: row.word_count
-      });
-    });
-    
-    res.json(groups);
+    res.json(rows);
   } catch (error) {
     console.error('[词库列表] 查询失败:', error);
     res.status(500).json({ error: '查询失败' });
