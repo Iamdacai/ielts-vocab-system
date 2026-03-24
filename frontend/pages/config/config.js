@@ -4,7 +4,7 @@ Page({
   data: {
     userInfo: null,
     config: {
-      vocab_library: ['cambridge'],  // 🆕 默认词库（数组，支持多选）
+      vocab_library: [],             // 🆕 默认词库（空数组，首次加载时全选）
       vocab_category: '',            // 🆕 词汇分类
       weekly_new_words_days: [1, 2, 3, 4, 5, 6, 7],
       daily_new_words_count: 20,
@@ -152,7 +152,10 @@ Page({
         }
         
         // 🆕 从后端获取用户已选的词库，如果没有则默认全选
-        const selectedLibraries = this.data.config.vocab_library || libraries.map(lib => lib.id);
+        const savedLibraries = this.data.config.vocab_library;
+        const selectedLibraries = (savedLibraries && savedLibraries.length > 0) 
+          ? savedLibraries 
+          : libraries.map(lib => lib.id);
         
         // 🆕 为每个词库添加 selected 状态
         const librariesWithSelected = libraries.map(lib => ({
@@ -191,11 +194,14 @@ Page({
   // 🆕 加载分类列表
   async loadCategories() {
     // 🆕 获取第一个选中的词库（用于加载分类）
-    const firstLibrary = this.data.config.vocab_library[0] || 'cambridge';
+    const firstLibrary = this.data.config.vocab_library[0] || (this.data.libraries[0] ? this.data.libraries[0].id : '');
+    
+    // 🆕 判断是否是真经词库（包含"真经"关键字）
+    const isZhenjing = firstLibrary && firstLibrary.includes('真经');
     
     try {
       const res = await wx.request({
-        url: `${app.globalData.apiUrl}/words/categories?source=${firstLibrary === 'zhenjing' ? '真经' : '剑桥'}`,
+        url: `${app.globalData.apiUrl}/words/categories?source=${isZhenjing ? '真经' : ''}`,
         method: 'GET',
         header: {
           'Authorization': `Bearer ${app.globalData.token}`
