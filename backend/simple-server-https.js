@@ -9,6 +9,7 @@ const path = require('path');
 const multer = require('multer');
 const crypto = require('crypto');
 const axios = require('axios');
+const sqlite3 = require('sqlite3');
 
 // 有道智云 API 配置
 const YOUDAO_APP_KEY = process.env.YOUDAO_APP_KEY;
@@ -2009,22 +2010,6 @@ app.post('/api/admin/data-reset', requireAdmin, async (req, res) => {
   }
 });
 
-// HTTPS 配置 - 修正路径
-const sslPath = path.join(__dirname, '..', 'ssl');
-const options = {
-  key: fs.readFileSync(path.join(sslPath, 'key.pem')),
-  cert: fs.readFileSync(path.join(sslPath, 'cert.pem'))
-};
-
-// 使用端口3001
-const PORT = process.env.PORT || 3001;
-https.createServer(options, app).listen(PORT, () => {
-  console.log(`雅思背单词简化HTTPS后端服务启动成功！端口: ${PORT}`);
-  console.log('注意：这是简化版本，仅用于前端测试和演示');
-  console.log('HTTPS证书路径:', sslPath);
-});
-
-module.exports = app;
 // 📚 词库 API - 获取整理后的词库列表
 app.get('/api/words/libraries', authenticateToken, (req, res) => {
   const db = new sqlite3.Database(DB_PATH, sqlite3.OPEN_READONLY);
@@ -2088,3 +2073,20 @@ app.get('/api/words/categories', authenticateToken, (req, res) => {
     res.json(rows);
   });
 });
+
+// HTTPS 配置 - 修正路径
+const sslPath = path.join(__dirname, '..', 'ssl');
+const options = {
+  key: fs.readFileSync(path.join(sslPath, 'key.pem')),
+  cert: fs.readFileSync(path.join(sslPath, 'cert.pem'))
+};
+
+// 使用端口 3001
+const PORT = process.env.PORT || 3001;
+https.createServer(options, app).listen(PORT, () => {
+  console.log(`雅思背单词简化 HTTPS 后端服务启动成功！端口：${PORT}`);
+  console.log('注意：这是简化版本，仅用于前端测试和演示');
+  console.log('HTTPS 证书路径:', sslPath);
+});
+
+module.exports = app;
