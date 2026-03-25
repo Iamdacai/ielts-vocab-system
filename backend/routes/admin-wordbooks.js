@@ -416,7 +416,7 @@ router.get('/wordbooks/:id/words', requireAdmin, async (req, res) => {
     // 获取单词列表
     const words = await new Promise((resolve, reject) => {
       db.all(
-        `SELECT id, word, phonetic, definition, example, category 
+        `SELECT id, word, phonetic, definition, example_sentences as example, category 
          FROM ielts_words 
          WHERE ${whereClause} 
          ORDER BY word 
