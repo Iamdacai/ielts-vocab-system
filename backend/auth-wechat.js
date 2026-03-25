@@ -225,7 +225,8 @@ function verifyToken(token) {
  * 检查是否是管理员
  */
 function isAdmin(user) {
-  return user?.role === 'admin' || (ADMIN_OPENID && user?.openid === ADMIN_OPENID);
+  // 支持 admin 和 super_admin 角色
+  return user?.role === 'admin' || user?.role === 'super_admin' || (ADMIN_OPENID && user?.openid === ADMIN_OPENID);
 }
 
 module.exports = {

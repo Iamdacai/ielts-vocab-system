@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>词库管理测试</title>
+  <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+</head>
+<body style="padding: 20px">
+  <div id="app">
+    <h2>词库管理 API 测试</h2>
+    <el-button @click="loadWordbooks" type="primary">加载词库</el-button>
+    <div style="margin-top: 20px">
+      <pre>{{ rawData }}</pre>
+    </div>
+    <el-table :data="wordbooks" style="margin-top: 20px" border stripe>
+      <el-table-column prop="name" label="词库名称" min-width="250" />
+      <el-table-column prop="description" label="描述" min-width="250" />
+      <el-table-column prop="wordCount" label="单词数" width="100" align="center" />
+    </el-table>
+  </div>
+  
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://unpkg.com/element-plus"></script>
+  <script>
+    Vue.createApp({
+      setup() {
+        const wordbooks = Vue.ref([]);
+        const rawData = Vue.ref({});
+        
+        const loadWordbooks = async () => {
+          const token = localStorage.getItem('admin_token');
+          const res = await fetch('/api/admin/wordbooks?page=1&pageSize=5', {
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+          const data = await res.json();
+          wordbooks.value = data.wordbooks || [];
+          rawData.value = data;
+          console.log('词库数据:', wordbooks.value);
+        };
+        
+        return { wordbooks, rawData, loadWordbooks };
+      }
+    }).use(ElementPlus).mount('#app');
+  </script>
+</body>
+</html>

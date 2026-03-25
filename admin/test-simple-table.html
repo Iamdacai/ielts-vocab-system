@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>词库表格 - 最简测试</title>
+  <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+</head>
+<body style="padding: 20px">
+  <div id="app">
+    <h2>最简表格测试</h2>
+    <el-table :data="tableData" border style="width: 100%">
+      <el-table-column prop="name" label="名称" width="180" />
+      <el-table-column prop="desc" label="描述" width="180" />
+      <el-table-column prop="count" label="数量" width="80" />
+    </el-table>
+    
+    <h3 style="margin-top: 30px">原始数据：</h3>
+    <pre>{{ tableData }}</pre>
+  </div>
+  
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://unpkg.com/element-plus"></script>
+  <script>
+    const { createApp, ref } = Vue;
+    
+    createApp({
+      setup() {
+        const tableData = ref([
+          { name: '测试 1', desc: '描述 1', count: 100 },
+          { name: '测试 2', desc: '描述 2', count: 200 },
+          { name: '测试 3', desc: '描述 3', count: 300 }
+        ]);
+        
+        return { tableData };
+      }
+    })
+    .use(ElementPlus)
+    .mount('#app');
+  </script>
+</body>
+</html>

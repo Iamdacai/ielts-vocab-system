@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>后台管理 - P2 功能测试</title>
+  <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; margin: 0; padding: 20px; }
+    .container { max-width: 1400px; margin: 0 auto; }
+    .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+    h2 { margin-top: 0; color: #333; }
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0; }
+    .stat-card { padding: 20px; border-radius: 8px; text-align: center; }
+    .stat-card.warning { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
+    .stat-card.danger { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white; }
+    .stat-card.info { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333; }
+    .stat-value { font-size: 36px; font-weight: bold; margin: 10px 0; }
+    .stat-label { opacity: 0.9; font-size: 14px; }
+    .anomaly-item { border-left: 4px solid #F56C6C; padding: 15px; margin: 10px 0; background: #fef0f0; border-radius: 4px; }
+    .anomaly-item.warning { border-left-color: #E6A23C; background: #fdf6ec; }
+    .risk-badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+    .risk-high { background: #F56C6C; color: white; }
+    .risk-medium { background: #E6A23C; color: white; }
+    .risk-low { background: #67C23A; color: white; }
+  </style>
+</head>
+<body>
+  <div id="app" class="container">
+    <el-page-header @back="() => window.location.href='/admin'" title="返回主后台">
+      <template #content>
+        <span class="page-title">P2 功能测试</span>
+      </template>
+    </el-page-header>
+
+    <!-- 异常检测 -->
+    <div class="card" style="margin-top: 20px">
+      <h2>🔍 异常检测</h2>
+      <el-form inline>
+        <el-form-item label="检测天数">
+          <el-select v-model="anomalyDays" style="width: 120px">
+            <el-option label="7 天" :value="7" />
+            <el-option label="30 天" :value="30" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="loadAnomalyDetection" :loading="anomalyLoading">生成检测报告</el-button>
+        </el-form-item>
+      </el-form>
+
+      <div v-if="anomalyData" style="margin-top: 20px">
+        <div class="stat-grid">
+          <div class="stat-card danger">
+            <div class="stat-value">{{ anomalyData.summary.totalAnomalies }}</div>
+            <div class="stat-label">异常总数</div>
+          </div>
+          <div class="stat-card warning">
+            <div class="stat-value">{{ anomalyData.summary.superFastLearning }}</div>
+            <div class="stat-label">超快学习</div>
+          </div>
+          <div class="stat-card warning">
+            <div class="stat-value">{{ anomalyData.summary.perfectAccuracy }}</div>
+            <div class="stat-label">异常正确率</div>
+          </div>
+          <div class="stat-card info">
+            <div class="stat-value">{{ anomalyData.summary.nonStopLearning }}</div>
+            <div class="stat-label">不间断学习</div>
+          </div>
+        </div>
+
+        <el-tabs>
+          <el-tab-pane label="超快学习">
+            <el-table :data="anomalyData.anomalies.superFastLearning" style="margin-top: 15px">
+              <el-table-column prop="userId" label="用户 ID" width="80" />
+              <el-table-column prop="nickname" label="昵称" />
+              <el-table-column prop="date" label="日期" width="120" />
+              <el-table-column prop="hour" label="时段" width="80" />
+              <el-table-column prop="wordsPerHour" label="单词/小时" width="100" />
+            </el-table>
+          </el-tab-pane>
+          <el-tab-pane label="异常正确率">
+            <el-table :data="anomalyData.anomalies.perfectAccuracy" style="margin-top: 15px">
+              <el-table-column prop="userId" label="用户 ID" width="80" />
+              <el-table-column prop="nickname" label="昵称" />
+              <el-table-column prop="consecutiveCorrect" label="连续正确" width="100" />
+              <el-table-column prop="startTime" label="开始时间" width="180" />
+            </el-table>
+          </el-tab-pane>
+          <el-tab-pane label="不间断学习">
+            <el-table :data="anomalyData.anomalies.nonStopLearning" style="margin-top: 15px">
+              <el-table-column prop="userId" label="用户 ID" width="80" />
+              <el-table-column prop="nickname" label="昵称" />
+              <el-table-column prop="activeHours" label="活跃小时" width="100" />
+              <el-table-column prop="date" label="日期" width="120" />
+            </el-table>
+          </el-tab-pane>
+        </el-tabs>
+      </div>
+    </div>
+
+    <!-- 用户行为分析 -->
+    <div class="card">
+      <h2>📊 用户行为分析</h2>
+      <el-form inline>
+        <el-form-item label="用户 ID">
+          <el-input v-model="analysisUserId" placeholder="输入用户 ID" style="width: 200px" />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="loadUserAnalysis">分析</el-button>
+        </el-form-item>
+      </el-form>
+
+      <div v-if="userAnalysisData" style="margin-top: 20px">
+        <el-descriptions :column="2" border>
+          <el-descriptions-item label="用户 ID">{{ userAnalysisData.user.id }}</el-descriptions-item>
+          <el-descriptions-item label="OpenID">{{ userAnalysisData.user.openid }}</el-descriptions-item>
+          <el-descriptions-item label="注册时间">{{ userAnalysisData.user.created_at }}</el-descriptions-item>
+          <el-descriptions-item label="状态">
+            <el-tag :type="userAnalysisData.user.status === 'active' ? 'success' : 'danger'">
+              {{ userAnalysisData.user.status === 'active' ? '正常' : '禁用' }}
+            </el-tag>
+          </el-descriptions-item>
+        </el-descriptions>
+
+        <div style="margin-top: 20px">
+          <h4>风险评估</h4>
+          <div style="margin: 15px 0">
+            <span class="risk-badge" :class="'risk-' + (userAnalysisData.riskAssessment.level === '高风险' ? 'high' : userAnalysisData.riskAssessment.level === '中风险' ? 'medium' : 'low')">
+              {{ userAnalysisData.riskAssessment.level }} ({{ userAnalysisData.riskAssessment.score }}分)
+            </span>
+          </div>
+          <el-tag v-for="(factor, i) in userAnalysisData.riskAssessment.factors" :key="i" style="margin-right: 10px">
+            {{ factor }}
+          </el-tag>
+        </div>
+
+        <h4 style="margin-top: 20px">学习历史（30 天）</h4>
+        <el-table :data="userAnalysisData.analysis" style="margin-top: 15px" max-height="400">
+          <el-table-column prop="date" label="日期" width="120" />
+          <el-table-column prop="wordCount" label="单词数" width="100" />
+          <el-table-column prop="avgResponseTime" label="平均响应 (s)" width="120" />
+          <el-table-column prop="accuracy" label="正确率" width="100">
+            <template #default="{ row }">{{ row.accuracy?.toFixed(1) }}%</template>
+          </el-table-column>
+          <el-table-column prop="activeHours" label="活跃小时" width="100" />
+        </el-table>
+      </div>
+    </div>
+
+    <!-- 数据清理 -->
+    <div class="card">
+      <h2>🧹 数据清理</h2>
+      
+      <div v-if="cleanupAnalysis" style="margin-bottom: 20px">
+        <div class="stat-grid">
+          <div class="stat-card warning">
+            <div class="stat-value">{{ cleanupAnalysis.analysis.zombieUsers }}</div>
+            <div class="stat-label">僵尸用户</div>
+          </div>
+          <div class="stat-card warning">
+            <div class="stat-value">{{ cleanupAnalysis.analysis.orphanedRecords }}</div>
+            <div class="stat-label">无效记录</div>
+          </div>
+          <div class="stat-card info">
+            <div class="stat-value">{{ cleanupAnalysis.analysis.oldSessions }}</div>
+            <div class="stat-label">过期会话</div>
+          </div>
+          <div class="stat-card info">
+            <div class="stat-value">{{ cleanupAnalysis.analysis.dbSize }}</div>
+            <div class="stat-label">数据库大小</div>
+          </div>
+        </div>
+      </div>
+
+      <el-form>
+        <h4>清理操作</h4>
+        <el-row :gutter="20">
+          <el-col :span="8">
+            <div style="border: 1px solid #e4e7ed; padding: 15px; border-radius: 4px">
+              <h5>🧟 清理僵尸用户</h5>
+              <p style="color: #909399; font-size: 13px">注册超过 30 天且从未学习的用户</p>
+              <el-button type="danger" @click="cleanupZombieUsers" :loading="cleanupLoading">清理</el-button>
+            </div>
+          </el-col>
+          <el-col :span="8">
+            <div style="border: 1px solid #e4e7ed; padding: 15px; border-radius: 4px">
+              <h5>🗑️ 清理无效记录</h5>
+              <p style="color: #909399; font-size: 13px">关联单词不存在的学习记录</p>
+              <el-button type="danger" @click="cleanupOrphanedRecords" :loading="cleanupLoading">清理</el-button>
+            </div>
+          </el-col>
+          <el-col :span="8">
+            <div style="border: 1px solid #e4e7ed; padding: 15px; border-radius: 4px">
+              <h5>📅 清理过期会话</h5>
+              <p style="color: #909399; font-size: 13px">超过 90 天的复习会话</p>
+              <el-button type="danger" @click="cleanupOldSessions" :loading="cleanupLoading">清理</el-button>
+            </div>
+          </el-col>
+        </el-row>
+
+        <h4 style="margin-top: 20px">数据库优化</h4>
+        <el-button type="primary" @click="vacuumDatabase" :loading="cleanupLoading">🛠️ 执行 VACUUM 优化</el-button>
+      </el-form>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://unpkg.com/element-plus"></script>
+  <script src="https://unpkg.com/@element-plus/icons-vue/dist/index.global.min.js"></script>
+  
+  <script>
+    const { createApp, ref, reactive, onMounted } = Vue;
+    
+    createApp({
+      setup() {
+        const API_BASE = '/api/admin';
+        
+        // 异常检测
+        const anomalyDays = ref(7);
+        const anomalyLoading = ref(false);
+        const anomalyData = ref(null);
+        
+        // 用户行为分析
+        const analysisUserId = ref('');
+        const userAnalysisData = ref(null);
+        
+        // 数据清理
+        const cleanupAnalysis = ref(null);
+        const cleanupLoading = ref(false);
+        
+        const getToken = () => localStorage.getItem('admin_token');
+        
+        // 加载异常检测
+        const loadAnomalyDetection = async () => {
+          anomalyLoading.value = true;
+          try {
+            const token = getToken();
+            if (!token) return;
+            
+            const res = await fetch(`${API_BASE}/anomaly/detection?days=${anomalyDays.value}`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (res.ok) {
+              anomalyData.value = await res.json();
+            }
+          } catch (error) {
+            console.error('加载异常检测失败:', error);
+            ElementPlus.ElMessage.error('加载失败');
+          } finally {
+            anomalyLoading.value = false;
+          }
+        };
+        
+        // 加载用户行为分析
+        const loadUserAnalysis = async () => {
+          if (!analysisUserId.value) {
+            ElementPlus.ElMessage.warning('请输入用户 ID');
+            return;
+          }
+          
+          try {
+            const token = getToken();
+            if (!token) return;
+            
+            const res = await fetch(`${API_BASE}/anomaly/users/${analysisUserId.value}`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (res.ok) {
+              userAnalysisData.value = await res.json();
+            } else {
+              const error = await res.json();
+              ElementPlus.ElMessage.error(error.error || '加载失败');
+            }
+          } catch (error) {
+            console.error('加载用户分析失败:', error);
+            ElementPlus.ElMessage.error('加载失败');
+          }
+        };
+        
+        // 加载清理分析
+        const loadCleanupAnalysis = async () => {
+          try {
+            const token = getToken();
+            if (!token) return;
+            
+            const res = await fetch(`${API_BASE}/cleanup/analysis`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (res.ok) {
+              cleanupAnalysis.value = await res.json();
+            }
+          } catch (error) {
+            console.error('加载清理分析失败:', error);
+          }
+        };
+        
+        // 清理僵尸用户
+        const cleanupZombieUsers = async () => {
+          try {
+            await ElementPlus.ElMessageBox.confirm('确定要清理僵尸用户吗？此操作不可恢复！', '确认清理', { type: 'warning' });
+            
+            const token = getToken();
+            if (!token) return;
+            
+            cleanupLoading.value = true;
+            const res = await fetch(`${API_BASE}/cleanup/zombie-users`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({ confirm: true })
+            });
+            
+            if (res.ok) {
+              const data = await res.json();
+              ElementPlus.ElMessage.success(data.message);
+              loadCleanupAnalysis();
+            }
+          } catch (error) {
+            if (error !== 'cancel') {
+              console.error('清理失败:', error);
+              ElementPlus.ElMessage.error('清理失败');
+            }
+          } finally {
+            cleanupLoading.value = false;
+          }
+        };
+        
+        // 清理无效记录
+        const cleanupOrphanedRecords = async () => {
+          try {
+            await ElementPlus.ElMessageBox.confirm('确定要清理无效记录吗？', '确认清理', { type: 'warning' });
+            
+            const token = getToken();
+            cleanupLoading.value = true;
+            
+            const res = await fetch(`${API_BASE}/cleanup/orphaned-records`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({ confirm: true })
+            });
+            
+            if (res.ok) {
+              const data = await res.json();
+              ElementPlus.ElMessage.success(data.message);
+              loadCleanupAnalysis();
+            }
+          } catch (error) {
+            if (error !== 'cancel') {
+              ElementPlus.ElMessage.error('清理失败');
+            }
+          } finally {
+            cleanupLoading.value = false;
+          }
+        };
+        
+        // 清理过期会话
+        const cleanupOldSessions = async () => {
+          try {
+            await ElementPlus.ElMessageBox.confirm('确定要清理过期会话吗？', '确认清理', { type: 'warning' });
+            
+            const token = getToken();
+            cleanupLoading.value = true;
+            
+            const res = await fetch(`${API_BASE}/cleanup/old-sessions`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({ confirm: true, days: 90 })
+            });
+            
+            if (res.ok) {
+              const data = await res.json();
+              ElementPlus.ElMessage.success(data.message);
+              loadCleanupAnalysis();
+            }
+          } catch (error) {
+            if (error !== 'cancel') {
+              ElementPlus.ElMessage.error('清理失败');
+            }
+          } finally {
+            cleanupLoading.value = false;
+          }
+        };
+        
+        // 数据库优化
+        const vacuumDatabase = async () => {
+          try {
+            await ElementPlus.ElMessageBox.confirm('执行 VACUUM 优化可能需要较长时间，确定继续？', '确认优化', { type: 'warning' });
+            
+            const token = getToken();
+            cleanupLoading.value = true;
+            
+            const res = await fetch(`${API_BASE}/cleanup/vacuum`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (res.ok) {
+              const data = await res.json();
+              ElementPlus.ElMessage.success(`优化完成！数据库大小：${data.dbSize}`);
+              loadCleanupAnalysis();
+            }
+          } catch (error) {
+            if (error !== 'cancel') {
+              ElementPlus.ElMessage.error('优化失败');
+            }
+          } finally {
+            cleanupLoading.value = false;
+          }
+        };
+        
+        onMounted(() => {
+          loadCleanupAnalysis();
+        });
+        
+        return {
+          anomalyDays,
+          anomalyLoading,
+          anomalyData,
+          analysisUserId,
+          userAnalysisData,
+          cleanupAnalysis,
+          cleanupLoading,
+          loadAnomalyDetection,
+          loadUserAnalysis,
+          cleanupZombieUsers,
+          cleanupOrphanedRecords,
+          cleanupOldSessions,
+          vacuumDatabase
+        };
+      }
+    }).use(ElementPlus).mount('#app');
+  </script>
+</body>
+</html>

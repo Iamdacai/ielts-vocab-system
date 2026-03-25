@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>词库表格 - 修复版</title>
+  <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+</head>
+<body style="padding: 20px">
+  <div id="app">
+    <h2>词库表格 - 修复版</h2>
+    <el-button @click="loadWordbooks" type="primary">加载词库</el-button>
+    <p>数据条数：{{ wordbooks.length }}</p>
+    
+    <!-- 方法 1：使用 slot-scope -->
+    <h3>方法 1：使用插槽</h3>
+    <el-table :data="wordbooks" border stripe style="margin-bottom: 20px">
+      <el-table-column label="词库名称" width="300">
+        <template #default="scope">
+          {{ scope.row.name }}
+        </template>
+      </el-table-column>
+      <el-table-column label="描述" width="300">
+        <template #default="scope">
+          {{ scope.row.description }}
+        </template>
+      </el-table-column>
+      <el-table-column label="单词数" width="100">
+        <template #default="scope">
+          {{ scope.row.wordCount }}
+        </template>
+      </el-table-column>
+    </el-table>
+    
+    <!-- 方法 2：使用 prop -->
+    <h3>方法 2：使用 prop</h3>
+    <el-table :data="wordbooks" border stripe>
+      <el-table-column prop="name" label="词库名称" width="300" show-overflow-tooltip />
+      <el-table-column prop="description" label="描述" width="300" show-overflow-tooltip />
+      <el-table-column prop="wordCount" label="单词数" width="100" align="center" />
+    </el-table>
+  </div>
+  
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://unpkg.com/element-plus"></script>
+  <script>
+    const { createApp, ref } = Vue;
+    
+    createApp({
+      setup() {
+        const wordbooks = ref([]);
+        
+        const loadWordbooks = async () => {
+          const token = localStorage.getItem('admin_token');
+          const res = await fetch('/api/admin/wordbooks?page=1&pageSize=5', {
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+          const data = await res.json();
+          wordbooks.value = data.wordbooks || [];
+          console.log('✅ 词库数据:', wordbooks.value);
+          console.log('第一条 name:', wordbooks.value[0]?.name);
+        };
+        
+        return { wordbooks, loadWordbooks };
+      }
+    })
+    .use(ElementPlus)
+    .mount('#app');
+  </script>
+</body>
+</html>

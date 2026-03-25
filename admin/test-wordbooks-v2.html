@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>词库管理测试 - 修复版</title>
+  <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+  <style>
+    body { padding: 20px; font-family: sans-serif; }
+    .table-container { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <h2>词库管理 API 测试 - 修复版</h2>
+    <el-button @click="loadWordbooks" type="primary">加载词库</el-button>
+    <p>数据条数：{{ wordbooks.length }}</p>
+    <p>第一条数据 name: {{ wordbooks[0]?.name || '无数据' }}</p>
+    
+    <div class="table-container">
+      <el-table :data="wordbooks" border stripe>
+        <el-table-column prop="name" label="词库名称" min-width="250" show-overflow-tooltip />
+        <el-table-column prop="description" label="描述" min-width="250" show-overflow-tooltip />
+        <el-table-column prop="wordCount" label="单词数" width="100" align="center" />
+      </el-table>
+    </div>
+  </div>
+  
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://unpkg.com/element-plus"></script>
+  <script src="https://unpkg.com/@element-plus/icons-vue/dist/index.global.min.js"></script>
+  <script>
+    const { createApp, ref, onMounted } = Vue;
+    
+    createApp({
+      setup() {
+        const wordbooks = ref([]);
+        
+        const loadWordbooks = async () => {
+          const token = localStorage.getItem('admin_token');
+          try {
+            const res = await fetch('/api/admin/wordbooks?page=1&pageSize=5', {
+              headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const data = await res.json();
+            wordbooks.value = data.wordbooks || [];
+            console.log('✅ 词库数据:', wordbooks.value);
+            console.log('第一条 name:', wordbooks.value[0]?.name);
+          } catch (e) {
+            console.error('❌ 加载失败:', e);
+          }
+        };
+        
+        onMounted(() => {
+          loadWordbooks();
+        });
+        
+        return { wordbooks, loadWordbooks };
+      }
+    })
+    .use(ElementPlus)
+    .mount('#app');
+  </script>
+</body>
+</html>

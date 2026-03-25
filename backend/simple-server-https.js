@@ -56,14 +56,15 @@ if (!fs.existsSync('temp')) {
 
 // 安全中间件
 app.use(helmet({
-  // 允许微信小程序域名
+  // 允许微信小程序域名 + 外部 CDN（Vue/Element Plus）
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://unpkg.com", "https://cdn.jsdelivr.net"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://cdn.jsdelivr.net"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "https://servicewechat.com", "https://mp.weixin.qq.com", "https://caiyuyang.cn:3001", "https://localhost:3001", "*"]
+      connectSrc: ["'self'", "https://servicewechat.com", "https://mp.weixin.qq.com", "https://caiyuyang.cn:3001", "https://localhost:3001", "*"],
+      fontSrc: ["'self'", "https:", "data:", "https://unpkg.com", "https://cdn.jsdelivr.net"]
     }
   },
   // 开发环境放宽限制
@@ -2009,6 +2010,56 @@ app.post('/api/admin/data-reset', requireAdmin, async (req, res) => {
     });
   }
 });
+
+// ====================  🆕 Admin 后台管理路由  ====================
+// 导入 Admin 路由模块
+const adminAuthRoutes = require('./routes/admin-auth');
+const adminWordbooksRoutes = require('./routes/admin-wordbooks');
+const adminStatsRoutes = require('./routes/admin-stats');
+const adminUsersRoutes = require('./routes/admin-users');
+const adminLogsRoutes = require('./routes/admin-logs');
+const adminConfigRoutes = require('./routes/admin-config');
+const adminExportRoutes = require('./routes/admin-export');
+const adminAchievementsRoutes = require('./routes/admin-achievements');
+const adminRemindersRoutes = require('./routes/admin-reminders');
+const adminUserLearningRoutes = require('./routes/admin-user-learning');
+const adminAnomalyRoutes = require('./routes/admin-anomaly');
+const adminCleanupRoutes = require('./routes/admin-cleanup');
+
+// 注册 Admin 路由
+app.use('/api/admin/auth', adminAuthRoutes);
+app.use('/api/admin', adminWordbooksRoutes);
+app.use('/api/admin/stats', adminStatsRoutes);
+app.use('/api/admin/users', adminUsersRoutes);
+app.use('/api/admin', adminLogsRoutes);
+app.use('/api/admin', adminConfigRoutes);
+app.use('/api/admin', adminExportRoutes);
+app.use('/api/admin', adminAchievementsRoutes);
+app.use('/api/admin', adminRemindersRoutes);
+app.use('/api/admin', adminUserLearningRoutes);
+app.use('/api/admin', adminAnomalyRoutes);
+app.use('/api/admin', adminCleanupRoutes);
+
+// Admin 静态文件服务
+const adminPath = path.join(__dirname, '..', 'admin');
+app.use('/admin', express.static(adminPath));
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(adminPath, 'index.html'));
+});
+
+// Admin 页面 CSP 头 - 允许加载外部 CDN 资源
+app.use('/admin', (req, res, next) => {
+  if (req.path.endsWith('.html') || req.path === '/') {
+    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net; font-src 'self' https: data: https://unpkg.com https://cdn.jsdelivr.net; img-src 'self' data: https:; connect-src 'self' https:;");
+  }
+  next();
+});
+
+console.log('[Admin] 后台管理路由已注册');
+console.log('[Admin] 管理后台地址：https://caiyuyang.cn:3001/admin');
+console.log('[Admin] P1 功能：成就系统、提醒管理、用户学习轨迹');
+console.log('[Admin] P2 功能：异常检测、数据清理');
+console.log('[Admin] 新增路由：/anomaly, /cleanup');
 
 // 📚 词库 API - 获取整理后的词库列表
 app.get('/api/words/libraries', authenticateToken, async (req, res) => {
