@@ -339,9 +339,15 @@
                 <div class="card">
                   <h4>📚 词库使用排行</h4>
                   <el-table :data="stats.wordbooks || []" style="margin-top: 15px" size="small">
-                    <el-table-column prop="name" label="词库名称" />
-                    <el-table-column prop="activeUsers" label="活跃用户" width="100" />
-                    <el-table-column prop="learningUsers" label="学习人数" width="100" />
+                    <el-table-column label="词库名称">
+                      <template #default="{ row }">{{ row.name }}</template>
+                    </el-table-column>
+                    <el-table-column label="活跃用户" width="100">
+                      <template #default="{ row }">{{ row.activeUsers }}</template>
+                    </el-table-column>
+                    <el-table-column label="学习人数" width="100">
+                      <template #default="{ row }">{{ row.learningUsers }}</template>
+                    </el-table-column>
                   </el-table>
                 </div>
               </el-col>
@@ -349,9 +355,15 @@
                 <div class="card">
                   <h4>❌ 高频错题 TOP5</h4>
                   <el-table :data="stats.mistakes?.topMistakes?.slice(0, 5) || []" style="margin-top: 15px" size="small">
-                    <el-table-column prop="word" label="单词" />
-                    <el-table-column prop="mistakeCount" label="错误次数" width="100" />
-                    <el-table-column prop="userCount" label="人数" width="80" />
+                    <el-table-column label="单词">
+                      <template #default="{ row }">{{ row.word }}</template>
+                    </el-table-column>
+                    <el-table-column label="错误次数" width="100">
+                      <template #default="{ row }">{{ row.mistakeCount }}</template>
+                    </el-table-column>
+                    <el-table-column label="人数" width="80">
+                      <template #default="{ row }">{{ row.userCount }}</template>
+                    </el-table-column>
                   </el-table>
                 </div>
               </el-col>
@@ -544,11 +556,21 @@
               </div>
               
               <el-table :data="mistakes" v-loading="mistakesLoading" style="width: 100%">
-                <el-table-column prop="word" label="单词" width="200" />
-                <el-table-column prop="phonetic" label="音标" width="150" />
-                <el-table-column prop="mistakeCount" label="错误次数" width="120" sortable />
-                <el-table-column prop="userCount" label="错误人数" width="100" sortable />
-                <el-table-column prop="category" label="所属词库" />
+                <el-table-column label="单词" width="200" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.word }}</template>
+                </el-table-column>
+                <el-table-column label="音标" width="150" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.phonetic }}</template>
+                </el-table-column>
+                <el-table-column label="错误次数" width="120" sortable>
+                  <template #default="{ row }">{{ row.mistakeCount }}</template>
+                </el-table-column>
+                <el-table-column label="错误人数" width="100" sortable>
+                  <template #default="{ row }">{{ row.userCount }}</template>
+                </el-table-column>
+                <el-table-column label="所属词库" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.category }}</template>
+                </el-table-column>
                 <el-table-column label="操作" width="150" fixed="right">
                   <template #default="{ row }">
                     <el-button size="small" @click="viewWordDetail(row)">查看详情</el-button>
@@ -571,12 +593,24 @@
             <div class="card">
               <h4>📋 操作日志</h4>
               <el-table :data="logs" v-loading="logsLoading">
-                <el-table-column prop="id" label="ID" width="80" />
-                <el-table-column prop="adminUsername" label="操作人" width="120" />
-                <el-table-column prop="action" label="操作类型" width="150" />
-                <el-table-column prop="targetType" label="目标类型" width="100" />
-                <el-table-column prop="details" label="详情" show-overflow-tooltip />
-                <el-table-column prop="createdAt" label="时间" width="180" />
+                <el-table-column label="ID" width="80">
+                  <template #default="{ row }">{{ row.id }}</template>
+                </el-table-column>
+                <el-table-column label="操作人" width="120">
+                  <template #default="{ row }">{{ row.adminUsername }}</template>
+                </el-table-column>
+                <el-table-column label="操作类型" width="150">
+                  <template #default="{ row }">{{ row.action }}</template>
+                </el-table-column>
+                <el-table-column label="目标类型" width="100">
+                  <template #default="{ row }">{{ row.targetType }}</template>
+                </el-table-column>
+                <el-table-column label="详情" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.details }}</template>
+                </el-table-column>
+                <el-table-column label="时间" width="180">
+                  <template #default="{ row }">{{ row.createdAt }}</template>
+                </el-table-column>
               </el-table>
             </div>
           </div>
@@ -726,9 +760,15 @@
               
               <h4 style="margin-top: 30px">通知模板</h4>
               <el-table :data="notificationTemplates" style="margin-top: 15px">
-                <el-table-column prop="name" label="模板名称" width="150" />
-                <el-table-column prop="type" label="类型" width="150" />
-                <el-table-column prop="content" label="内容" show-overflow-tooltip />
+                <el-table-column label="模板名称" width="150">
+                  <template #default="{ row }">{{ row.name }}</template>
+                </el-table-column>
+                <el-table-column label="类型" width="150">
+                  <template #default="{ row }">{{ row.type }}</template>
+                </el-table-column>
+                <el-table-column label="内容" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.content }}</template>
+                </el-table-column>
               </el-table>
             </div>
           </div>
@@ -772,27 +812,53 @@
                 <el-tabs style="margin-top: 20px">
                   <el-tab-pane label="超快学习">
                     <el-table :data="anomalyData.anomalies.superFastLearning" style="margin-top: 15px">
-                      <el-table-column prop="userId" label="用户 ID" width="80" />
-                      <el-table-column prop="nickname" label="昵称" />
-                      <el-table-column prop="date" label="日期" width="120" />
-                      <el-table-column prop="hour" label="时段" width="80" />
-                      <el-table-column prop="wordsPerHour" label="单词/小时" width="100" />
+                      <el-table-column label="用户 ID" width="80">
+                        <template #default="{ row }">{{ row.userId }}</template>
+                      </el-table-column>
+                      <el-table-column label="昵称">
+                        <template #default="{ row }">{{ row.nickname }}</template>
+                      </el-table-column>
+                      <el-table-column label="日期" width="120">
+                        <template #default="{ row }">{{ row.date }}</template>
+                      </el-table-column>
+                      <el-table-column label="时段" width="80">
+                        <template #default="{ row }">{{ row.hour }}</template>
+                      </el-table-column>
+                      <el-table-column label="单词/小时" width="100">
+                        <template #default="{ row }">{{ row.wordsPerHour }}</template>
+                      </el-table-column>
                     </el-table>
                   </el-tab-pane>
                   <el-tab-pane label="异常正确率">
                     <el-table :data="anomalyData.anomalies.perfectAccuracy" style="margin-top: 15px">
-                      <el-table-column prop="userId" label="用户 ID" width="80" />
-                      <el-table-column prop="nickname" label="昵称" />
-                      <el-table-column prop="consecutiveCorrect" label="连续正确" width="100" />
-                      <el-table-column prop="startTime" label="开始时间" width="180" />
+                      <el-table-column label="用户 ID" width="80">
+                        <template #default="{ row }">{{ row.userId }}</template>
+                      </el-table-column>
+                      <el-table-column label="昵称">
+                        <template #default="{ row }">{{ row.nickname }}</template>
+                      </el-table-column>
+                      <el-table-column label="连续正确" width="100">
+                        <template #default="{ row }">{{ row.consecutiveCorrect }}</template>
+                      </el-table-column>
+                      <el-table-column label="开始时间" width="180">
+                        <template #default="{ row }">{{ row.startTime }}</template>
+                      </el-table-column>
                     </el-table>
                   </el-tab-pane>
                   <el-tab-pane label="不间断学习">
                     <el-table :data="anomalyData.anomalies.nonStopLearning" style="margin-top: 15px">
-                      <el-table-column prop="userId" label="用户 ID" width="80" />
-                      <el-table-column prop="nickname" label="昵称" />
-                      <el-table-column prop="activeHours" label="活跃小时" width="100" />
-                      <el-table-column prop="date" label="日期" width="120" />
+                      <el-table-column label="用户 ID" width="80">
+                        <template #default="{ row }">{{ row.userId }}</template>
+                      </el-table-column>
+                      <el-table-column label="昵称">
+                        <template #default="{ row }">{{ row.nickname }}</template>
+                      </el-table-column>
+                      <el-table-column label="活跃小时" width="100">
+                        <template #default="{ row }">{{ row.activeHours }}</template>
+                      </el-table-column>
+                      <el-table-column label="日期" width="120">
+                        <template #default="{ row }">{{ row.date }}</template>
+                      </el-table-column>
                     </el-table>
                   </el-tab-pane>
                 </el-tabs>
