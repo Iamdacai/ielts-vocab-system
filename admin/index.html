@@ -911,14 +911,14 @@
         :data="wordList" 
         v-loading="wordListLoading" 
         style="width: 100%" 
-        max-height="500"
+        height="400"
         border
         :header-cell-style="{ background: '#f5f7fa', color: '#606266', fontWeight: '600' }"
       >
         <el-table-column prop="word" label="单词" width="150" fixed show-overflow-tooltip />
         <el-table-column prop="phonetic" label="音标" width="150" show-overflow-tooltip />
-        <el-table-column prop="definition" label="释义" min-width="250" show-overflow-tooltip />
-        <el-table-column prop="example" label="例句" min-width="300" show-overflow-tooltip />
+        <el-table-column prop="definition" label="释义" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="example" label="例句" min-width="250" show-overflow-tooltip />
       </el-table>
       
       <div style="margin-top: 20px; text-align: right">

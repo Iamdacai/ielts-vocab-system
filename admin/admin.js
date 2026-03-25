@@ -460,8 +460,11 @@
             params.append('search', wordSearch.value);
           }
           
+          const wordbookId = currentWordbook.value.id;
+          console.log('🔍 请求词库单词:', wordbookId);
+          
           const res = await fetch(
-            `${API_BASE}/wordbooks/${encodeURIComponent(currentWordbook.value.id)}/words?${params}`,
+            `${API_BASE}/wordbooks/${encodeURIComponent(wordbookId)}/words?${params}`,
             {
               headers: {
                 'Authorization': `Bearer ${token}`
@@ -469,18 +472,24 @@
             }
           );
           
+          console.log('📡 API 响应状态:', res.status);
+          
           if (res.ok) {
             const data = await res.json();
-            wordList.value = data.words;
-            wordListTotal.value = data.total;
-            console.log('✅ 单词列表加载成功:', wordList.value.length, '个');
+            console.log('✅ 单词列表加载成功:', data.words?.length || 0, '个，总数:', data.total);
+            console.log('📦 示例数据:', data.words?.[0]);
+            wordList.value = data.words || [];
+            wordListTotal.value = data.total || 0;
           } else {
             const error = await res.json();
+            console.error('❌ API 错误:', error);
             ElementPlus.ElMessage.error(error.error || '加载失败');
+            wordList.value = [];
           }
         } catch (error) {
-          console.error('加载单词列表失败:', error);
-          ElementPlus.ElMessage.error('加载失败');
+          console.error('💥 加载单词列表异常:', error);
+          ElementPlus.ElMessage.error('加载失败：' + error.message);
+          wordList.value = [];
         } finally {
           wordListLoading.value = false;
         }
