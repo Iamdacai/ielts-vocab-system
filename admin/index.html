@@ -378,37 +378,37 @@
               </div>
               
               <el-table :data="wordbooks" v-loading="wordbookLoading" style="width: 100%" border stripe>
-                <el-table-column label="词库名称" min-width="250" show-overflow-tooltip>
+                <el-table-column label="词库名称" width="180" show-overflow-tooltip>
                   <template #default="{ row }">
                     {{ row.name }}
                   </template>
                 </el-table-column>
-                <el-table-column label="描述" min-width="250" show-overflow-tooltip>
+                <el-table-column label="描述" width="200" show-overflow-tooltip>
                   <template #default="{ row }">
                     {{ row.description }}
                   </template>
                 </el-table-column>
-                <el-table-column label="单词数" width="100" align="center">
+                <el-table-column label="单词数" width="80" align="center">
                   <template #default="{ row }">
                     {{ row.wordCount }}
                   </template>
                 </el-table-column>
-                <el-table-column label="使用状态" width="160" align="center">
+                <el-table-column label="使用状态" width="140" align="center">
                   <template #default="{ row }">
-                    <div style="font-size: 12px; line-height: 1.8">
+                    <div style="font-size: 12px; line-height: 1.6">
                       <div><span style="color: #67C23A">●</span> {{ row.activeUsers || 0 }} 人在学</div>
                       <div><span style="color: #409EFF">●</span> {{ row.learningUsers || 0 }} 有记录</div>
                     </div>
                   </template>
                 </el-table-column>
-                <el-table-column label="状态" width="80" align="center">
+                <el-table-column label="状态" width="70" align="center">
                   <template #default="{ row }">
                     <el-tag :type="row.status === 'active' ? 'success' : 'info'" size="small">
                       {{ row.status === 'active' ? '启用' : '禁用' }}
                     </el-tag>
                   </template>
                 </el-table-column>
-                <el-table-column label="操作" width="200" fixed="right" align="center">
+                <el-table-column label="操作" width="280" fixed="right" align="center">
                   <template #default="{ row }">
                     <el-button size="small" type="primary" @click="viewWordbookWords(row)">查看单词</el-button>
                     <el-button size="small" @click="editWordbook(row)">编辑</el-button>
