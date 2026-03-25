@@ -1822,56 +1822,6 @@ app.post('/api/users/reset-progress', async (req, res) => {
 // ====================  🆕 管理员功能  ====================
 
 /**
- * 🆕 获取用户列表（管理员）
- */
-app.get('/api/admin/users', requireAdmin, async (req, res) => {
-  try {
-    const db = await initializeDatabase();
-    const page = parseInt(req.query.page) || 1;
-    const pageSize = parseInt(req.query.pageSize) || 20;
-    const offset = (page - 1) * pageSize;
-    
-    // 获取用户列表
-    const users = await new Promise((resolve, reject) => {
-      db.all(`
-        SELECT 
-          u.id, u.openid, u.role, u.status, u.created_at, u.last_login_at,
-          p.nickname, p.avatar_url,
-          (SELECT COUNT(DISTINCT DATE(created_at)) FROM learning_records WHERE user_id = u.id) as studyDays,
-          (SELECT COUNT(*) FROM learning_records WHERE user_id = u.id) as totalWords
-        FROM users u
-        LEFT JOIN user_profiles p ON u.id = p.user_id
-        ORDER BY u.created_at DESC
-        LIMIT ? OFFSET ?
-      `, [pageSize, offset], (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows);
-      });
-    });
-    
-    // 获取总数
-    const total = await new Promise((resolve) => {
-      db.get('SELECT COUNT(*) as count FROM users', (err, row) => {
-        resolve(row?.count || 0);
-      });
-    });
-    
-    res.json({
-      users,
-      total,
-      page,
-      pageSize
-    });
-  } catch (error) {
-    console.error('获取用户列表失败:', error);
-    res.status(500).json({ 
-      error: 'Failed to get users',
-      message: error.message 
-    });
-  }
-});
-
-/**
  * 🆕 获取全局统计（管理员）
  */
 app.get('/api/admin/stats', requireAdmin, async (req, res) => {
