@@ -915,10 +915,26 @@
         border
         :header-cell-style="{ background: '#f5f7fa', color: '#606266', fontWeight: '600' }"
       >
-        <el-table-column prop="word" label="单词" width="150" fixed show-overflow-tooltip />
-        <el-table-column prop="phonetic" label="音标" width="150" show-overflow-tooltip />
-        <el-table-column prop="definition" label="释义" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="example" label="例句" min-width="250" show-overflow-tooltip />
+        <el-table-column label="单词" width="150" fixed show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ row.word }}
+          </template>
+        </el-table-column>
+        <el-table-column label="音标" width="150" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ row.phonetic }}
+          </template>
+        </el-table-column>
+        <el-table-column label="释义" min-width="200" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ row.definition }}
+          </template>
+        </el-table-column>
+        <el-table-column label="例句" min-width="250" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ row.example }}
+          </template>
+        </el-table-column>
       </el-table>
       
       <div style="margin-top: 20px; text-align: right">
