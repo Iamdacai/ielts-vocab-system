@@ -58,7 +58,7 @@ function getDb() {
 /**
  * GET /api/admin/wordbooks - 获取词库列表（基于 ielts_words 的 category）
  */
-router.get('/wordbooks', requireAdmin, async (req, res) => {
+router.get('/', requireAdmin, async (req, res) => {
   const db = await getDb();
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 20;
@@ -134,7 +134,7 @@ router.get('/wordbooks', requireAdmin, async (req, res) => {
 /**
  * GET /api/admin/wordbooks/:id - 获取词库详情
  */
-router.get('/wordbooks/:id', requireAdmin, async (req, res) => {
+router.get('/:id', requireAdmin, async (req, res) => {
   const db = await getDb();
   const { id } = req.params;
 
@@ -383,7 +383,7 @@ router.delete('/wordbooks/:id', requireAdmin, async (req, res) => {
 /**
  * GET /api/admin/wordbooks/:id/words - 获取词库单词列表
  */
-router.get('/wordbooks/:id/words', requireAdmin, async (req, res) => {
+router.get('/:id/words', requireAdmin, async (req, res) => {
   const db = await getDb();
   const { id } = req.params;
   const { page = 1, pageSize = 50, search } = req.query;
