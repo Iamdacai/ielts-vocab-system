@@ -171,6 +171,9 @@ Page({
         console.log('[词库] 加载成功，词库数量:', librariesWithSelected.length);
         console.log('[词库] 已选词库:', selectedLibraries);
         
+        // 🆕 检测是否需要提示用户更新词库（词库升级通知）
+        this.checkLibraryUpdate();
+        
         // 加载分类（如果有选中的词库）
         if (selectedLibraries.length > 0) {
           this.loadCategories();
@@ -187,6 +190,75 @@ Page({
       wx.showToast({
         title: '网络错误',
         icon: 'none'
+      });
+    }
+  },
+  
+  // 🆕 检测词库更新并提示用户
+  checkLibraryUpdate() {
+    // 旧词库列表（需要用户重新选择的词库）
+    const OLD_LIBRARIES = [
+      '托福 9000 词 Word',
+      '词汇总编 9800 带音标 + 词汇 9400',
+      '词汇汇编 9800',
+      '托福词汇 4700+ 词汇 9400',
+      'GRE 词汇 7500+ 词汇 9400',
+      '3500 词汇高中词汇表',
+      '雅思词汇 4500+ 词汇 9400',
+      '初中英语单词表大全 2182 个单词中考英语 1600 词汇对照表分类记忆法 (1)',
+      '身心健康',
+      '学校教育',
+      '05.大学英语四级词汇带默写版',
+      '小学英语常用单词汇总大全',
+      '行为动作',
+      '自然地理',
+      '沙场争锋',
+      '娱乐运动',
+      '饮食健康',
+      '社会经济',
+      '动物保护',
+      '物品材料',
+      '国家政府',
+      '交通旅行',
+      '建筑场所',
+      '植物研究',
+      '科技发明',
+      '社会角色',
+      '法律法规',
+      '时尚潮流',
+      '文化历史',
+      '太空探索',
+      '语言演化',
+      '时间日期'
+    ];
+    
+    // 检查用户当前选择的词库是否包含旧词库
+    const savedLibraries = wx.getStorageSync('userConfig')?.vocab_library || [];
+    const hasOldLibrary = savedLibraries.some(lib => OLD_LIBRARIES.includes(lib));
+    
+    // 检查是否已经显示过提示（避免重复打扰）
+    const hasNotified = wx.getStorageSync('library_update_notified');
+    
+    if (hasOldLibrary && !hasNotified) {
+      wx.showModal({
+        title: '🎉 词库已更新',
+        content: '词库列表已升级，请重新选择你想学习的词库（支持多选）',
+        confirmText: '去选择',
+        showCancel: false,
+        success: () => {
+          // 标记已通知
+          wx.setStorageSync('library_update_notified', true);
+          // 自动滚动到词库选择区域
+          wx.createSelectorQuery().select('.library-selector')
+            .boundingClientRect(rect => {
+              if (rect) {
+                wx.pageScrollTo({ 
+                  scrollTop: rect.top - 20,
+                  duration: 300
+                });
+              }
+            }).exec();
+        }
       });
     }
   },
