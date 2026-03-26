@@ -56,14 +56,15 @@ if (!fs.existsSync('temp')) {
 
 // 安全中间件
 app.use(helmet({
-  // 允许微信小程序域名
+  // 允许微信小程序域名 + 外部 CDN（Vue/Element Plus）
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://unpkg.com", "https://cdn.jsdelivr.net"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://cdn.jsdelivr.net"],
       imgSrc: ["'self'", "data:", "https:"],
-      connectSrc: ["'self'", "https://servicewechat.com", "https://mp.weixin.qq.com", "https://caiyuyang.cn:3001", "https://localhost:3001", "*"]
+      connectSrc: ["'self'", "https://servicewechat.com", "https://mp.weixin.qq.com", "https://caiyuyang.cn:3001", "https://localhost:3001", "*"],
+      fontSrc: ["'self'", "https:", "data:", "https://unpkg.com", "https://cdn.jsdelivr.net"]
     }
   },
   // 开发环境放宽限制
@@ -741,28 +742,30 @@ app.get('/api/review/dashboard', authenticateToken, async (req, res) => {
     
     // 🆕 获取用户词库配置
     const config = await db.get('SELECT vocab_library, vocab_category FROM user_configs WHERE user_id = ?', [userId]);
-    const selectedLibraries = config?.vocab_library ? JSON.parse(config.vocab_library) : ['cambridge'];
+    const selectedLibraries = config?.vocab_library ? JSON.parse(config.vocab_library) : [];
     const selectedCategory = config?.vocab_category || '';
     
     console.log('[九宫格] 用户词库配置:', selectedLibraries, '分类:', selectedCategory);
     
-    // 🆕 构建词库过滤条件
+    // 🆕 构建词库过滤条件（根据实际选择的 category 过滤）
     let whereClause = '';
     const params = [];
     
-    if (selectedLibraries.includes('cambridge') && selectedLibraries.includes('zhenjing')) {
-      // 两个词库都选了，不过滤
+    if (!selectedLibraries || selectedLibraries.length === 0) {
+      // 未选择任何词库，默认全部
       whereClause = '1=1';
-    } else if (selectedLibraries.includes('cambridge')) {
-      // 只选剑桥
-      whereClause = 'cambridge_book BETWEEN 1 AND 18';
-    } else if (selectedLibraries.includes('zhenjing')) {
-      // 只选真经
-      whereClause = "frequency_level IN ('high', 'medium', 'low')";
+    } else if (selectedLibraries.length === 1) {
+      // 只选了一个词库
+      whereClause = 'category = ?';
+      params.push(selectedLibraries[0]);
     } else {
-      // 默认剑桥
-      whereClause = 'cambridge_book BETWEEN 1 AND 18';
+      // 选了多个词库，使用 IN 查询
+      const placeholders = selectedLibraries.map(() => '?').join(',');
+      whereClause = `category IN (${placeholders})`;
+      params.push(...selectedLibraries);
     }
+    
+    console.log('[九宫格] 过滤条件:', whereClause, '参数:', params);
     
     // 1. 获取所有单词的进度数据（按词库过滤）- 🆕 使用 DISTINCT 按 word 去重
     const words = await db.all(`
@@ -784,7 +787,7 @@ app.get('/api/review/dashboard', authenticateToken, async (req, res) => {
       ) p ON w.id = p.word_id
       WHERE (${whereClause})
       GROUP BY w.word
-    `, [userId]);
+    `, [userId, ...params]);
     
     // 2. 计算九宫格数据（根据掌握分数和下次复习时间计算阶段）- 🆕 每个阶段颜色不同
     const REVIEW_STAGES = [
@@ -1210,32 +1213,35 @@ app.get('/api/stats', authenticateToken, async (req, res) => {
     
     // 🆕 获取用户词库配置
     const config = await db.get('SELECT vocab_library, vocab_category FROM user_configs WHERE user_id = ?', [userId]);
-    const selectedLibraries = config?.vocab_library ? JSON.parse(config.vocab_library) : ['cambridge'];
+    const selectedLibraries = config?.vocab_library ? JSON.parse(config.vocab_library) : [];
     const selectedCategory = config?.vocab_category || '';
     
     console.log('[统计] 用户词库配置:', selectedLibraries, '分类:', selectedCategory);
     
-    // 🆕 构建词库过滤条件
+    // 🆕 构建词库过滤条件（根据实际选择的 category 过滤）
     let whereClause = '';
     const params = [];
     
-    if (selectedLibraries.includes('cambridge') && selectedLibraries.includes('zhenjing')) {
-      // 两个词库都选了，不过滤
+    if (!selectedLibraries || selectedLibraries.length === 0) {
+      // 未选择任何词库，默认全部
       whereClause = '1=1';
-    } else if (selectedLibraries.includes('cambridge')) {
-      // 只选剑桥
-      whereClause = 'cambridge_book BETWEEN 1 AND 18';
-    } else if (selectedLibraries.includes('zhenjing')) {
-      // 只选真经
-      whereClause = "frequency_level IN ('high', 'medium', 'low')";
+    } else if (selectedLibraries.length === 1) {
+      // 只选了一个词库
+      whereClause = 'category = ?';
+      params.push(selectedLibraries[0]);
     } else {
-      // 默认剑桥
-      whereClause = 'cambridge_book BETWEEN 1 AND 18';
+      // 选了多个词库，使用 IN 查询
+      const placeholders = selectedLibraries.map(() => '?').join(',');
+      whereClause = `category IN (${placeholders})`;
+      params.push(...selectedLibraries);
     }
     
+    console.log('[统计] 过滤条件:', whereClause, '参数:', params);
+    
     // 🆕 获取总单词数（按用户选择的词库过滤，使用 COUNT(DISTINCT word) 统计不重复单词）
-    const totalResult = await db.get(`SELECT COUNT(DISTINCT word) as count FROM ielts_words WHERE ${whereClause}`);
-    const total_words = totalResult.count || 0;
+    const totalResult = await db.get(`SELECT COUNT(DISTINCT word) as count FROM ielts_words WHERE ${whereClause}`, params);
+    const total_words = totalResult?.count || 0;
+    console.log('[统计] 总单词数:', total_words);
     
     // 获取今日日期范围
     const today = new Date();
@@ -1821,56 +1827,6 @@ app.post('/api/users/reset-progress', async (req, res) => {
 // ====================  🆕 管理员功能  ====================
 
 /**
- * 🆕 获取用户列表（管理员）
- */
-app.get('/api/admin/users', requireAdmin, async (req, res) => {
-  try {
-    const db = await initializeDatabase();
-    const page = parseInt(req.query.page) || 1;
-    const pageSize = parseInt(req.query.pageSize) || 20;
-    const offset = (page - 1) * pageSize;
-    
-    // 获取用户列表
-    const users = await new Promise((resolve, reject) => {
-      db.all(`
-        SELECT 
-          u.id, u.openid, u.role, u.status, u.created_at, u.last_login_at,
-          p.nickname, p.avatar_url,
-          (SELECT COUNT(DISTINCT DATE(created_at)) FROM learning_records WHERE user_id = u.id) as studyDays,
-          (SELECT COUNT(*) FROM learning_records WHERE user_id = u.id) as totalWords
-        FROM users u
-        LEFT JOIN user_profiles p ON u.id = p.user_id
-        ORDER BY u.created_at DESC
-        LIMIT ? OFFSET ?
-      `, [pageSize, offset], (err, rows) => {
-        if (err) reject(err);
-        else resolve(rows);
-      });
-    });
-    
-    // 获取总数
-    const total = await new Promise((resolve) => {
-      db.get('SELECT COUNT(*) as count FROM users', (err, row) => {
-        resolve(row?.count || 0);
-      });
-    });
-    
-    res.json({
-      users,
-      total,
-      page,
-      pageSize
-    });
-  } catch (error) {
-    console.error('获取用户列表失败:', error);
-    res.status(500).json({ 
-      error: 'Failed to get users',
-      message: error.message 
-    });
-  }
-});
-
-/**
  * 🆕 获取全局统计（管理员）
  */
 app.get('/api/admin/stats', requireAdmin, async (req, res) => {
@@ -2009,6 +1965,56 @@ app.post('/api/admin/data-reset', requireAdmin, async (req, res) => {
     });
   }
 });
+
+// ====================  🆕 Admin 后台管理路由  ====================
+// 导入 Admin 路由模块
+const adminAuthRoutes = require('./routes/admin-auth');
+const adminWordbooksRoutes = require('./routes/admin-wordbooks');
+const adminStatsRoutes = require('./routes/admin-stats');
+const adminUsersRoutes = require('./routes/admin-users');
+const adminLogsRoutes = require('./routes/admin-logs');
+const adminConfigRoutes = require('./routes/admin-config');
+const adminExportRoutes = require('./routes/admin-export');
+const adminAchievementsRoutes = require('./routes/admin-achievements');
+const adminRemindersRoutes = require('./routes/admin-reminders');
+const adminUserLearningRoutes = require('./routes/admin-user-learning');
+const adminAnomalyRoutes = require('./routes/admin-anomaly');
+const adminCleanupRoutes = require('./routes/admin-cleanup');
+
+// 注册 Admin 路由
+app.use('/api/admin/auth', adminAuthRoutes);
+app.use('/api/admin/users', adminUsersRoutes);
+app.use('/api/admin/stats', adminStatsRoutes);
+app.use('/api/admin/logs', adminLogsRoutes);
+app.use('/api/admin/config', adminConfigRoutes);
+app.use('/api/admin/export', adminExportRoutes);
+app.use('/api/admin/achievements', adminAchievementsRoutes);
+app.use('/api/admin/reminders', adminRemindersRoutes);
+app.use('/api/admin/user-learning', adminUserLearningRoutes);
+app.use('/api/admin/anomaly', adminAnomalyRoutes);
+app.use('/api/admin/cleanup', adminCleanupRoutes);
+app.use('/api/admin/wordbooks', adminWordbooksRoutes);
+
+// Admin 静态文件服务
+const adminPath = path.join(__dirname, '..', 'admin');
+app.use('/admin', express.static(adminPath));
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(adminPath, 'index.html'));
+});
+
+// Admin 页面 CSP 头 - 允许加载外部 CDN 资源
+app.use('/admin', (req, res, next) => {
+  if (req.path.endsWith('.html') || req.path === '/') {
+    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://unpkg.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://unpkg.com https://cdn.jsdelivr.net; font-src 'self' https: data: https://unpkg.com https://cdn.jsdelivr.net; img-src 'self' data: https:; connect-src 'self' https:;");
+  }
+  next();
+});
+
+console.log('[Admin] 后台管理路由已注册');
+console.log('[Admin] 管理后台地址：https://caiyuyang.cn:3001/admin');
+console.log('[Admin] P1 功能：成就系统、提醒管理、用户学习轨迹');
+console.log('[Admin] P2 功能：异常检测、数据清理');
+console.log('[Admin] 新增路由：/anomaly, /cleanup');
 
 // 📚 词库 API - 获取整理后的词库列表
 app.get('/api/words/libraries', authenticateToken, async (req, res) => {

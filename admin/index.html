@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>雅思背单词系统 - 后台管理</title>
+  
+  <!-- Element Plus CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f5f7fa;
+    }
+    
+    #app {
+      min-height: 100vh;
+    }
+    
+    .login-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .login-box {
+      background: white;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+    
+    .login-title {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #333;
+      font-size: 24px;
+    }
+    
+    .admin-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+    
+    .admin-aside {
+      width: 220px;
+      background: #304156;
+      color: white;
+      transition: width 0.3s;
+    }
+    
+    .admin-header {
+      background: white;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+      padding: 0 20px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .admin-main {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    
+    .logo {
+      padding: 20px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .menu-item {
+      padding: 15px 20px;
+      cursor: pointer;
+      transition: background 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .menu-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .menu-item.active {
+      background: #409EFF;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 4px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    }
+    
+    .stat-card {
+      text-align: center;
+      padding: 30px 20px;
+    }
+    
+    .stat-value {
+      font-size: 36px;
+      font-weight: bold;
+      color: #409EFF;
+      margin: 10px 0;
+    }
+    
+    .stat-label {
+      color: #909399;
+      font-size: 14px;
+    }
+    
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .empty-data {
+      text-align: center;
+      padding: 60px 20px;
+      color: #909399;
+    }
+    
+    .status-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 12px;
+    }
+    
+    .status-active {
+      background: #f0f9ff;
+      color: #409EFF;
+    }
+    
+    .status-banned {
+      background: #fef0f0;
+      color: #F56C6C;
+    }
+    
+    .wordbook-usage {
+      display: flex;
+      gap: 15px;
+      font-size: 13px;
+      color: #606266;
+    }
+    
+    .usage-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    
+    .usage-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    
+    .dot-active {
+      background: #67C23A;
+    }
+    
+    .dot-learning {
+      background: #409EFF;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- 登录页面 -->
+    <div v-if="!isLoggedIn" class="login-container">
+      <div class="login-box">
+        <h1 class="login-title">🐍 后台管理系统</h1>
+        <el-form :model="loginForm" :rules="loginRules" ref="loginFormRef">
+          <el-form-item prop="username">
+            <el-input 
+              v-model="loginForm.username" 
+              placeholder="用户名"
+              prefix-icon="User"
+              size="large"
+            />
+          </el-form-item>
+          <el-form-item prop="password">
+            <el-input 
+              v-model="loginForm.password" 
+              type="password"
+              placeholder="密码"
+              prefix-icon="Lock"
+              size="large"
+              @keyup.enter="handleLogin"
+            />
+          </el-form-item>
+          <el-form-item>
+            <el-checkbox v-model="loginForm.remember">记住我（7 天）</el-checkbox>
+          </el-form-item>
+          <el-form-item>
+            <el-button 
+              type="primary" 
+              size="large" 
+              style="width: 100%"
+              :loading="loginLoading"
+              @click="handleLogin"
+            >
+              登录
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+    </div>
+    
+    <!-- 管理后台主界面 -->
+    <div v-else class="admin-layout">
+      <!-- 侧边栏 -->
+      <div class="admin-aside">
+        <div class="logo">🐍 雅思背单词</div>
+        <div class="menu-item" :class="{ active: currentMenu === 'dashboard' }" @click="currentMenu = 'dashboard'">
+          <span>📊</span> 数据概览
+        </div>
+        <div class="menu-item" :class="{ active: currentMenu === 'wordbooks' }" @click="currentMenu = 'wordbooks'">
+          <span>📚</span> 词库管理
+        </div>
+        <div class="menu-item" :class="{ active: currentMenu === 'users' }" @click="currentMenu = 'users'">
+          <span>👥</span> 用户管理
+        </div>
+        <div class="menu-item" :class="{ active: currentMenu === 'mistakes' }" @click="currentMenu = 'mistakes'">
+          <span>❌</span> 错题本
+        </div>
+        <div class="menu-item" :class="{ active: currentMenu === 'stats' }" @click="currentMenu = 'stats'">
+          <span>📈</span> 统计分析
+        </div>
+        <div class="menu-item" :class="{ active: currentMenu === 'logs' }" @click="currentMenu = 'logs'">
+          <span>📋</span> 操作日志
+        </div>
+        <div class="menu-item" :class="{ active: currentMenu === 'config' }" @click="currentMenu = 'config'">
+          <span>⚙️</span> 系统配置
+        </div>
+        <div class="menu-item" :class="{ active: currentMenu === 'export' }" @click="currentMenu = 'export'">
+          <span>📤</span> 数据导出
+        </div>
+        <div class="menu-item" :class="{ active: currentMenu === 'achievements' }" @click="currentMenu = 'achievements'">
+          <span>🏆</span> 成就系统
+        </div>
+        <div class="menu-item" :class="{ active: currentMenu === 'reminders' }" @click="currentMenu = 'reminders'">
+          <span>⏰</span> 提醒管理
+        </div>
+        <div class="menu-item" :class="{ active: currentMenu === 'anomaly' }" @click="currentMenu = 'anomaly'">
+          <span>🔍</span> 异常检测
+        </div>
+        <div class="menu-item" :class="{ active: currentMenu === 'cleanup' }" @click="currentMenu = 'cleanup'">
+          <span>🧹</span> 数据清理
+        </div>
+      </div>
+      
+      <!-- 主内容区 -->
+      <div style="flex: 1; display: flex; flex-direction: column;">
+        <!-- 顶部导航 -->
+        <div class="admin-header">
+          <h3>{{ menuTitle }}</h3>
+          <div class="user-info">
+            <el-dropdown @command="handleCommand">
+              <span style="cursor: pointer">
+                {{ adminInfo.nickname }}
+                <el-icon><ArrowDown /></el-icon>
+              </span>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="password">修改密码</el-dropdown-item>
+                  <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
+        </div>
+        
+        <!-- 内容区 -->
+        <div class="admin-main">
+          <!-- 数据概览 -->
+          <div v-if="currentMenu === 'dashboard'">
+            <el-row :gutter="20">
+              <el-col :span="6">
+                <div class="card stat-card">
+                  <div class="stat-label">总用户数</div>
+                  <div class="stat-value">{{ stats.overview?.totalUsers || 0 }}</div>
+                  <div>+{{ stats.overview?.newUsersToday || 0 }} 今日新增</div>
+                </div>
+              </el-col>
+              <el-col :span="6">
+                <div class="card stat-card">
+                  <div class="stat-label">活跃用户 (7 天)</div>
+                  <div class="stat-value">{{ stats.overview?.activeUsers7d || 0 }}</div>
+                  <div>较上周 +12%</div>
+                </div>
+              </el-col>
+              <el-col :span="6">
+                <div class="card stat-card">
+                  <div class="stat-label">今日学习人次</div>
+                  <div class="stat-value">{{ stats.overview?.studySessionsToday || 0 }}</div>
+                  <div>学习热度 🔥</div>
+                </div>
+              </el-col>
+              <el-col :span="6">
+                <div class="card stat-card">
+                  <div class="stat-label">总词库数</div>
+                  <div class="stat-value">{{ stats.overview?.totalWordbooks || 0 }}</div>
+                  <div>{{ stats.overview?.totalWords || 0 }} 个单词</div>
+                </div>
+              </el-col>
+            </el-row>
+            
+            <el-row :gutter="20" style="margin-top: 20px">
+              <el-col :span="12">
+                <div class="card">
+                  <h4>📚 词库使用排行</h4>
+                  <el-table :data="stats.wordbooks || []" style="margin-top: 15px" size="small">
+                    <el-table-column label="词库名称">
+                      <template #default="{ row }">{{ row.name }}</template>
+                    </el-table-column>
+                    <el-table-column label="活跃用户" width="100">
+                      <template #default="{ row }">{{ row.activeUsers }}</template>
+                    </el-table-column>
+                    <el-table-column label="学习人数" width="100">
+                      <template #default="{ row }">{{ row.learningUsers }}</template>
+                    </el-table-column>
+                  </el-table>
+                </div>
+              </el-col>
+              <el-col :span="12">
+                <div class="card">
+                  <h4>❌ 高频错题 TOP5</h4>
+                  <el-table :data="stats.mistakes?.topMistakes?.slice(0, 5) || []" style="margin-top: 15px" size="small">
+                    <el-table-column label="单词">
+                      <template #default="{ row }">{{ row.word }}</template>
+                    </el-table-column>
+                    <el-table-column label="错误次数" width="100">
+                      <template #default="{ row }">{{ row.mistakeCount }}</template>
+                    </el-table-column>
+                    <el-table-column label="人数" width="80">
+                      <template #default="{ row }">{{ row.userCount }}</template>
+                    </el-table-column>
+                  </el-table>
+                </div>
+              </el-col>
+            </el-row>
+          </div>
+          
+          <!-- 词库管理 -->
+          <div v-if="currentMenu === 'wordbooks'">
+            <div class="card">
+              <div class="toolbar">
+                <div style="display: flex; gap: 10px">
+                  <el-input 
+                    v-model="wordbookSearch" 
+                    placeholder="搜索词库..."
+                    style="width: 250px"
+                    clearable
+                    @clear="loadWordbooks"
+                  />
+                  <el-button type="primary" @click="loadWordbooks">搜索</el-button>
+                </div>
+                <el-button type="primary" @click="showCreateWordbookDialog">
+                  <el-icon><Plus /></el-icon> 新建词库
+                </el-button>
+              </div>
+              
+              <el-table :data="wordbooks" v-loading="wordbookLoading" style="width: 100%" border stripe>
+                <el-table-column label="词库名称" width="180" show-overflow-tooltip>
+                  <template #default="{ row }">
+                    {{ row.name }}
+                  </template>
+                </el-table-column>
+                <el-table-column label="描述" width="200" show-overflow-tooltip>
+                  <template #default="{ row }">
+                    {{ row.description }}
+                  </template>
+                </el-table-column>
+                <el-table-column label="单词数" width="80" align="center">
+                  <template #default="{ row }">
+                    {{ row.wordCount }}
+                  </template>
+                </el-table-column>
+                <el-table-column label="使用状态" width="140" align="center">
+                  <template #default="{ row }">
+                    <div style="font-size: 12px; line-height: 1.6">
+                      <div><span style="color: #67C23A">●</span> {{ row.activeUsers || 0 }} 人在学</div>
+                      <div><span style="color: #409EFF">●</span> {{ row.learningUsers || 0 }} 有记录</div>
+                    </div>
+                  </template>
+                </el-table-column>
+                <el-table-column label="状态" width="70" align="center">
+                  <template #default="{ row }">
+                    <el-tag :type="row.status === 'active' ? 'success' : 'info'" size="small">
+                      {{ row.status === 'active' ? '启用' : '禁用' }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column label="操作" width="280" fixed="right" align="center">
+                  <template #default="{ row }">
+                    <el-button size="small" type="primary" @click="viewWordbookWords(row)">查看单词</el-button>
+                    <el-button size="small" @click="editWordbook(row)">编辑</el-button>
+                    <el-button 
+                      size="small" 
+                      type="danger" 
+                      @click="deleteWordbook(row)"
+                      :disabled="row.activeUsers > 0 || row.learningUsers > 0"
+                    >
+                      删除
+                    </el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+              
+              <div style="margin-top: 20px; text-align: right">
+                <el-pagination
+                  v-model:current-page="wordbookPage"
+                  v-model:page-size="wordbookPageSize"
+                  :total="wordbookTotal"
+                  :page-sizes="[20, 50, 100]"
+                  layout="total, sizes, prev, pager, next, jumper"
+                  @current-change="loadWordbooks"
+                  @size-change="loadWordbooks"
+                />
+              </div>
+            </div>
+          </div>
+          
+          <!-- 用户管理 -->
+          <div v-if="currentMenu === 'users'">
+            <div class="card">
+              <div class="toolbar">
+                <div style="display: flex; gap: 10px">
+                  <el-input 
+                    v-model="userSearch" 
+                    placeholder="搜索用户..."
+                    style="width: 250px"
+                    clearable
+                  />
+                  <el-select v-model="userStatus" placeholder="状态" style="width: 120px" clearable>
+                    <el-option label="正常" value="active" />
+                    <el-option label="禁用" value="banned" />
+                  </el-select>
+                  <el-button type="primary" @click="loadUsers">搜索</el-button>
+                </div>
+              </div>
+              
+              <el-table :data="users" v-loading="userLoading" border stripe>
+                <el-table-column label="ID" width="70" align="center">
+                  <template #default="{ row }">
+                    {{ row.id }}
+                  </template>
+                </el-table-column>
+                <el-table-column label="用户信息" min-width="280">
+                  <template #default="{ row }">
+                    <div style="display: flex; align-items: center; gap: 12px">
+                      <el-avatar :size="40" :src="row.avatar" shape="circle" />
+                      <div style="flex: 1">
+                        <div style="font-weight: 600; margin-bottom: 4px">
+                          {{ row.nickname }}
+                          <el-tag v-if="row.gender === 1" size="small" type="primary" style="margin-left: 6px">♂</el-tag>
+                          <el-tag v-else-if="row.gender === 2" size="small" type="danger" style="margin-left: 6px">♀</el-tag>
+                        </div>
+                        <div style="font-size: 12px; color: #909399">
+                          <span v-if="row.phone !== '-'">📱 {{ row.phone }}</span>
+                          <span v-else>🔖 {{ row.openid.substring(0, 20) }}...</span>
+                        </div>
+                      </div>
+                    </div>
+                  </template>
+                </el-table-column>
+                <el-table-column label="地区" width="150" align="center">
+                  <template #default="{ row }">
+                    <span v-if="row.province && row.city">{{ row.province }} {{ row.city }}</span>
+                    <span v-else style="color: #909399">-</span>
+                  </template>
+                </el-table-column>
+                <el-table-column label="学习数据" width="180" align="center">
+                  <template #default="{ row }">
+                    <div style="font-size: 13px; line-height: 1.8">
+                      <div>📚 累计：<strong>{{ row.totalWords }}</strong> 词</div>
+                      <div>📅 总天数：<strong>{{ row.studyDays }}</strong> 天</div>
+                      <div>📈 近 7 天：<strong style="color: #67C23A">{{ row.studyDays7 }}</strong> 天</div>
+                    </div>
+                  </template>
+                </el-table-column>
+                <el-table-column label="最后登录" width="160">
+                  <template #default="{ row }">
+                    <div style="font-size: 13px">
+                      <div>{{ row.lastLoginAt || '无' }}</div>
+                      <div style="color: #909399; font-size: 12px">注册：{{ row.createdAt }}</div>
+                    </div>
+                  </template>
+                </el-table-column>
+                <el-table-column label="状态" width="90" align="center">
+                  <template #default="{ row }">
+                    <el-tag :type="row.status === 'active' ? 'success' : 'danger'" size="small">
+                      {{ row.status === 'active' ? '正常' : '禁用' }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column label="操作" width="180" fixed="right" align="center">
+                  <template #default="{ row }">
+                    <el-button size="small" type="primary" @click="viewUserDetail(row)">详情</el-button>
+                    <el-button 
+                      v-if="row.status === 'active'"
+                      size="small" 
+                      type="warning" 
+                      @click="disableUser(row)"
+                    >
+                      禁用
+                    </el-button>
+                    <el-button 
+                      v-else
+                      size="small" 
+                      type="success" 
+                      @click="enableUser(row)"
+                    >
+                      启用
+                    </el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+              
+              <div style="margin-top: 20px; text-align: right">
+                <el-pagination
+                  v-model:current-page="userPage"
+                  v-model:page-size="userPageSize"
+                  :total="userTotal"
+                  :page-sizes="[20, 50, 100]"
+                  layout="total, sizes, prev, pager, next, jumper"
+                  @current-change="loadUsers"
+                  @size-change="loadUsers"
+                />
+              </div>
+            </div>
+          </div>
+          
+          <!-- 错题本 -->
+          <div v-if="currentMenu === 'mistakes'">
+            <div class="card">
+              <div class="toolbar">
+                <h4>❌ 高频错题 TOP50</h4>
+                <el-button type="primary" size="small" @click="loadMistakes">
+                  <el-icon><Refresh /></el-icon> 刷新
+                </el-button>
+              </div>
+              
+              <el-table :data="mistakes" v-loading="mistakesLoading" style="width: 100%">
+                <el-table-column label="单词" width="200" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.word }}</template>
+                </el-table-column>
+                <el-table-column label="音标" width="150" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.phonetic }}</template>
+                </el-table-column>
+                <el-table-column label="错误次数" width="120" sortable>
+                  <template #default="{ row }">{{ row.mistakeCount }}</template>
+                </el-table-column>
+                <el-table-column label="错误人数" width="100" sortable>
+                  <template #default="{ row }">{{ row.userCount }}</template>
+                </el-table-column>
+                <el-table-column label="所属词库" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.category }}</template>
+                </el-table-column>
+                <el-table-column label="操作" width="150" fixed="right">
+                  <template #default="{ row }">
+                    <el-button size="small" @click="viewWordDetail(row)">查看详情</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+          </div>
+          
+          <!-- 统计分析 -->
+          <div v-if="currentMenu === 'stats'">
+            <div class="card">
+              <h4>📊 详细统计分析</h4>
+              <p style="color: #909399; margin-top: 10px">功能开发中...</p>
+            </div>
+          </div>
+          
+          <!-- 操作日志 -->
+          <div v-if="currentMenu === 'logs'">
+            <div class="card">
+              <h4>📋 操作日志</h4>
+              <el-table :data="logs" v-loading="logsLoading">
+                <el-table-column label="ID" width="80">
+                  <template #default="{ row }">{{ row.id }}</template>
+                </el-table-column>
+                <el-table-column label="操作人" width="120">
+                  <template #default="{ row }">{{ row.adminUsername }}</template>
+                </el-table-column>
+                <el-table-column label="操作类型" width="150">
+                  <template #default="{ row }">{{ row.action }}</template>
+                </el-table-column>
+                <el-table-column label="目标类型" width="100">
+                  <template #default="{ row }">{{ row.targetType }}</template>
+                </el-table-column>
+                <el-table-column label="详情" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.details }}</template>
+                </el-table-column>
+                <el-table-column label="时间" width="180">
+                  <template #default="{ row }">{{ row.createdAt }}</template>
+                </el-table-column>
+              </el-table>
+            </div>
+          </div>
+          
+          <!-- 系统配置 -->
+          <div v-if="currentMenu === 'config'">
+            <div class="card">
+              <h4>⚙️ 系统配置</h4>
+              <el-form :model="config" label-width="150px" style="margin-top: 20px">
+                <h5>学习配置</h5>
+                <el-form-item label="每日新词默认数量">
+                  <el-input-number v-model="config.learning.defaultDailyNewWords" :min="10" :max="100" />
+                </el-form-item>
+                <el-form-item label="默认复习时间">
+                  <el-time-picker v-model="config.learning.defaultReviewTime" format="HH:mm" placeholder="选择时间" />
+                </el-form-item>
+                
+                <h5 style="margin-top: 30px">提醒配置</h5>
+                <el-form-item label="启用提醒">
+                  <el-switch v-model="config.reminder.enabled" />
+                </el-form-item>
+                <el-form-item label="每日最多提醒次数">
+                  <el-input-number v-model="config.reminder.maxRemindersPerDay" :min="1" :max="10" />
+                </el-form-item>
+                
+                <h5 style="margin-top: 30px">系统配置</h5>
+                <el-form-item label="维护模式">
+                  <el-switch v-model="config.system.maintenanceMode" />
+                </el-form-item>
+                <el-form-item label="允许新用户注册">
+                  <el-switch v-model="config.system.allowRegistration" />
+                </el-form-item>
+                
+                <el-form-item>
+                  <el-button type="primary" @click="saveConfig">保存配置</el-button>
+                  <el-button @click="loadConfig">重置</el-button>
+                </el-form-item>
+              </el-form>
+            </div>
+          </div>
+          
+          <!-- 数据导出 -->
+          <div v-if="currentMenu === 'export'">
+            <div class="card">
+              <h4>📤 数据导出</h4>
+              <el-row :gutter="20" style="margin-top: 20px">
+                <el-col :span="8">
+                  <div class="stat-card" style="border: 1px solid #e4e7ed; border-radius: 4px">
+                    <div class="stat-label">用户数据</div>
+                    <div style="margin: 15px 0">
+                      <el-select v-model="exportUserFormat" placeholder="选择格式" style="width: 100%">
+                        <el-option label="Excel (.xlsx)" value="excel" />
+                        <el-option label="CSV (.csv)" value="csv" />
+                      </el-select>
+                    </div>
+                    <el-button type="primary" @click="exportUsers" style="width: 100%">导出用户</el-button>
+                  </div>
+                </el-col>
+                
+                <el-col :span="8">
+                  <div class="stat-card" style="border: 1px solid #e4e7ed; border-radius: 4px">
+                    <div class="stat-label">词库数据</div>
+                    <div style="margin: 15px 0">
+                      <el-select v-model="exportWordFormat" placeholder="选择格式" style="width: 100%">
+                        <el-option label="Excel (.xlsx)" value="excel" />
+                        <el-option label="CSV (.csv)" value="csv" />
+                      </el-select>
+                    </div>
+                    <el-button type="primary" @click="exportWordbooks" style="width: 100%">导出词库</el-button>
+                  </div>
+                </el-col>
+                
+                <el-col :span="8">
+                  <div class="stat-card" style="border: 1px solid #e4e7ed; border-radius: 4px">
+                    <div class="stat-label">学习记录</div>
+                    <div style="margin: 15px 0">
+                      <el-date-picker
+                        v-model="exportLearningDate"
+                        type="daterange"
+                        range-separator="至"
+                        start-placeholder="开始日期"
+                        end-placeholder="结束日期"
+                        style="width: 100%"
+                      />
+                    </div>
+                    <el-button type="primary" @click="exportLearning" style="width: 100%">导出记录</el-button>
+                  </div>
+                </el-col>
+              </el-row>
+            </div>
+          </div>
+          
+          <!-- 成就系统 -->
+          <div v-if="currentMenu === 'achievements'">
+            <div class="card">
+              <h4>🏆 成就系统</h4>
+              <div class="stat-grid" style="margin: 20px 0">
+                <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white">
+                  <div class="stat-value">{{ achievementStats.totalAchievements }}</div>
+                  <div class="stat-label">总成就数</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white">
+                  <div class="stat-value">{{ achievementStats.totalAchieved }}</div>
+                  <div class="stat-label">总达成次数</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333">
+                  <div class="stat-value">{{ achievementStats.usersWithAchievements }}</div>
+                  <div class="stat-label">获得成就用户</div>
+                </div>
+                <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white">
+                  <div class="stat-value">{{ achievementStats.achievementRate }}%</div>
+                  <div class="stat-label">成就达成率</div>
+                </div>
+              </div>
+              
+              <h4>成就列表</h4>
+              <div class="achievement-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin-top: 20px">
+                <div v-for="ach in achievements" :key="ach.id" style="border: 2px solid #e4e7ed; border-radius: 8px; padding: 20px; text-align: center; transition: all 0.3s" @mouseenter="$event.currentTarget.style.borderColor='#409EFF'; $event.currentTarget.style.transform='translateY(-2px)'" @mouseleave="$event.currentTarget.style.borderColor='#e4e7ed'; $event.currentTarget.style.transform='translateY(0)'">
+                  <div style="font-size: 48px; margin-bottom: 10px">{{ ach.icon }}</div>
+                  <div style="font-weight: bold; color: #333; margin: 10px 0">{{ ach.name }}</div>
+                  <div style="color: #909399; font-size: 13px; margin: 5px 0">{{ ach.description }}</div>
+                  <div style="color: #67C23A; font-size: 12px; margin-top: 10px">🎉 {{ ach.achievedCount }} 人已达成</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 提醒管理 -->
+          <div v-if="currentMenu === 'reminders'">
+            <div class="card">
+              <h4>⏰ 提醒管理</h4>
+              <el-form :model="reminderConfig" label-width="150px" style="margin-top: 20px">
+                <el-form-item label="启用提醒">
+                  <el-switch v-model="reminderConfig.enabled" />
+                </el-form-item>
+                <el-form-item label="默认提醒时间">
+                  <el-time-picker v-model="reminderConfig.defaultTime" format="HH:mm" placeholder="选择时间" />
+                </el-form-item>
+                <el-form-item label="每日最多提醒次数">
+                  <el-input-number v-model="reminderConfig.maxRemindersPerDay" :min="1" :max="10" />
+                </el-form-item>
+                <el-form-item>
+                  <el-button type="primary" @click="saveReminderConfig">保存配置</el-button>
+                  <el-button @click="loadReminderConfig">重置</el-button>
+                </el-form-item>
+              </el-form>
+              
+              <h4 style="margin-top: 30px">通知模板</h4>
+              <el-table :data="notificationTemplates" style="margin-top: 15px">
+                <el-table-column label="模板名称" width="150">
+                  <template #default="{ row }">{{ row.name }}</template>
+                </el-table-column>
+                <el-table-column label="类型" width="150">
+                  <template #default="{ row }">{{ row.type }}</template>
+                </el-table-column>
+                <el-table-column label="内容" show-overflow-tooltip>
+                  <template #default="{ row }">{{ row.content }}</template>
+                </el-table-column>
+              </el-table>
+            </div>
+          </div>
+          
+          <!-- 异常检测 -->
+          <div v-if="currentMenu === 'anomaly'">
+            <div class="card">
+              <h4>🔍 异常检测</h4>
+              <el-form inline>
+                <el-form-item label="检测天数">
+                  <el-select v-model="anomalyDays" style="width: 120px">
+                    <el-option label="7 天" :value="7" />
+                    <el-option label="30 天" :value="30" />
+                  </el-select>
+                </el-form-item>
+                <el-form-item>
+                  <el-button type="primary" @click="loadAnomalyDetection" :loading="anomalyLoading">生成检测报告</el-button>
+                </el-form-item>
+              </el-form>
+              
+              <div v-if="anomalyData" style="margin-top: 20px">
+                <div class="stat-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px">
+                  <div class="stat-card" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); color: white">
+                    <div class="stat-value">{{ anomalyData.summary.totalAnomalies }}</div>
+                    <div class="stat-label">异常总数</div>
+                  </div>
+                  <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white">
+                    <div class="stat-value">{{ anomalyData.summary.superFastLearning }}</div>
+                    <div class="stat-label">超快学习</div>
+                  </div>
+                  <div class="stat-card" style="background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); color: white">
+                    <div class="stat-value">{{ anomalyData.summary.perfectAccuracy }}</div>
+                    <div class="stat-label">异常正确率</div>
+                  </div>
+                  <div class="stat-card" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333">
+                    <div class="stat-value">{{ anomalyData.summary.nonStopLearning }}</div>
+                    <div class="stat-label">不间断学习</div>
+                  </div>
+                </div>
+                
+                <el-tabs style="margin-top: 20px">
+                  <el-tab-pane label="超快学习">
+                    <el-table :data="anomalyData.anomalies.superFastLearning" style="margin-top: 15px">
+                      <el-table-column label="用户 ID" width="80">
+                        <template #default="{ row }">{{ row.userId }}</template>
+                      </el-table-column>
+                      <el-table-column label="昵称">
+                        <template #default="{ row }">{{ row.nickname }}</template>
+                      </el-table-column>
+                      <el-table-column label="日期" width="120">
+                        <template #default="{ row }">{{ row.date }}</template>
+                      </el-table-column>
+                      <el-table-column label="时段" width="80">
+                        <template #default="{ row }">{{ row.hour }}</template>
+                      </el-table-column>
+                      <el-table-column label="单词/小时" width="100">
+                        <template #default="{ row }">{{ row.wordsPerHour }}</template>
+                      </el-table-column>
+                    </el-table>
+                  </el-tab-pane>
+                  <el-tab-pane label="异常正确率">
+                    <el-table :data="anomalyData.anomalies.perfectAccuracy" style="margin-top: 15px">
+                      <el-table-column label="用户 ID" width="80">
+                        <template #default="{ row }">{{ row.userId }}</template>
+                      </el-table-column>
+                      <el-table-column label="昵称">
+                        <template #default="{ row }">{{ row.nickname }}</template>
+                      </el-table-column>
+                      <el-table-column label="连续正确" width="100">
+                        <template #default="{ row }">{{ row.consecutiveCorrect }}</template>
+                      </el-table-column>
+                      <el-table-column label="开始时间" width="180">
+                        <template #default="{ row }">{{ row.startTime }}</template>
+                      </el-table-column>
+                    </el-table>
+                  </el-tab-pane>
+                  <el-tab-pane label="不间断学习">
+                    <el-table :data="anomalyData.anomalies.nonStopLearning" style="margin-top: 15px">
+                      <el-table-column label="用户 ID" width="80">
+                        <template #default="{ row }">{{ row.userId }}</template>
+                      </el-table-column>
+                      <el-table-column label="昵称">
+                        <template #default="{ row }">{{ row.nickname }}</template>
+                      </el-table-column>
+                      <el-table-column label="活跃小时" width="100">
+                        <template #default="{ row }">{{ row.activeHours }}</template>
+                      </el-table-column>
+                      <el-table-column label="日期" width="120">
+                        <template #default="{ row }">{{ row.date }}</template>
+                      </el-table-column>
+                    </el-table>
+                  </el-tab-pane>
+                </el-tabs>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 数据清理 -->
+          <div v-if="currentMenu === 'cleanup'">
+            <div class="card">
+              <h4>🧹 数据清理</h4>
+              
+              <div v-if="cleanupAnalysis" style="margin-bottom: 20px">
+                <div class="stat-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px">
+                  <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white">
+                    <div class="stat-value">{{ cleanupAnalysis.analysis.zombieUsers }}</div>
+                    <div class="stat-label">僵尸用户</div>
+                  </div>
+                  <div class="stat-card" style="background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); color: white">
+                    <div class="stat-value">{{ cleanupAnalysis.analysis.orphanedRecords }}</div>
+                    <div class="stat-label">无效记录</div>
+                  </div>
+                  <div class="stat-card" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333">
+                    <div class="stat-value">{{ cleanupAnalysis.analysis.oldSessions }}</div>
+                    <div class="stat-label">过期会话</div>
+                  </div>
+                  <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white">
+                    <div class="stat-value">{{ cleanupAnalysis.analysis.dbSize }}</div>
+                    <div class="stat-label">数据库大小</div>
+                  </div>
+                </div>
+              </div>
+              
+              <h4>清理操作</h4>
+              <el-row :gutter="20" style="margin-top: 20px">
+                <el-col :span="8">
+                  <div style="border: 1px solid #e4e7ed; padding: 15px; border-radius: 4px">
+                    <h5>🧟 清理僵尸用户</h5>
+                    <p style="color: #909399; font-size: 13px">注册超过 30 天且从未学习的用户</p>
+                    <el-button type="danger" @click="cleanupZombieUsers" :loading="cleanupLoading">清理</el-button>
+                  </div>
+                </el-col>
+                <el-col :span="8">
+                  <div style="border: 1px solid #e4e7ed; padding: 15px; border-radius: 4px">
+                    <h5>🗑️ 清理无效记录</h5>
+                    <p style="color: #909399; font-size: 13px">关联单词不存在的学习记录</p>
+                    <el-button type="danger" @click="cleanupOrphanedRecords" :loading="cleanupLoading">清理</el-button>
+                  </div>
+                </el-col>
+                <el-col :span="8">
+                  <div style="border: 1px solid #e4e7ed; padding: 15px; border-radius: 4px">
+                    <h5>📅 清理过期会话</h5>
+                    <p style="color: #909399; font-size: 13px">超过 90 天的复习会话</p>
+                    <el-button type="danger" @click="cleanupOldSessions" :loading="cleanupLoading">清理</el-button>
+                  </div>
+                </el-col>
+              </el-row>
+              
+              <h4 style="margin-top: 20px">数据库优化</h4>
+              <el-button type="primary" @click="vacuumDatabase" :loading="cleanupLoading">🛠️ 执行 VACUUM 优化</el-button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 创建/编辑词库对话框 -->
+    <el-dialog 
+      v-model="wordbookDialogVisible" 
+      :title="isEditWordbook ? '编辑词库' : '创建词库'"
+      width="500px"
+    >
+      <el-form :model="wordbookForm" label-width="80px">
+        <el-form-item label="词库名称" required>
+          <el-input v-model="wordbookForm.name" placeholder="请输入词库名称" />
+        </el-form-item>
+        <el-form-item label="描述">
+          <el-input 
+            v-model="wordbookForm.description" 
+            type="textarea" 
+            :rows="3"
+            placeholder="词库描述（可选）"
+          />
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-radio-group v-model="wordbookForm.status">
+            <el-radio label="active">启用</el-radio>
+            <el-radio label="inactive">禁用</el-radio>
+          </el-radio-group>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="wordbookDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveWordbook">保存</el-button>
+      </template>
+    </el-dialog>
+    
+    <!-- 查看单词对话框 -->
+    <el-dialog 
+      v-model="wordListDialogVisible" 
+      :title="currentWordbook?.name || '词库单词列表'"
+      width="950px"
+    >
+      <div style="margin-bottom: 15px">
+        <el-input 
+          v-model="wordSearch" 
+          placeholder="搜索单词..." 
+          style="width: 300px"
+          clearable
+          @input="loadWordbookWords"
+        />
+        <span style="margin-left: 15px; color: #909399">共 {{ wordListTotal }} 个单词</span>
+      </div>
+      
+      <el-table 
+        :data="wordList" 
+        v-loading="wordListLoading" 
+        style="width: 100%" 
+        height="400"
+        border
+        :header-cell-style="{ background: '#f5f7fa', color: '#606266', fontWeight: '600' }"
+      >
+        <el-table-column label="单词" width="150" fixed show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ row.word }}
+          </template>
+        </el-table-column>
+        <el-table-column label="音标" width="150" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ row.phonetic }}
+          </template>
+        </el-table-column>
+        <el-table-column label="释义" min-width="200" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ row.definition }}
+          </template>
+        </el-table-column>
+        <el-table-column label="例句" min-width="250" show-overflow-tooltip>
+          <template #default="{ row }">
+            {{ row.example }}
+          </template>
+        </el-table-column>
+      </el-table>
+      
+      <div style="margin-top: 20px; text-align: right">
+        <el-pagination
+          v-model:current-page="wordListPage"
+          v-model:page-size="wordListPageSize"
+          :total="wordListTotal"
+          :page-sizes="[50, 100, 200]"
+          layout="total, sizes, prev, pager, next, jumper"
+          @current-change="loadWordbookWords"
+          @size-change="loadWordbookWords"
+        />
+      </div>
+      
+      <template #footer>
+        <el-button @click="wordListDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
+    
+    <!-- 用户详情对话框 -->
+    <el-dialog 
+      v-model="userDetailDialogVisible" 
+      :title="'用户详情：' + (currentUser?.nickname || '未知')"
+      width="750px"
+    >
+      <div v-if="currentUser" style="line-height: 1.8">
+        <!-- 操作按钮 -->
+        <div style="text-align: right; margin-bottom: 15px">
+          <el-button 
+            v-if="!isEditingProfile"
+            type="primary" 
+            size="small" 
+            @click="startEditProfile"
+          >
+            <el-icon><Edit /></el-icon> 编辑资料
+          </el-button>
+          <el-button 
+            v-else
+            type="success" 
+            size="small" 
+            @click="saveProfile"
+            :loading="saveProfileLoading"
+          >
+            <el-icon><Check /></el-icon> 保存
+          </el-button>
+          <el-button 
+            v-if="isEditingProfile"
+            @click="cancelEditProfile"
+          >
+            取消
+          </el-button>
+          <el-button 
+            size="small"
+            @click="syncWechatInfo"
+            :loading="syncLoading"
+          >
+            <el-icon><Refresh /></el-icon> 同步微信
+          </el-button>
+        </div>
+        
+        <!-- 基本信息 -->
+        <el-divider content-position="left">📱 基本信息</el-divider>
+        
+        <!-- 编辑模式 -->
+        <el-form v-if="isEditingProfile" :model="editProfileForm" label-width="100px" size="default">
+          <el-form-item label="头像" required>
+            <div style="display: flex; align-items: center; gap: 15px">
+              <el-avatar :size="64" :src="editProfileForm.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + currentUser.openid" shape="circle" />
+              <el-input 
+                v-model="editProfileForm.avatar_url" 
+                placeholder="头像 URL（可选）" 
+                style="width: 400px"
+                clearable
+              />
+              <el-button size="small" @click="editProfileForm.avatar_url = ''">使用默认</el-button>
+            </div>
+          </el-form-item>
+          <el-form-item label="昵称" required>
+            <el-input v-model="editProfileForm.nickname" placeholder="请输入昵称" style="width: 300px" />
+            <span style="color: #F56C6C; font-size: 12px; margin-left: 10px">* 必填</span>
+          </el-form-item>
+          <el-form-item label="手机号" required>
+            <el-input v-model="editProfileForm.phone" placeholder="请输入手机号" style="width: 300px" />
+            <span style="color: #F56C6C; font-size: 12px; margin-left: 10px">* 必填</span>
+          </el-form-item>
+          <el-form-item label="邮箱">
+            <el-input v-model="editProfileForm.email" placeholder="请输入邮箱（可选）" style="width: 300px" />
+          </el-form-item>
+          <el-form-item label="性别">
+            <el-radio-group v-model="editProfileForm.gender">
+              <el-radio :label="0">未知</el-radio>
+              <el-radio :label="1">♂ 男</el-radio>
+              <el-radio :label="2">♀ 女</el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item label="地区">
+            <el-input v-model="editProfileForm.province" placeholder="省" style="width: 120px" />
+            <el-input v-model="editProfileForm.city" placeholder="市" style="width: 120px; margin: 0 10px" />
+            <el-input v-model="editProfileForm.country" placeholder="国家" style="width: 120px" />
+          </el-form-item>
+        </el-form>
+        
+        <!-- 查看模式 -->
+        <el-descriptions v-else :column="2" border>
+          <el-descriptions-item label="用户 ID">{{ currentUser.id }}</el-descriptions-item>
+          <el-descriptions-item label="微信 OpenID">{{ currentUser.openid }}</el-descriptions-item>
+          <el-descriptions-item label="微信 UnionID">{{ currentUser.unionid || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="头像">
+            <el-avatar :size="40" :src="currentUser.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + currentUser.openid" shape="circle" />
+          </el-descriptions-item>
+          <el-descriptions-item label="昵称">{{ currentUser.nickname || '未设置' }}</el-descriptions-item>
+          <el-descriptions-item label="手机号">{{ currentUser.phone || '未设置' }}</el-descriptions-item>
+          <el-descriptions-item label="邮箱">{{ currentUser.email || '未设置' }}</el-descriptions-item>
+          <el-descriptions-item label="性别">
+            <span v-if="currentUser.gender === 1">♂ 男</span>
+            <span v-else-if="currentUser.gender === 2">♀ 女</span>
+            <span v-else style="color: #909399">未知</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="地区">
+            <span v-if="currentUser.province || currentUser.city">{{ currentUser.province || '' }} {{ currentUser.city || '' }} {{ currentUser.country || '' }}</span>
+            <span v-else style="color: #909399">未设置</span>
+          </el-descriptions-item>
+        </el-descriptions>
+        
+        <!-- 学习数据 -->
+        <el-divider content-position="left">📚 学习数据</el-divider>
+        <el-row :gutter="20" style="margin-top: 15px">
+          <el-col :span="8">
+            <el-statistic title="累计学习单词" :value="currentUser.totalWords" />
+          </el-col>
+          <el-col :span="8">
+            <el-statistic title="总学习天数" :value="currentUser.studyDays" />
+          </el-col>
+          <el-col :span="8">
+            <el-statistic title="近 7 天学习" :value="currentUser.studyDays7" />
+          </el-col>
+        </el-row>
+        <el-row :gutter="20" style="margin-top: 15px">
+          <el-col :span="8">
+            <el-statistic title="近 30 天学习" :value="currentUser.studyDays30" />
+          </el-col>
+          <el-col :span="8">
+            <el-statistic title="账号状态">
+              <el-tag :type="currentUser.status === 'active' ? 'success' : 'danger'" size="small">
+                {{ currentUser.status === 'active' ? '正常' : '禁用' }}
+              </el-tag>
+            </el-statistic>
+          </el-col>
+          <el-col :span="8">
+            <el-statistic title="角色">
+              <el-tag type="primary" size="small">{{ currentUser.role }}</el-tag>
+            </el-statistic>
+          </el-col>
+        </el-row>
+        
+        <!-- 时间信息 -->
+        <el-divider content-position="left">🕐 时间信息</el-divider>
+        <el-descriptions :column="2" border>
+          <el-descriptions-item label="注册时间">{{ currentUser.createdAt }}</el-descriptions-item>
+          <el-descriptions-item label="首次登录">{{ currentUser.firstLoginAt || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="最后登录">{{ currentUser.lastLoginAt || '-' }}</el-descriptions-item>
+        </el-descriptions>
+      </div>
+      
+      <template #footer>
+        <el-button @click="userDetailDialogVisible = false">关闭</el-button>
+        <el-button 
+          v-if="currentUser?.status === 'active'"
+          type="warning" 
+          @click="disableUser(currentUser); userDetailDialogVisible = false"
+        >
+          禁用此用户
+        </el-button>
+        <el-button 
+          v-else
+          type="success" 
+          @click="enableUser(currentUser); userDetailDialogVisible = false"
+        >
+          启用此用户
+        </el-button>
+      </template>
+    </el-dialog>
+  </div>
+  
+  <!-- Vue 3 + Element Plus -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://unpkg.com/element-plus"></script>
+  <script src="https://unpkg.com/@element-plus/icons-vue/dist/index.global.min.js"></script>
+  <script src="admin.js?v=202603261130"></script>
+</body>
+</html>

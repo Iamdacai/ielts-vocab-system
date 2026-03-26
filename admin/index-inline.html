@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>雅思背单词系统 - 后台管理</title>
+  <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; }
+    #app { min-height: 100vh; }
+    .login-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .login-box { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
+    .login-title { text-align: center; margin-bottom: 30px; color: #333; font-size: 24px; }
+    .admin-layout { display: flex; min-height: 100vh; }
+    .admin-aside { width: 220px; background: #304156; color: white; }
+    .admin-header { background: white; box-shadow: 0 1px 4px rgba(0,0,0,0.1); padding: 0 20px; height: 60px; display: flex; align-items: center; justify-content: space-between; }
+    .admin-main { flex: 1; padding: 20px; overflow-y: auto; }
+    .logo { padding: 20px; text-align: center; font-size: 18px; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .menu-item { padding: 15px 20px; cursor: pointer; transition: background 0.3s; display: flex; align-items: center; gap: 10px; }
+    .menu-item:hover { background: rgba(255,255,255,0.1); }
+    .menu-item.active { background: #409EFF; }
+    .card { background: white; border-radius: 4px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1); }
+    .stat-card { text-align: center; padding: 30px 20px; }
+    .stat-value { font-size: 36px; font-weight: bold; color: #409EFF; margin: 10px 0; }
+    .stat-label { color: #909399; font-size: 14px; }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+    .user-info { display: flex; align-items: center; gap: 10px; }
+    .wordbook-usage { display: flex; gap: 15px; font-size: 13px; color: #606266; }
+    .usage-item { display: flex; align-items: center; gap: 5px; }
+    .usage-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot-active { background: #67C23A; }
+    .dot-learning { background: #409EFF; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div v-if="!isLoggedIn" class="login-container">
+      <div class="login-box">
+        <h1 class="login-title">🐍 后台管理系统</h1>
+        <el-form :model="loginForm" :rules="loginRules" ref="loginFormRef">
+          <el-form-item prop="username">
+            <el-input v-model="loginForm.username" placeholder="用户名" prefix-icon="User" size="large"/>
+          </el-form-item>
+          <el-form-item prop="password">
+            <el-input v-model="loginForm.password" type="password" placeholder="密码" prefix-icon="Lock" size="large" @keyup.enter="handleLogin"/>
+          </el-form-item>
+          <el-form-item>
+            <el-checkbox v-model="loginForm.remember">记住我（7 天）</el-checkbox>
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" size="large" style="width: 100%" :loading="loginLoading" @click="handleLogin">登录</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+    </div>
+    <div v-else class="admin-layout">
+      <div class="admin-aside">
+        <div class="logo">🐍 雅思背单词</div>
+        <div class="menu-item" :class="{ active: currentMenu === 'dashboard' }" @click="currentMenu = 'dashboard'"><span>📊</span> 数据概览</div>
+        <div class="menu-item" :class="{ active: currentMenu === 'wordbooks' }" @click="currentMenu = 'wordbooks'"><span>📚</span> 词库管理</div>
+        <div class="menu-item" :class="{ active: currentMenu === 'users' }" @click="currentMenu = 'users'"><span>👥</span> 用户管理</div>
+        <div class="menu-item" :class="{ active: currentMenu === 'mistakes' }" @click="currentMenu = 'mistakes'"><span>❌</span> 错题本</div>
+        <div class="menu-item" :class="{ active: currentMenu === 'logs' }" @click="currentMenu = 'logs'"><span>📋</span> 操作日志</div>
+      </div>
+      <div style="flex: 1; display: flex; flex-direction: column;">
+        <div class="admin-header">
+          <h3>{{ menuTitle }}</h3>
+          <div class="user-info">
+            <el-dropdown @command="handleCommand">
+              <span style="cursor: pointer">{{ adminInfo?.nickname || '管理员' }}<el-icon><ArrowDown /></el-icon></span>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
+        </div>
+        <div class="admin-main">
+          <div v-if="currentMenu === 'dashboard'">
+            <el-row :gutter="20">
+              <el-col :span="6"><div class="card stat-card"><div class="stat-label">总用户数</div><div class="stat-value">{{ stats.overview?.totalUsers || 0 }}</div><div>+{{ stats.overview?.newUsersToday || 0 }} 今日新增</div></div></el-col>
+              <el-col :span="6"><div class="card stat-card"><div class="stat-label">活跃用户 (7 天)</div><div class="stat-value">{{ stats.overview?.activeUsers7d || 0 }}</div></div></el-col>
+              <el-col :span="6"><div class="card stat-card"><div class="stat-label">今日学习人次</div><div class="stat-value">{{ stats.overview?.studySessionsToday || 0 }}</div></div></el-col>
+              <el-col :span="6"><div class="card stat-card"><div class="stat-label">总词库数</div><div class="stat-value">{{ stats.overview?.totalWordbooks || 0 }}</div></div></el-col>
+            </el-row>
+          </div>
+          <div v-if="currentMenu === 'wordbooks'">
+            <div class="card">
+              <div class="toolbar">
+                <el-button type="primary" @click="loadWordbooks">🔄 刷新</el-button>
+              </div>
+              <el-table :data="wordbooks" v-loading="wordbookLoading">
+                <el-table-column prop="name" label="词库名称" />
+                <el-table-column prop="wordCount" label="单词数" width="100" />
+                <el-table-column label="使用状态" width="200">
+                  <template #default="{ row }">
+                    <div class="wordbook-usage">
+                      <div class="usage-item"><div class="usage-dot dot-active"></div><span>{{ row.activeUsers }} 人在学</span></div>
+                      <div class="usage-item"><div class="usage-dot dot-learning"></div><span>{{ row.learningUsers }} 有记录</span></div>
+                    </div>
+                  </template>
+                </el-table-column>
+                <el-table-column label="操作" width="150" fixed="right">
+                  <template #default="{ row }">
+                    <el-button size="small" @click="editWordbook(row)">编辑</el-button>
+                    <el-button size="small" type="danger" @click="deleteWordbook(row)" :disabled="row.activeUsers > 0 || row.learningUsers > 0">删除</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+          </div>
+          <div v-if="currentMenu === 'users'">
+            <div class="card">
+              <div class="toolbar"><el-button type="primary" @click="loadUsers">🔄 刷新</el-button></div>
+              <el-table :data="users" v-loading="userLoading">
+                <el-table-column label="用户" width="300">
+                  <template #default="{ row }">
+                    <div style="display: flex; align-items: center; gap: 10px">
+                      <el-avatar :size="32" />
+                      <div><div>{{ row.nickname }}</div><div style="font-size: 12px; color: #909399">{{ row.openid }}</div></div>
+                    </div>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="status" label="状态" width="100">
+                  <template #default="{ row }">
+                    <el-tag :type="row.status === 'active' ? 'success' : 'danger'" size="small">{{ row.status === 'active' ? '正常' : '禁用' }}</el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column label="操作" width="150" fixed="right">
+                  <template #default="{ row }">
+                    <el-button v-if="row.status === 'active'" size="small" type="warning" @click="disableUser(row)">禁用</el-button>
+                    <el-button v-else size="small" type="success" @click="enableUser(row)">启用</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+          </div>
+          <div v-if="currentMenu === 'mistakes'">
+            <div class="card">
+              <div class="toolbar"><h4>❌ 高频错题</h4><el-button type="primary" size="small" @click="loadMistakes">🔄 刷新</el-button></div>
+              <el-table :data="mistakes" v-loading="mistakesLoading">
+                <el-table-column prop="word" label="单词" width="200" />
+                <el-table-column prop="mistakeCount" label="错误次数" width="100" />
+                <el-table-column prop="userCount" label="人数" width="80" />
+              </el-table>
+            </div>
+          </div>
+          <div v-if="currentMenu === 'logs'">
+            <div class="card"><h4>📋 操作日志</h4><el-table :data="logs" v-loading="logsLoading"><el-table-column prop="action" label="操作" /><el-table-column prop="details" label="详情" show-overflow-tooltip /><el-table-column prop="createdAt" label="时间" width="180" /></el-table></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <el-dialog v-model="wordbookDialogVisible" :title="isEditWordbook ? '编辑词库' : '创建词库'" width="500px">
+      <el-form :model="wordbookForm" label-width="80px">
+        <el-form-item label="词库名称" required><el-input v-model="wordbookForm.name" placeholder="请输入词库名称" /></el-form-item>
+        <el-form-item label="描述"><el-input v-model="wordbookForm.description" type="textarea" :rows="3" placeholder="词库描述（可选）" /></el-form-item>
+        <el-form-item label="状态"><el-radio-group v-model="wordbookForm.status"><el-radio label="active">启用</el-radio><el-radio label="inactive">禁用</el-radio></el-radio-group></el-form-item>
+      </el-form>
+      <template #footer><el-button @click="wordbookDialogVisible = false">取消</el-button><el-button type="primary" @click="saveWordbook">保存</el-button></template>
+    </el-dialog>
+  </div>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script src="https://unpkg.com/element-plus"></script>
+  <script src="https://unpkg.com/@element-plus/icons-vue/dist/index.global.min.js"></script>
+  <script>
+/**
+ * 后台管理系统 - 前端逻辑
+ */
+
+// 立即执行初始化
+(function initApp() {
+  console.log('🚀 开始初始化管理后台...');
+  console.log('📦 Vue 状态:', typeof Vue);
+  console.log('📦 Element Plus 状态:', typeof ElementPlus);
+  console.log('📦 DOM 状态:', document.readyState);
+  
+  const { createApp, ref, reactive, computed, onMounted, watch } = Vue;
+  
+  console.log('✅ Vue 已加载');
+  
+  const app = createApp({
+    setup() {
+      // API 基础地址
+      const API_BASE = '/api/admin';
+      
+      // 登录状态
+      const isLoggedIn = ref(false);
+      const loginLoading = ref(false);
+      const adminInfo = ref(null);
+      
+      // 登录表单
+      const loginForm = reactive({
+        username: '',
+        password: '',
+        remember: false
+      });
+      
+      const loginRules = {
+        username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+        password: [{ required: true, message: '请输入密码', trigger: 'blur' }]
+      };
+      
+      // 当前菜单
+      const currentMenu = ref('dashboard');
+      
+      // 统计数据
+      const stats = reactive({
+        overview: null,
+        wordbooks: [],
+        mistakes: { topMistakes: [] },
+        trends: { userGrowth: [], studyActivity: [] }
+      });
+      
+      // 词库管理
+      const wordbookLoading = ref(false);
+      const wordbooks = ref([]);
+      const wordbookPage = ref(1);
+      const wordbookPageSize = ref(20);
+      const wordbookTotal = ref(0);
+      const wordbookSearch = ref('');
+      const wordbookDialogVisible = ref(false);
+      const isEditWordbook = ref(false);
+      const wordbookForm = reactive({
+        id: null,
+        name: '',
+        description: '',
+        status: 'active'
+      });
+      
+      // 用户管理
+      const userLoading = ref(false);
+      const users = ref([]);
+      const userPage = ref(1);
+      const userPageSize = ref(20);
+      const userTotal = ref(0);
+      const userSearch = ref('');
+      const userStatus = ref('');
+      
+      // 操作日志
+      const logsLoading = ref(false);
+      const logs = ref([]);
+      
+      // 错题本
+      const mistakesLoading = ref(false);
+      const mistakes = ref([]);
+      
+      // 菜单标题
+      const menuTitle = computed(() => {
+        const titles = {
+          dashboard: '📊 数据概览',
+          wordbooks: '📚 词库管理',
+          users: '👥 用户管理',
+          mistakes: '❌ 错题本',
+          stats: '📈 统计分析',
+          logs: '📋 操作日志'
+        };
+        return titles[currentMenu.value] || '后台管理';
+      });
+      
+      // 检查登录状态
+      const checkLogin = () => {
+        const token = localStorage.getItem('admin_token');
+        if (token) {
+          isLoggedIn.value = true;
+          loadAdminInfo();
+          loadDashboard();
+        }
+      };
+      
+      // 加载管理员信息
+      const loadAdminInfo = async () => {
+        try {
+          const token = localStorage.getItem('admin_token');
+          const res = await fetch(`${API_BASE}/auth/me`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            adminInfo.value = data.admin;
+          } else {
+            logout();
+          }
+        } catch (error) {
+          console.error('加载管理员信息失败:', error);
+          logout();
+        }
+      };
+      
+      // 登录
+      const handleLogin = async () => {
+        loginLoading.value = true;
+        
+        try {
+          const res = await fetch(`${API_BASE}/auth/login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(loginForm)
+          });
+          
+          const data = await res.json();
+          
+          if (res.ok) {
+            localStorage.setItem('admin_token', data.token);
+            isLoggedIn.value = true;
+            adminInfo.value = data.admin;
+            ElementPlus.ElMessage.success('登录成功');
+            loadDashboard();
+          } else {
+            ElementPlus.ElMessage.error(data.message || '登录失败');
+          }
+        } catch (error) {
+          console.error('登录失败:', error);
+          ElementPlus.ElMessage.error('网络错误，请稍后重试');
+        } finally {
+          loginLoading.value = false;
+        }
+      };
+      
+      // 登出
+      const logout = async () => {
+        try {
+          const token = localStorage.getItem('admin_token');
+          await fetch(`${API_BASE}/auth/logout`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+        } catch (error) {
+          console.error('登出失败:', error);
+        }
+        
+        localStorage.removeItem('admin_token');
+        isLoggedIn.value = false;
+        adminInfo.value = null;
+        ElementPlus.ElMessage.success('已退出登录');
+      };
+      
+      // 处理下拉菜单
+      const handleCommand = (command) => {
+        if (command === 'logout') {
+          logout();
+        } else if (command === 'password') {
+          ElementPlus.ElMessage.info('修改密码功能开发中');
+        }
+      };
+      
+      // 加载仪表盘数据
+      const loadDashboard = async () => {
+        const token = localStorage.getItem('admin_token');
+        
+        try {
+          // 加载概览数据
+          const overviewRes = await fetch(`${API_BASE}/stats/overview`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (overviewRes.ok) {
+            const data = await overviewRes.json();
+            stats.overview = data.overview;
+            console.log('✅ Dashboard 数据加载成功:', stats.overview);
+          }
+          
+          // 加载词库统计
+          const wordbooksRes = await fetch(`${API_BASE}/stats/wordbooks`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (wordbooksRes.ok) {
+            const data = await wordbooksRes.json();
+            stats.wordbooks = data.wordbooks.slice(0, 10);
+          }
+          
+          // 加载错题统计
+          const mistakesRes = await fetch(`${API_BASE}/stats/mistakes`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (mistakesRes.ok) {
+            const data = await mistakesRes.json();
+            stats.mistakes = data.mistakes;
+          }
+        } catch (error) {
+          console.error('加载仪表盘数据失败:', error);
+        }
+      };
+      
+      // 加载词库列表
+      const loadWordbooks = async () => {
+        wordbookLoading.value = true;
+        const token = localStorage.getItem('admin_token');
+        
+        try {
+          const params = new URLSearchParams({
+            page: wordbookPage.value,
+            pageSize: wordbookPageSize.value
+          });
+          
+          if (wordbookSearch.value) {
+            params.append('search', wordbookSearch.value);
+          }
+          
+          const res = await fetch(`${API_BASE}/wordbooks?${params}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            wordbooks.value = data.wordbooks;
+            wordbookTotal.value = data.total;
+            console.log('✅ 词库列表加载成功:', wordbooks.value.length, '个');
+          }
+        } catch (error) {
+          console.error('加载词库列表失败:', error);
+          ElementPlus.ElMessage.error('加载失败');
+        } finally {
+          wordbookLoading.value = false;
+        }
+      };
+      
+      // 显示创建词库对话框
+      const showCreateWordbookDialog = () => {
+        isEditWordbook.value = false;
+        wordbookForm.id = null;
+        wordbookForm.name = '';
+        wordbookForm.description = '';
+        wordbookForm.status = 'active';
+        wordbookDialogVisible.value = true;
+      };
+      
+      // 编辑词库
+      const editWordbook = (row) => {
+        isEditWordbook.value = true;
+        wordbookForm.id = row.id;
+        wordbookForm.name = row.name;
+        wordbookForm.description = row.description || '';
+        wordbookForm.status = row.status;
+        wordbookDialogVisible.value = true;
+      };
+      
+      // 保存词库
+      const saveWordbook = async () => {
+        if (!wordbookForm.name) {
+          ElementPlus.ElMessage.warning('请输入词库名称');
+          return;
+        }
+        
+        const token = localStorage.getItem('admin_token');
+        
+        try {
+          let res;
+          
+          if (isEditWordbook.value) {
+            res = await fetch(`${API_BASE}/wordbooks/${encodeURIComponent(wordbookForm.id)}`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify(wordbookForm)
+            });
+          } else {
+            res = await fetch(`${API_BASE}/wordbooks`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify(wordbookForm)
+            });
+          }
+          
+          const data = await res.json();
+          
+          if (res.ok) {
+            ElementPlus.ElMessage.success(isEditWordbook.value ? '更新成功' : '创建成功');
+            wordbookDialogVisible.value = false;
+            loadWordbooks();
+          } else {
+            ElementPlus.ElMessage.error(data.error || '操作失败');
+          }
+        } catch (error) {
+          console.error('保存词库失败:', error);
+          ElementPlus.ElMessage.error('网络错误');
+        }
+      };
+      
+      // 删除词库
+      const deleteWordbook = async (row) => {
+        try {
+          await ElementPlus.ElMessageBox.confirm(
+            `确定要删除词库"${row.name}"吗？此操作不可恢复。`,
+            '删除确认',
+            {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+              type: 'warning'
+            }
+          );
+        } catch {
+          return;
+        }
+        
+        const token = localStorage.getItem('admin_token');
+        
+        try {
+          const res = await fetch(`${API_BASE}/wordbooks/${encodeURIComponent(row.id)}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          const data = await res.json();
+          
+          if (res.ok) {
+            ElementPlus.ElMessage.success('删除成功');
+            loadWordbooks();
+          } else {
+            if (data.activeUsers || data.learningUsers) {
+              ElementPlus.ElMessage.error(
+                `无法删除：${data.message} (${data.activeUsers || 0} 人在学，${data.learningUsers || 0} 人有记录)`
+              );
+            } else {
+              ElementPlus.ElMessage.error(data.error || '删除失败');
+            }
+          }
+        } catch (error) {
+          console.error('删除词库失败:', error);
+          ElementPlus.ElMessage.error('网络错误');
+        }
+      };
+      
+      // 查看词库单词
+      const viewWordbookWords = (row) => {
+        ElementPlus.ElMessage.info(`查看词库"${row.name}"的单词 - 功能开发中`);
+      };
+      
+      // 加载用户列表
+      const loadUsers = async () => {
+        userLoading.value = true;
+        const token = localStorage.getItem('admin_token');
+        
+        try {
+          const params = new URLSearchParams({
+            page: userPage.value,
+            pageSize: userPageSize.value
+          });
+          
+          if (userSearch.value) {
+            params.append('search', userSearch.value);
+          }
+          
+          if (userStatus.value) {
+            params.append('status', userStatus.value);
+          }
+          
+          const res = await fetch(`${API_BASE}/users?${params}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            users.value = data.users;
+            userTotal.value = data.total;
+            console.log('✅ 用户列表加载成功:', users.value.length, '个');
+          }
+        } catch (error) {
+          console.error('加载用户列表失败:', error);
+          ElementPlus.ElMessage.error('加载失败');
+        } finally {
+          userLoading.value = false;
+        }
+      };
+      
+      // 查看用户详情
+      const viewUserDetail = (row) => {
+        ElementPlus.ElMessage.info(`查看用户"${row.nickname}"详情 - 功能开发中`);
+      };
+      
+      // 禁用用户
+      const disableUser = async (row) => {
+        try {
+          await ElementPlus.ElMessageBox.confirm(
+            `确定要禁用用户"${row.nickname}"吗？`,
+            '禁用确认',
+            {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+              type: 'warning'
+            }
+          );
+        } catch {
+          return;
+        }
+        
+        const token = localStorage.getItem('admin_token');
+        
+        try {
+          const res = await fetch(`${API_BASE}/users/${row.id}/status`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ status: 'banned' })
+          });
+          
+          if (res.ok) {
+            ElementPlus.ElMessage.success('用户已禁用');
+            loadUsers();
+          } else {
+            const data = await res.json();
+            ElementPlus.ElMessage.error(data.error || '操作失败');
+          }
+        } catch (error) {
+          console.error('禁用用户失败:', error);
+          ElementPlus.ElMessage.error('网络错误');
+        }
+      };
+      
+      // 启用用户
+      const enableUser = async (row) => {
+        const token = localStorage.getItem('admin_token');
+        
+        try {
+          const res = await fetch(`${API_BASE}/users/${row.id}/status`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ status: 'active' })
+          });
+          
+          if (res.ok) {
+            ElementPlus.ElMessage.success('用户已启用');
+            loadUsers();
+          } else {
+            const data = await res.json();
+            ElementPlus.ElMessage.error(data.error || '操作失败');
+          }
+        } catch (error) {
+          console.error('启用用户失败:', error);
+          ElementPlus.ElMessage.error('网络错误');
+        }
+      };
+      
+      // 加载操作日志
+      const loadLogs = async () => {
+        logsLoading.value = true;
+        const token = localStorage.getItem('admin_token');
+        
+        try {
+          const res = await fetch(`${API_BASE}/logs?limit=50`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            logs.value = data.logs;
+            console.log('✅ 日志加载成功:', logs.value.length, '条');
+          }
+        } catch (error) {
+          console.error('加载日志失败:', error);
+        } finally {
+          logsLoading.value = false;
+        }
+      };
+      
+      // 加载错题本
+      const loadMistakes = async () => {
+        mistakesLoading.value = true;
+        const token = localStorage.getItem('admin_token');
+        
+        try {
+          const res = await fetch(`${API_BASE}/stats/mistakes?limit=50`, {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            mistakes.value = data.mistakes?.topMistakes || [];
+            console.log('✅ 错题加载成功:', mistakes.value.length, '个');
+          }
+        } catch (error) {
+          console.error('加载错题失败:', error);
+        } finally {
+          mistakesLoading.value = false;
+        }
+      };
+      
+      // 查看单词详情
+      const viewWordDetail = (row) => {
+        ElementPlus.ElMessage.info(`查看单词"${row.word}"详情 - 功能开发中`);
+      };
+      
+      // 菜单切换
+      watch(currentMenu, (newMenu) => {
+        if (newMenu === 'dashboard') {
+          loadDashboard();
+        } else if (newMenu === 'wordbooks') {
+          loadWordbooks();
+        } else if (newMenu === 'users') {
+          loadUsers();
+        } else if (newMenu === 'logs') {
+          loadLogs();
+        } else if (newMenu === 'mistakes') {
+          loadMistakes();
+        }
+      });
+      
+      // 初始化
+      onMounted(() => {
+        console.log(' Vue 组件已挂载');
+        checkLogin();
+      });
+      
+      return {
+        isLoggedIn,
+        loginLoading,
+        adminInfo,
+        loginForm,
+        loginRules,
+        currentMenu,
+        menuTitle,
+        stats,
+        wordbookLoading,
+        wordbooks,
+        wordbookPage,
+        wordbookPageSize,
+        wordbookTotal,
+        wordbookSearch,
+        wordbookDialogVisible,
+        isEditWordbook,
+        wordbookForm,
+        userLoading,
+        users,
+        userPage,
+        userPageSize,
+        userTotal,
+        userSearch,
+        userStatus,
+        logsLoading,
+        logs,
+        mistakesLoading,
+        mistakes,
+        handleLogin,
+        handleCommand,
+        loadWordbooks,
+        showCreateWordbookDialog,
+        editWordbook,
+        saveWordbook,
+        deleteWordbook,
+        viewWordbookWords,
+        loadUsers,
+        viewUserDetail,
+        disableUser,
+        enableUser,
+        viewWordDetail
+      };
+    }
+  });
+  
+  // 注册 Element Plus 图标
+  if (typeof ElementPlusIconsVue !== 'undefined') {
+    for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+      app.component(key, component);
+    }
+    console.log('✅ Element Plus Icons 已注册');
+  } else {
+    console.warn('⚠️ Element Plus Icons 未加载');
+  }
+  
+  // 使用 Element Plus
+  app.use(ElementPlus);
+  console.log('✅ Element Plus 已使用');
+  
+  // 挂载应用
+  try {
+    app.mount('#app');
+    console.log('✅ 管理后台 Vue 应用已启动');
+  } catch (error) {
+    console.error('❌ Vue 挂载失败:', error);
+  }
+})();
+
+console.log('📝 admin.js 已加载');
+  </script>
+</body></html>

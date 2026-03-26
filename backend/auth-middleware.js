@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const { isAdmin } = require('./auth-wechat');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret';
+const JWT_SECRET = process.env.JWT_SECRET || 'ielts_vocab_dev_secret_2026_change_in_production';
 
 /**
  * 基础认证中间件 - 验证 JWT token
