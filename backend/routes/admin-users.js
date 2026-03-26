@@ -404,9 +404,92 @@ router.put('/:id/status', requireAdmin, async (req, res) => {
 });
 
 /**
+ * PUT /api/admin/users/:id/profile - 更新用户资料（管理员）
+ */
+router.put('/:id/profile', requireAdmin, async (req, res) => {
+  const db = await getDb();
+  const adminId = req.user.userId;
+  const userId = req.params.id;
+  const { nickname, phone, email, avatar_url, gender, city, province, country } = req.body;
+
+  try {
+    // 检查用户是否存在
+    const user = await new Promise((resolve, reject) => {
+      db.get('SELECT id FROM users WHERE id = ?', [userId], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: '用户不存在' });
+    }
+
+    // 验证必填字段
+    if (!nickname || nickname.trim() === '') {
+      return res.status(400).json({ error: '昵称为必填项' });
+    }
+
+    // 更新用户资料
+    await new Promise((resolve, reject) => {
+      db.run(
+        `UPDATE user_profiles SET 
+           nickname = ?, 
+           phone = ?, 
+           email = ?, 
+           avatar_url = ?, 
+           gender = ?, 
+           city = ?, 
+           province = ?, 
+           country = ?,
+           last_login_at = CURRENT_TIMESTAMP
+         WHERE user_id = ?`,
+        [nickname, phone, email, avatar_url, gender, city, province, country, userId],
+        function(err) {
+          if (err) {
+            // 如果没有记录，插入新记录
+            if (err.message.includes('no such table') || this.changes === 0) {
+              db.run(
+                `INSERT INTO user_profiles (user_id, nickname, phone, email, avatar_url, gender, city, province, country)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [userId, nickname, phone, email, avatar_url, gender, city, province, country],
+                (err2) => err2 ? reject(err2) : resolve()
+              );
+            } else {
+              reject(err);
+            }
+          } else {
+            resolve();
+          }
+        }
+      );
+    });
+
+    // 记录日志
+    await new Promise((resolve, reject) => {
+      db.run(
+        `INSERT INTO system_logs (admin_id, action, target_type, target_id, details)
+         VALUES (?, ?, ?, ?, ?)`,
+        [adminId, 'user_profile_update', 'user', userId, JSON.stringify({ nickname, phone, email })],
+        (err) => err ? reject(err) : resolve()
+      );
+    });
+
+    res.json({
+      success: true,
+      message: '用户资料已更新'
+    });
+  } catch (error) {
+    console.error('更新用户资料失败:', error);
+    res.status(500).json({ error: '更新用户资料失败', message: error.message });
+  } finally {
+    db.close();
+  }
+});
+
+/**
  * GET /api/admin/users/:id/progress - 获取用户学习进度
  */
-router.get('/:id/progress', requireAdmin, async (req, res) => {
   const db = await getDb();
   const userId = req.params.id;
 
@@ -459,6 +542,54 @@ router.get('/:id/progress', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('获取用户学习进度失败:', error);
     res.status(500).json({ error: '获取学习进度失败' });
+  } finally {
+    db.close();
+  }
+});
+
+/**
+ * GET /api/admin/users/default-avatar - 获取默认头像（根据用户 ID 生成）
+ */
+router.get('/default-avatar', async (req, res) => {
+  const { userId, seed } = req.query;
+  
+  // 使用 DiceBear API 生成默认头像
+  const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed || userId || 'default'}`;
+  
+  res.redirect(avatarUrl);
+});
+
+/**
+ * POST /api/admin/users/:id/sync-wechat - 同步微信用户信息
+ */
+router.post('/:id/sync-wechat', requireAdmin, async (req, res) => {
+  const db = await getDb();
+  const adminId = req.user.userId;
+  const userId = req.params.id;
+
+  try {
+    // 获取用户 openid
+    const user = await new Promise((resolve, reject) => {
+      db.get('SELECT openid FROM users WHERE id = ?', [userId], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: '用户不存在' });
+    }
+
+    // 这里可以调用微信 API 获取用户信息
+    // 由于需要 access_token，暂时返回提示
+    res.json({
+      success: true,
+      message: '微信信息同步功能需要配置微信 API，当前使用本地编辑',
+      openid: user.openid
+    });
+  } catch (error) {
+    console.error('同步微信信息失败:', error);
+    res.status(500).json({ error: '同步微信信息失败', message: error.message });
   } finally {
     db.close();
   }

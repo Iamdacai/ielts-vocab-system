@@ -74,6 +74,21 @@
       // 用户详情对话框
       const userDetailDialogVisible = ref(false);
       const currentUser = ref(null);
+      const isEditingProfile = ref(false);
+      const saveProfileLoading = ref(false);
+      const syncLoading = ref(false);
+      
+      // 编辑资料表单
+      const editProfileForm = reactive({
+        nickname: '',
+        phone: '',
+        email: '',
+        avatar_url: '',
+        gender: 0,
+        city: '',
+        province: '',
+        country: ''
+      });
       
       // 操作日志
       const logsLoading = ref(false);
@@ -541,7 +556,107 @@
       // 查看用户详情
       const viewUserDetail = (row) => {
         currentUser.value = row;
+        isEditingProfile.value = false;
         userDetailDialogVisible.value = true;
+      };
+      
+      // 开始编辑资料
+      const startEditProfile = () => {
+        isEditingProfile.value = true;
+        // 填充表单
+        editProfileForm.nickname = currentUser.value.nickname || '';
+        editProfileForm.phone = currentUser.value.phone || '';
+        editProfileForm.email = currentUser.value.email || '';
+        editProfileForm.avatar_url = currentUser.value.avatar || '';
+        editProfileForm.gender = currentUser.value.gender || 0;
+        editProfileForm.city = currentUser.value.city || '';
+        editProfileForm.province = currentUser.value.province || '';
+        editProfileForm.country = currentUser.value.country || '';
+      };
+      
+      // 取消编辑
+      const cancelEditProfile = () => {
+        isEditingProfile.value = false;
+      };
+      
+      // 保存资料
+      const saveProfile = async () => {
+        // 验证必填字段
+        if (!editProfileForm.nickname || !editProfileForm.nickname.trim()) {
+          ElementPlus.ElMessage.warning('请输入昵称');
+          return;
+        }
+        if (!editProfileForm.phone || !editProfileForm.phone.trim()) {
+          ElementPlus.ElMessage.warning('请输入手机号');
+          return;
+        }
+        
+        saveProfileLoading.value = true;
+        const token = localStorage.getItem('admin_token');
+        
+        try {
+          const res = await fetch(`${API_BASE}/users/${currentUser.value.id}/profile`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(editProfileForm)
+          });
+          
+          const data = await res.json();
+          
+          if (res.ok) {
+            ElementPlus.ElMessage.success('用户资料已更新');
+            isEditingProfile.value = false;
+            // 更新当前用户信息
+            currentUser.value.nickname = editProfileForm.nickname;
+            currentUser.value.phone = editProfileForm.phone;
+            currentUser.value.email = editProfileForm.email;
+            currentUser.value.avatar = editProfileForm.avatar_url;
+            currentUser.value.gender = editProfileForm.gender;
+            currentUser.value.city = editProfileForm.city;
+            currentUser.value.province = editProfileForm.province;
+            currentUser.value.country = editProfileForm.country;
+            // 重新加载用户列表
+            loadUsers();
+          } else {
+            ElementPlus.ElMessage.error(data.error || '保存失败');
+          }
+        } catch (error) {
+          console.error('保存用户资料失败:', error);
+          ElementPlus.ElMessage.error('保存失败：' + error.message);
+        } finally {
+          saveProfileLoading.value = false;
+        }
+      };
+      
+      // 同步微信信息
+      const syncWechatInfo = async () => {
+        syncLoading.value = true;
+        const token = localStorage.getItem('admin_token');
+        
+        try {
+          const res = await fetch(`${API_BASE}/users/${currentUser.value.id}/sync-wechat`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          
+          const data = await res.json();
+          
+          if (res.ok) {
+            ElementPlus.ElMessage.info(data.message || '同步完成');
+          } else {
+            ElementPlus.ElMessage.error(data.error || '同步失败');
+          }
+        } catch (error) {
+          console.error('同步微信信息失败:', error);
+          ElementPlus.ElMessage.error('同步失败：' + error.message);
+        } finally {
+          syncLoading.value = false;
+        }
       };
       
       // 禁用用户
@@ -1091,7 +1206,15 @@
         wordListTotal,
         wordSearch,
         userDetailDialogVisible,
-        currentUser
+        currentUser,
+        isEditingProfile,
+        saveProfileLoading,
+        syncLoading,
+        editProfileForm,
+        startEditProfile,
+        cancelEditProfile,
+        saveProfile,
+        syncWechatInfo
       };
     }
   });
