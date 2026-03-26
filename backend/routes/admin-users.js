@@ -72,8 +72,18 @@ router.get('/', requireAdmin, async (req, res) => {
            u.last_login_at,
            p.nickname,
            p.avatar_url,
+           p.phone,
+           p.email,
+           p.city,
+           p.province,
+           p.country,
+           p.gender,
+           p.wx_unionid,
+           p.first_login_at,
            (SELECT COUNT(DISTINCT DATE(lr.created_at)) FROM learning_records lr WHERE lr.user_id = u.id) as studyDays,
-           (SELECT COUNT(*) FROM learning_records lr WHERE lr.user_id = u.id) as totalWords
+           (SELECT COUNT(*) FROM learning_records lr WHERE lr.user_id = u.id) as totalWords,
+           (SELECT COUNT(DISTINCT DATE(lr.created_at)) FROM learning_records lr WHERE lr.user_id = u.id AND lr.created_at >= datetime('now', '-7 days')) as studyDays7,
+           (SELECT COUNT(DISTINCT DATE(lr.created_at)) FROM learning_records lr WHERE lr.user_id = u.id AND lr.created_at >= datetime('now', '-30 days')) as studyDays30
          FROM users u
          LEFT JOIN user_profiles p ON u.id = p.user_id
          WHERE ${whereClause}
@@ -91,13 +101,23 @@ router.get('/', requireAdmin, async (req, res) => {
       users: users.map(u => ({
         id: u.id,
         openid: u.openid,
+        unionid: u.wx_unionid,
         nickname: u.nickname || '微信用户',
-        avatar: u.avatar_url || '',
+        avatar: u.avatar_url || '/default-avatar.png',
+        phone: u.phone || '-',
+        email: u.email || '-',
+        city: u.city || '-',
+        province: u.province || '-',
+        country: u.country || '-',
+        gender: u.gender || 0,
         role: u.role,
         status: u.status,
         studyDays: u.studyDays || 0,
+        studyDays7: u.studyDays7 || 0,
+        studyDays30: u.studyDays30 || 0,
         totalWords: u.totalWords || 0,
         lastLoginAt: u.last_login_at,
+        firstLoginAt: u.first_login_at,
         createdAt: u.created_at
       })),
       total,

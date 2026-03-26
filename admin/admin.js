@@ -71,6 +71,10 @@
       const userSearch = ref('');
       const userStatus = ref('');
       
+      // 用户详情对话框
+      const userDetailDialogVisible = ref(false);
+      const currentUser = ref(null);
+      
       // 操作日志
       const logsLoading = ref(false);
       const logs = ref([]);
@@ -536,7 +540,8 @@
       
       // 查看用户详情
       const viewUserDetail = (row) => {
-        ElementPlus.ElMessage.info(`查看用户"${row.nickname}"详情 - 功能开发中`);
+        currentUser.value = row;
+        userDetailDialogVisible.value = true;
       };
       
       // 禁用用户
@@ -1084,7 +1089,9 @@
         wordListPage,
         wordListPageSize,
         wordListTotal,
-        wordSearch
+        wordSearch,
+        userDetailDialogVisible,
+        currentUser
       };
     }
   });
