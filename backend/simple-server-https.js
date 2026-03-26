@@ -2017,9 +2017,23 @@ console.log('[Admin] P2 功能：异常检测、数据清理');
 console.log('[Admin] 新增路由：/anomaly, /cleanup');
 
 // 📚 词库 API - 获取整理后的词库列表（可选认证）
+// 🆕 只显示 7 个标准词库
 app.get('/api/words/libraries', optionalAuth, async (req, res) => {
   try {
     const db = await initializeDatabase();
+    
+    // 只显示 7 个标准词库
+    const STANDARD_LIBRARIES = [
+      'GRE 单词表',
+      '大学英语六级',
+      '大学英语四级',
+      '托福单词表',
+      '考研单词表',
+      '英语单词表汇编',
+      '雅思单词表'
+    ];
+    
+    const placeholders = STANDARD_LIBRARIES.map(() => '?').join(',');
     
     const query = `
       SELECT 
@@ -2027,12 +2041,23 @@ app.get('/api/words/libraries', optionalAuth, async (req, res) => {
         category as name,
         COUNT(*) as word_count
       FROM ielts_words
-      WHERE category IS NOT NULL AND category != ''
+      WHERE category IN (${placeholders})
       GROUP BY category
-      ORDER BY word_count DESC
+      ORDER BY 
+        CASE 
+          WHEN category = '雅思单词表' THEN 1
+          WHEN category = '托福单词表' THEN 2
+          WHEN category = 'GRE 单词表' THEN 3
+          WHEN category = '考研单词表' THEN 4
+          WHEN category = '大学英语六级' THEN 5
+          WHEN category = '大学英语四级' THEN 6
+          WHEN category = '英语单词表汇编' THEN 7
+          ELSE 8
+        END,
+        word_count DESC
     `;
     
-    const rows = await db.all(query);
+    const rows = await db.all(query, STANDARD_LIBRARIES);
     
     res.json(rows);
   } catch (error) {

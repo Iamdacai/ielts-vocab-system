@@ -69,7 +69,6 @@ const optionalAuth = (req, res, next) => {
 module.exports = { 
   authenticateToken, 
   requireAdmin,
-  optionalAuth: optional,  // 别名兼容
-  optional,
+  optionalAuth,
   JWT_SECRET
 };
