@@ -1,0 +1,115 @@
+<!-- pages/admin/notifications/notifications.wxml -->
+<view class="container">
+  <view class="page-title">📢 系统通知管理</view>
+  
+  <!-- 发送通知表单 -->
+  <view class="card">
+    <view class="card-title">📤 发送新通知</view>
+    
+    <view class="form-group">
+      <view class="label">通知标题</view>
+      <input 
+        class="input" 
+        placeholder="请输入通知标题" 
+        value="{{formData.title}}"
+        bindinput="onTitleInput"
+        maxlength="50"
+      />
+    </view>
+    
+    <view class="form-group">
+      <view class="label">通知内容</view>
+      <textarea 
+        class="textarea" 
+        placeholder="请输入通知内容" 
+        value="{{formData.content}}"
+        bindinput="onContentInput"
+        maxlength="500"
+        auto-height
+      />
+    </view>
+    
+    <view class="form-group">
+      <view class="label">通知类型</view>
+      <picker 
+        mode="selector" 
+        range="{{notificationTypes}}" 
+        range-key="label"
+        value="{{typeIndex}}"
+        bindchange="onTypeChange"
+      >
+        <view class="picker">
+          {{notificationTypes[typeIndex].label}}
+        </view>
+      </picker>
+    </view>
+    
+    <view class="form-group">
+      <view class="label">目标用户</view>
+      <picker 
+        mode="selector" 
+        range="{{targetOptions}}" 
+        range-key="label"
+        value="{{targetIndex}}"
+        bindchange="onTargetChange"
+      >
+        <view class="picker">
+          {{targetOptions[targetIndex].label}}
+        </view>
+      </picker>
+    </view>
+    
+    <button class="btn btn-primary" bindtap="sendNotification">
+      📤 发送通知
+    </button>
+  </view>
+  
+  <!-- 快捷模板 -->
+  <view class="card">
+    <view class="card-title">⚡ 快捷模板</view>
+    <view class="template-list">
+      <view 
+        wx:for="{{templates}}" 
+        wx:key="id"
+        class="template-item"
+        bindtap="useTemplate"
+        data-id="{{item.id}}"
+      >
+        <view class="template-title">{{item.title}}</view>
+        <view class="template-desc">{{item.content}}</view>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 发送历史 -->
+  <view class="card">
+    <view class="card-title">📜 发送历史</view>
+    <view wx:if="{{history.length === 0}}" class="empty">
+      暂无发送记录
+    </view>
+    <view wx:else class="history-list">
+      <view wx:for="{{history}}" wx:key="id" class="history-item">
+        <view class="history-header">
+          <text class="history-title">{{item.title}}</text>
+          <text class="history-type {{item.type}}">{{item.type}}</text>
+        </view>
+        <view class="history-content">{{item.content}}</view>
+        <view class="history-footer">
+          <text>发送时间：{{item.sent_at}}</text>
+          <text>接收人数：{{item.recipient_count}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 重置通知标记 -->
+  <view class="card" style="margin-top: 40rpx; border-top: 2rpx solid #f00;">
+    <view class="card-title" style="color: #f00;">⚠️ 重置通知标记</view>
+    <view class="desc">
+      重置后，用户将再次看到词库更新提示弹窗
+    </view>
+    <button class="btn btn-warning" bindtap="resetLibraryUpdateFlag">
+      🔄 重置词库更新标记（所有用户）
+    </button>
+  </view>
+</view>

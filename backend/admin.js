@@ -9,7 +9,11 @@ const path = require('path');
 const { requireAdmin } = require('./auth-middleware');
 
 const router = express.Router();
-const dbPath = path.join(__dirname, 'scripts', 'ielts_vocab.db');
+const dbPath = path.join(__dirname, 'ielts_vocab.db');
+
+// 导入通知管理路由
+const notificationRoutes = require('./routes/admin-notifications');
+router.use('/notifications', notificationRoutes);
 
 /**
  * 获取数据库连接
