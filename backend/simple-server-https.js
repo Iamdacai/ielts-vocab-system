@@ -742,28 +742,30 @@ app.get('/api/review/dashboard', authenticateToken, async (req, res) => {
     
     // 🆕 获取用户词库配置
     const config = await db.get('SELECT vocab_library, vocab_category FROM user_configs WHERE user_id = ?', [userId]);
-    const selectedLibraries = config?.vocab_library ? JSON.parse(config.vocab_library) : ['cambridge'];
+    const selectedLibraries = config?.vocab_library ? JSON.parse(config.vocab_library) : [];
     const selectedCategory = config?.vocab_category || '';
     
     console.log('[九宫格] 用户词库配置:', selectedLibraries, '分类:', selectedCategory);
     
-    // 🆕 构建词库过滤条件
+    // 🆕 构建词库过滤条件（根据实际选择的 category 过滤）
     let whereClause = '';
     const params = [];
     
-    if (selectedLibraries.includes('cambridge') && selectedLibraries.includes('zhenjing')) {
-      // 两个词库都选了，不过滤
+    if (!selectedLibraries || selectedLibraries.length === 0) {
+      // 未选择任何词库，默认全部
       whereClause = '1=1';
-    } else if (selectedLibraries.includes('cambridge')) {
-      // 只选剑桥
-      whereClause = 'cambridge_book BETWEEN 1 AND 18';
-    } else if (selectedLibraries.includes('zhenjing')) {
-      // 只选真经
-      whereClause = "frequency_level IN ('high', 'medium', 'low')";
+    } else if (selectedLibraries.length === 1) {
+      // 只选了一个词库
+      whereClause = 'category = ?';
+      params.push(selectedLibraries[0]);
     } else {
-      // 默认剑桥
-      whereClause = 'cambridge_book BETWEEN 1 AND 18';
+      // 选了多个词库，使用 IN 查询
+      const placeholders = selectedLibraries.map(() => '?').join(',');
+      whereClause = `category IN (${placeholders})`;
+      params.push(...selectedLibraries);
     }
+    
+    console.log('[九宫格] 过滤条件:', whereClause, '参数:', params);
     
     // 1. 获取所有单词的进度数据（按词库过滤）- 🆕 使用 DISTINCT 按 word 去重
     const words = await db.all(`
@@ -785,7 +787,7 @@ app.get('/api/review/dashboard', authenticateToken, async (req, res) => {
       ) p ON w.id = p.word_id
       WHERE (${whereClause})
       GROUP BY w.word
-    `, [userId]);
+    `, [userId, ...params]);
     
     // 2. 计算九宫格数据（根据掌握分数和下次复习时间计算阶段）- 🆕 每个阶段颜色不同
     const REVIEW_STAGES = [
@@ -1211,32 +1213,35 @@ app.get('/api/stats', authenticateToken, async (req, res) => {
     
     // 🆕 获取用户词库配置
     const config = await db.get('SELECT vocab_library, vocab_category FROM user_configs WHERE user_id = ?', [userId]);
-    const selectedLibraries = config?.vocab_library ? JSON.parse(config.vocab_library) : ['cambridge'];
+    const selectedLibraries = config?.vocab_library ? JSON.parse(config.vocab_library) : [];
     const selectedCategory = config?.vocab_category || '';
     
     console.log('[统计] 用户词库配置:', selectedLibraries, '分类:', selectedCategory);
     
-    // 🆕 构建词库过滤条件
+    // 🆕 构建词库过滤条件（根据实际选择的 category 过滤）
     let whereClause = '';
     const params = [];
     
-    if (selectedLibraries.includes('cambridge') && selectedLibraries.includes('zhenjing')) {
-      // 两个词库都选了，不过滤
+    if (!selectedLibraries || selectedLibraries.length === 0) {
+      // 未选择任何词库，默认全部
       whereClause = '1=1';
-    } else if (selectedLibraries.includes('cambridge')) {
-      // 只选剑桥
-      whereClause = 'cambridge_book BETWEEN 1 AND 18';
-    } else if (selectedLibraries.includes('zhenjing')) {
-      // 只选真经
-      whereClause = "frequency_level IN ('high', 'medium', 'low')";
+    } else if (selectedLibraries.length === 1) {
+      // 只选了一个词库
+      whereClause = 'category = ?';
+      params.push(selectedLibraries[0]);
     } else {
-      // 默认剑桥
-      whereClause = 'cambridge_book BETWEEN 1 AND 18';
+      // 选了多个词库，使用 IN 查询
+      const placeholders = selectedLibraries.map(() => '?').join(',');
+      whereClause = `category IN (${placeholders})`;
+      params.push(...selectedLibraries);
     }
     
+    console.log('[统计] 过滤条件:', whereClause, '参数:', params);
+    
     // 🆕 获取总单词数（按用户选择的词库过滤，使用 COUNT(DISTINCT word) 统计不重复单词）
-    const totalResult = await db.get(`SELECT COUNT(DISTINCT word) as count FROM ielts_words WHERE ${whereClause}`);
-    const total_words = totalResult.count || 0;
+    const totalResult = await db.get(`SELECT COUNT(DISTINCT word) as count FROM ielts_words WHERE ${whereClause}`, params);
+    const total_words = totalResult?.count || 0;
+    console.log('[统计] 总单词数:', total_words);
     
     // 获取今日日期范围
     const today = new Date();
