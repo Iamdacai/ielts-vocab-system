@@ -1978,17 +1978,17 @@ const adminCleanupRoutes = require('./routes/admin-cleanup');
 
 // 注册 Admin 路由
 app.use('/api/admin/auth', adminAuthRoutes);
-app.use('/api/admin', adminWordbooksRoutes);
-app.use('/api/admin/stats', adminStatsRoutes);
 app.use('/api/admin/users', adminUsersRoutes);
-app.use('/api/admin', adminLogsRoutes);
-app.use('/api/admin', adminConfigRoutes);
-app.use('/api/admin', adminExportRoutes);
-app.use('/api/admin', adminAchievementsRoutes);
-app.use('/api/admin', adminRemindersRoutes);
-app.use('/api/admin', adminUserLearningRoutes);
-app.use('/api/admin', adminAnomalyRoutes);
-app.use('/api/admin', adminCleanupRoutes);
+app.use('/api/admin/stats', adminStatsRoutes);
+app.use('/api/admin/logs', adminLogsRoutes);
+app.use('/api/admin/config', adminConfigRoutes);
+app.use('/api/admin/export', adminExportRoutes);
+app.use('/api/admin/achievements', adminAchievementsRoutes);
+app.use('/api/admin/reminders', adminRemindersRoutes);
+app.use('/api/admin/user-learning', adminUserLearningRoutes);
+app.use('/api/admin/anomaly', adminAnomalyRoutes);
+app.use('/api/admin/cleanup', adminCleanupRoutes);
+app.use('/api/admin/wordbooks', adminWordbooksRoutes);
 
 // Admin 静态文件服务
 const adminPath = path.join(__dirname, '..', 'admin');

@@ -26,7 +26,7 @@ function getDb() {
 /**
  * GET /api/admin/users - 获取用户列表
  */
-router.get('/users', requireAdmin, async (req, res) => {
+router.get('/', requireAdmin, async (req, res) => {
   const db = await getDb();
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.pageSize) || 20;
@@ -116,7 +116,7 @@ router.get('/users', requireAdmin, async (req, res) => {
 /**
  * GET /api/admin/users/:id - 获取用户详情
  */
-router.get('/users/:id', requireAdmin, async (req, res) => {
+router.get('/:id', requireAdmin, async (req, res) => {
   const db = await getDb();
   const userId = req.params.id;
 
@@ -220,7 +220,7 @@ router.get('/users/:id', requireAdmin, async (req, res) => {
 /**
  * POST /api/admin/users/:id/disable - 禁用用户
  */
-router.post('/users/:id/disable', requireAdmin, async (req, res) => {
+router.post('/:id/disable', requireAdmin, async (req, res) => {
   const db = await getDb();
   const adminId = req.user.userId;
   const userId = req.params.id;
@@ -277,7 +277,7 @@ router.post('/users/:id/disable', requireAdmin, async (req, res) => {
 /**
  * POST /api/admin/users/:id/enable - 启用用户
  */
-router.post('/users/:id/enable', requireAdmin, async (req, res) => {
+router.post('/:id/enable', requireAdmin, async (req, res) => {
   const db = await getDb();
   const adminId = req.user.userId;
   const userId = req.params.id;
@@ -331,9 +331,62 @@ router.post('/users/:id/enable', requireAdmin, async (req, res) => {
 });
 
 /**
+ * PUT /api/admin/users/:id/status - 更新用户状态（禁用/启用）
+ */
+router.put('/:id/status', requireAdmin, async (req, res) => {
+  const db = await getDb();
+  const adminId = req.user.userId;
+  const userId = req.params.id;
+  const { status } = req.body;
+
+  try {
+    // 检查用户是否存在
+    const user = await new Promise((resolve, reject) => {
+      db.get('SELECT id, openid, status FROM users WHERE id = ?', [userId], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: '用户不存在' });
+    }
+
+    // 更新用户状态
+    await new Promise((resolve, reject) => {
+      db.run(
+        'UPDATE users SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [status, userId],
+        (err) => err ? reject(err) : resolve()
+      );
+    });
+
+    // 记录日志
+    await new Promise((resolve, reject) => {
+      db.run(
+        `INSERT INTO system_logs (admin_id, action, target_type, target_id, details)
+         VALUES (?, ?, ?, ?, ?)`,
+        [adminId, 'user_status_update', 'user', userId, JSON.stringify({ status })],
+        (err) => err ? reject(err) : resolve()
+      );
+    });
+
+    res.json({
+      success: true,
+      message: status === 'banned' ? '用户已禁用' : '用户已启用'
+    });
+  } catch (error) {
+    console.error('更新用户状态失败:', error);
+    res.status(500).json({ error: '更新用户状态失败' });
+  } finally {
+    db.close();
+  }
+});
+
+/**
  * GET /api/admin/users/:id/progress - 获取用户学习进度
  */
-router.get('/users/:id/progress', requireAdmin, async (req, res) => {
+router.get('/:id/progress', requireAdmin, async (req, res) => {
   const db = await getDb();
   const userId = req.params.id;
 
