@@ -490,6 +490,7 @@ router.put('/:id/profile', requireAdmin, async (req, res) => {
 /**
  * GET /api/admin/users/:id/progress - 获取用户学习进度
  */
+router.get('/:id/progress', async (req, res) => {
   const db = await getDb();
   const userId = req.params.id;
 
