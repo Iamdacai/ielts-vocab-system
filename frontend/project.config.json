@@ -40,7 +40,8 @@
     "minifyWXSS": true,
     "devToolsConfig": {
       "disableHttpToHttps": false
-    }
+    },
+    "minifyWXML": true
   },
   "compileType": "miniprogram",
   "libVersion": "2.19.4",
