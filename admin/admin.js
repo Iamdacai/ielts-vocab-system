@@ -169,12 +169,31 @@
       });
       
       // 检查登录状态
-      const checkLogin = () => {
+      const checkLogin = async () => {
         const token = localStorage.getItem('admin_token');
         if (token) {
-          isLoggedIn.value = true;
-          loadAdminInfo();
-          loadDashboard();
+          try {
+            // 先验证 token 是否有效
+            const res = await fetch(`${API_BASE}/auth/me`, {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+            
+            if (res.ok) {
+              const data = await res.json();
+              isLoggedIn.value = true;
+              adminInfo.value = data.admin;
+              loadDashboard();
+              console.log('✅ 自动登录成功');
+            } else {
+              console.log('⚠️ Token 已过期，清除本地存储');
+              localStorage.removeItem('admin_token');
+            }
+          } catch (error) {
+            console.error('检查登录状态失败:', error);
+            localStorage.removeItem('admin_token');
+          }
         }
       };
       
@@ -322,21 +341,34 @@
             params.append('search', wordbookSearch.value);
           }
           
+          console.log('🔍 请求词库列表，token:', token ? '存在' : '不存在');
+          
           const res = await fetch(`${API_BASE}/wordbooks?${params}`, {
             headers: {
               'Authorization': `Bearer ${token}`
             }
           });
           
+          console.log('📡 API 响应状态:', res.status);
+          
           if (res.ok) {
             const data = await res.json();
-            wordbooks.value = data.wordbooks;
-            wordbookTotal.value = data.total;
-            console.log('✅ 词库列表加载成功:', wordbooks.value.length, '个');
+            console.log('✅ 词库列表加载成功:', data.wordbooks?.length || 0, '个，总数:', data.total);
+            wordbooks.value = data.wordbooks || [];
+            wordbookTotal.value = data.total || 0;
+          } else {
+            const error = await res.json();
+            console.error('❌ API 错误:', error);
+            if (res.status === 401) {
+              ElementPlus.ElMessage.error('登录已过期，请重新登录');
+              logout();
+            } else {
+              ElementPlus.ElMessage.error(error.error || '加载失败');
+            }
           }
         } catch (error) {
-          console.error('加载词库列表失败:', error);
-          ElementPlus.ElMessage.error('加载失败');
+          console.error('💥 加载词库列表异常:', error);
+          ElementPlus.ElMessage.error('加载失败：' + error.message);
         } finally {
           wordbookLoading.value = false;
         }
