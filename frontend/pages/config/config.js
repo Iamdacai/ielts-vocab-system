@@ -151,11 +151,39 @@ Page({
           return;
         }
         
-        // 🆕 从后端获取用户已选的词库，如果没有则默认全选
-        const savedLibraries = this.data.config.vocab_library;
-        const selectedLibraries = (savedLibraries && savedLibraries.length > 0) 
-          ? savedLibraries 
-          : libraries.map(lib => lib.id);
+        // 🆕 获取新词库 ID 列表
+        const newLibraryIds = libraries.map(lib => lib.id);
+        console.log('[词库] 新词库 ID 列表:', newLibraryIds);
+        
+        // 🆕 从本地缓存读取用户已选的词库
+        const savedLibraries = this.data.config.vocab_library || [];
+        console.log('[词库] 本地缓存的词库:', savedLibraries);
+        
+        // 🆕 过滤掉不在新列表中的旧词库
+        const validLibraries = savedLibraries.filter(id => newLibraryIds.includes(id));
+        console.log('[词库] 有效的词库:', validLibraries);
+        
+        // 🆕 如果所有保存的词库都无效（都是旧词库），则默认全选新词库
+        let selectedLibraries;
+        if (validLibraries.length === 0 && savedLibraries.length > 0) {
+          console.log('[词库] 检测到旧词库缓存，清空并全选新词库');
+          selectedLibraries = newLibraryIds;
+          
+          // 🆕 清除本地缓存中的旧词库配置
+          const userConfig = wx.getStorageSync('userConfig') || {};
+          userConfig.vocab_library = newLibraryIds;
+          wx.setStorageSync('userConfig', userConfig);
+          
+          // 🆕 显示提示
+          wx.showToast({
+            title: '词库已更新，已为您全选新词库',
+            icon: 'none',
+            duration: 2500
+          });
+        } else {
+          // 有有效的词库，使用有效的词库
+          selectedLibraries = validLibraries.length > 0 ? validLibraries : newLibraryIds;
+        }
         
         // 🆕 为每个词库添加 selected 状态
         const librariesWithSelected = libraries.map(lib => ({
