@@ -597,9 +597,71 @@
           
           <!-- 统计分析 -->
           <div v-if="currentMenu === 'stats'">
+            <!-- 数据概览 -->
+            <div class="card" style="margin-bottom: 20px">
+              <h4>📊 数据概览</h4>
+              <div v-loading="!stats.overview" style="min-height: 200px">
+                <div v-if="stats.overview" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 20px">
+                  <div class="stat-card">
+                    <div class="stat-label">总用户数</div>
+                    <div class="stat-value">{{ stats.overview.totalUsers || 0 }}</div>
+                    <div style="color: #67c23a; font-size: 12px; margin-top: 5px">+{{ stats.overview.newUsersToday || 0 }} 今日新增</div>
+                  </div>
+                  <div class="stat-card">
+                    <div class="stat-label">活跃用户 (7 天)</div>
+                    <div class="stat-value">{{ stats.overview.activeUsers7d || 0 }}</div>
+                    <div style="color: #909399; font-size: 12px; margin-top: 5px">最近 7 天有学习记录</div>
+                  </div>
+                  <div class="stat-card">
+                    <div class="stat-label">今日学习会话</div>
+                    <div class="stat-value">{{ stats.overview.studySessionsToday || 0 }}</div>
+                    <div style="color: #909399; font-size: 12px; margin-top: 5px">今日学习总次数</div>
+                  </div>
+                  <div class="stat-card">
+                    <div class="stat-label">词库统计</div>
+                    <div class="stat-value">{{ stats.overview.totalWordbooks || 0 }}</div>
+                    <div style="color: #909399; font-size: 12px; margin-top: 5px">{{ stats.overview.totalWords || 0 }} 个单词</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 词库统计 -->
+            <div class="card" style="margin-bottom: 20px">
+              <h4>📚 词库学习统计</h4>
+              <el-table :data="stats.wordbooks || []" v-loading="!stats.wordbooks" style="margin-top: 15px" size="small">
+                <el-table-column prop="name" label="词库名称" min-width="150"></el-table-column>
+                <el-table-column prop="word_count" label="单词数" width="100" align="right"></el-table-column>
+                <el-table-column prop="learner_count" label="学习人数" width="100" align="right"></el-table-column>
+                <el-table-column prop="total_reviews" label="总复习次数" width="120" align="right"></el-table-column>
+                <el-table-column prop="avg_mastery" label="平均掌握率" width="120" align="right">
+                  <template #default="{ row }">
+                    <el-progress :percentage="row.avg_mastery || 0" :stroke-width="8" :color="getMasteryColor(row.avg_mastery)" />
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+
+            <!-- 错题统计 -->
             <div class="card">
-              <h4>📊 详细统计分析</h4>
-              <p style="color: #909399; margin-top: 10px">功能开发中...</p>
+              <h4>❌ 高频错题 TOP10</h4>
+              <el-table :data="stats.mistakes?.topMistakes?.slice(0, 10) || []" v-loading="!stats.mistakes" style="margin-top: 15px" size="small">
+                <el-table-column label="排名" width="80" align="center">
+                  <template #default="{ $index }">
+                    <el-tag :type="$index < 3 ? 'danger' : 'info'" size="small">{{ $index + 1 }}</el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="word" label="单词" min-width="120"></el-table-column>
+                <el-table-column prop="phonetic" label="音标" width="120"></el-table-column>
+                <el-table-column prop="error_count" label="错误次数" width="100" align="right"></el-table-column>
+                <el-table-column prop="error_rate" label="错误率" width="100" align="right">
+                  <template #default="{ row }">
+                    <span :style="{ color: row.error_rate > 50 ? '#f56c6c' : '#67c23a' }">
+                      {{ (row.error_rate || 0).toFixed(1) }}%
+                    </span>
+                  </template>
+                </el-table-column>
+              </el-table>
             </div>
           </div>
           

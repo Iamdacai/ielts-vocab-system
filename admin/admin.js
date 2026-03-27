@@ -1123,6 +1123,15 @@
         ElementPlus.ElMessage.info(`查看单词"${row.word}"详情 - 功能开发中`);
       };
       
+      // 根据掌握率获取颜色
+      const getMasteryColor = (percentage) => {
+        if (!percentage) return '#909399';
+        if (percentage >= 80) return '#67c23a'; // 绿色 - 优秀
+        if (percentage >= 60) return '#e6a23c'; // 橙色 - 良好
+        if (percentage >= 40) return '#f56c6c'; // 红色 - 需加强
+        return '#909399'; // 灰色 - 低
+      };
+      
       // 菜单切换
       watch(currentMenu, (newMenu) => {
         if (newMenu === 'dashboard') {

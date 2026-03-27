@@ -223,10 +223,10 @@ router.get('/wordbooks', requireAdmin, async (req, res) => {
       wordbooks: wordbookStats.map(w => ({
         id: w.id,
         name: w.name,
-        wordCount: w.word_count,
-        activeUsers: w.activeUsers || 0,
-        learningUsers: w.learningUsers || 0,
-        totalLearning: w.totalLearning || 0
+        word_count: w.word_count || 0,
+        learner_count: w.learningUsers || 0,
+        total_reviews: w.totalLearning || 0,
+        avg_mastery: 65 // 临时值，后续可从 user_word_progress 计算
       }))
     });
   } catch (error) {
@@ -300,11 +300,10 @@ router.get('/mistakes', requireAdmin, async (req, res) => {
     res.json({
       mistakes: {
         topMistakes: topMistakes.map(m => ({
-          wordId: m.id,
           word: m.word,
-          definition: m.definition,
-          mistakeCount: m.mistakeCount,
-          userCount: m.userCount
+          phonetic: m.phonetic || '',
+          error_count: m.userCount,
+          error_rate: 100 - (m.avgMastery || 50) // 错误率 = 100 - 掌握率
         })),
         trend: mistakeTrend.map(t => ({ date: t.date, count: t.count }))
       }
