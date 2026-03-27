@@ -839,6 +839,9 @@ app.get('/api/review/dashboard', authenticateToken, async (req, res) => {
       ORDER BY w.id
     `, [userId, ...params]);
     
+    console.log('[九宫格] 查询结果:', words.length, '个单词');
+    console.log('[九宫格] 已掌握单词:', words.filter(w => w.mastery_score && w.mastery_score >= 75).length);
+    
     // 2. 计算九宫格数据（根据掌握分数和下次复习时间计算阶段）- 🆕 每个阶段颜色不同
     const REVIEW_STAGES = [
       { id: 0, label: '新学', days: 0, color: '#ef4444' },     // 红色 - 未开始学习
