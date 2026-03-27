@@ -555,10 +555,19 @@ app.get('/api/words/new', authenticateToken, async (req, res) => {
     
     // 🆕 获取用户词库配置
     const config = await db.get('SELECT vocab_library, vocab_category FROM user_configs WHERE user_id = ?', [userId]);
-    const selectedLibraries = config?.vocab_library ? JSON.parse(config.vocab_library) : ['cambridge'];
+    const selectedLibraries = config?.vocab_library ? JSON.parse(config.vocab_library) : [];
     const selectedCategory = config?.vocab_category || '';
     
     console.log('[新词] 用户词库配置:', selectedLibraries, '分类:', selectedCategory);
+    
+    // 🆕 检查用户是否已选择题库
+    if (!selectedLibraries || selectedLibraries.length === 0) {
+      return res.status(400).json({
+        error: '未选择题库',
+        message: '请先在设置页面选择要学习的词库',
+        needConfig: true
+      });
+    }
     
     // 🆕 构建词库过滤条件（支持 7 个标准词库）
     let whereClause = '';
@@ -593,10 +602,12 @@ app.get('/api/words/new', authenticateToken, async (req, res) => {
       // 只选真经（兼容旧配置）
       whereClause = "frequency_level IN ('high', 'medium', 'low')";
     } else {
-      // 默认：从 7 个标准词库随机
-      const placeholders = STANDARD_LIBRARIES.map(() => '?').join(',');
-      whereClause = `category IN (${placeholders})`;
-      params.push(...STANDARD_LIBRARIES);
+      // 无效配置，返回错误
+      return res.status(400).json({
+        error: '词库配置无效',
+        message: '请在设置页面重新选择词库',
+        needConfig: true
+      });
     }
     
     // 🆕 添加分类过滤（仅当真经词库且选择了分类）
