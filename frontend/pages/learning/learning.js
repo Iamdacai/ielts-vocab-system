@@ -267,6 +267,23 @@ Page({
             });
             setTimeout(() => wx.navigateBack(), 1500);
           }
+        } else if (res.statusCode === 400 && res.data.needConfig) {
+          // 🆕 用户未选择题库
+          console.error('[加载新词] 未选择题库:', res.data);
+          this.setData({ loading: false });
+          wx.showModal({
+            title: '⚠️ 未选择题库',
+            content: res.data.message || '请先在设置页面选择要学习的词库',
+            confirmText: '去设置',
+            cancelText: '取消',
+            success: (modalRes) => {
+              if (modalRes.confirm) {
+                wx.switchTab({
+                  url: '/pages/config/config'
+                });
+              }
+            }
+          });
         } else {
           console.error('[加载新词] 失败:', res);
           this.setData({ loading: false });
