@@ -157,8 +157,13 @@ Page({
         
         // 🆕 从后端服务器加载用户配置（而不是本地缓存）
         const userConfig = wx.getStorageSync('userConfig') || {};
-        const savedLibraries = userConfig.vocab_library || [];
+        let savedLibraries = userConfig.vocab_library || [];
         console.log('[词库] 本地缓存的词库:', savedLibraries);
+        
+        // 🆕 清理 cambridge 等无效词库
+        const INVALID_LIBRARIES = ['cambridge', 'zhenjing'];
+        savedLibraries = savedLibraries.filter(id => !INVALID_LIBRARIES.includes(id));
+        console.log('[词库] 清理无效词库后:', savedLibraries);
         
         // 🆕 过滤掉不在新列表中的旧词库
         const validLibraries = savedLibraries.filter(id => newLibraryIds.includes(id));
