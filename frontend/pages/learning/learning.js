@@ -508,19 +508,33 @@ Page({
         } else {
           // 从未授权过，请求授权
           wx.authorize({
-            scope: 'record',
+            scope: 'scope.record',  // ✅ 正确的 scope 格式
             success: () => {
+              console.log('[权限] 录音授权成功');
               this.startRecording(recorderManager);
             },
-            fail: () => {
+            fail: (err) => {
+              console.error('[权限] 授权失败:', err);
               wx.showModal({
-                title: '需要录音权限',
-                content: '请在设置中允许录音权限，以便进行发音练习',
+                title: '🎤 需要录音权限',
+                content: '跟读练习需要录制您的发音进行智能评分\n\n请点击"去设置"开启录音权限',
                 confirmText: '去设置',
                 cancelText: '取消',
                 success: (modalRes) => {
                   if (modalRes.confirm) {
-                    wx.openSetting();
+                    wx.openSetting({
+                      success: (openRes) => {
+                        if (openRes.authSetting['scope.record'] === true) {
+                          wx.showToast({
+                            title: '权限已开启',
+                            icon: 'success'
+                          });
+                          setTimeout(() => {
+                            this.startRecording(recorderManager);
+                          }, 500);
+                        }
+                      }
+                    });
                   }
                 }
               });
@@ -541,18 +555,37 @@ Page({
    * 🆕 开始录音（封装）
    */
   startRecording(recorderManager) {
-    recorderManager.start({
-      duration: 10000, // 最长 10 秒
-      sampleRate: 16000,
-      numberOfChannels: 1,
-      encodeBitRate: 48000,
-      format: 'mp3'
-    });
-    
-    wx.showToast({
-      title: '开始录音',
-      icon: 'success'
-    });
+    try {
+      recorderManager.start({
+        duration: 10000, // 最长 10 秒
+        sampleRate: 44100,  // ✅ 更高采样率
+        numberOfChannels: 1,
+        encodeBitRate: 192000,  // ✅ 更高比特率
+        format: 'mp3'
+      });
+      
+      console.log('[录音] 开始录音');
+      
+      wx.showToast({
+        title: '开始录音',
+        icon: 'success'
+      });
+    } catch (err) {
+      console.error('[录音] 启动失败:', err);
+      wx.showModal({
+        title: '🎤 录音失败',
+        content: '无法启动录音功能\n\n可能原因：\n1. 录音权限未开启\n2. 其他应用正在使用麦克风\n\n请在设置中检查录音权限',
+        confirmText: '去设置',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            wx.openSetting({
+              scope: 'scope.record'
+            });
+          }
+        }
+      });
+    }
   },
 
   /**
