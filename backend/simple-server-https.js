@@ -898,9 +898,10 @@ app.get('/api/review/dashboard', authenticateToken, async (req, res) => {
     
     const dueWordsCount = todayStats ? todayStats.count : 0;
     
-    // 5. 计算统计数据
+    // 5. 计算统计数据（🆕 与首页 /api/stats 保持一致）
     const totalWords = words.length;
-    const masteredWords = words.filter(w => calculateStage(w.mastery_score, w.review_count, w.next_review_at) === 7).length;
+    // 🆕 使用 mastery_score >= 75 判断已掌握（与首页一致）
+    const masteredWords = words.filter(w => w.mastery_score && w.mastery_score >= 75).length;
     const masteryRate = totalWords > 0 ? Math.round((masteredWords / totalWords) * 100) : 0;
     
     // 6. 构建今日复习课信息
