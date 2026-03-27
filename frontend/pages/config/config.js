@@ -4,7 +4,7 @@ Page({
   data: {
     userInfo: null,
     config: {
-      vocab_library: [],             // 🆕 默认词库（空数组，首次加载时全选）
+      vocab_library: [],             // 🆕 默认词库（空数组，加载时从服务器获取）
       vocab_category: '',            // 🆕 词汇分类
       weekly_new_words_days: [1, 2, 3, 4, 5, 6, 7],
       daily_new_words_count: 20,
@@ -155,34 +155,36 @@ Page({
         const newLibraryIds = libraries.map(lib => lib.id);
         console.log('[词库] 新词库 ID 列表:', newLibraryIds);
         
-        // 🆕 从本地缓存读取用户已选的词库
-        const savedLibraries = this.data.config.vocab_library || [];
+        // 🆕 从后端服务器加载用户配置（而不是本地缓存）
+        const userConfig = wx.getStorageSync('userConfig') || {};
+        const savedLibraries = userConfig.vocab_library || [];
         console.log('[词库] 本地缓存的词库:', savedLibraries);
         
         // 🆕 过滤掉不在新列表中的旧词库
         const validLibraries = savedLibraries.filter(id => newLibraryIds.includes(id));
         console.log('[词库] 有效的词库:', validLibraries);
         
-        // 🆕 如果所有保存的词库都无效（都是旧词库），则默认全选新词库
+        // 🆕 如果没有有效的词库（都是旧词库或空），则默认全选新词库
         let selectedLibraries;
-        if (validLibraries.length === 0 && savedLibraries.length > 0) {
-          console.log('[词库] 检测到旧词库缓存，清空并全选新词库');
+        if (validLibraries.length === 0) {
+          if (savedLibraries.length > 0) {
+            console.log('[词库] 检测到旧词库缓存，清空并全选新词库');
+            wx.showToast({
+              title: '词库已更新，已为您全选新词库',
+              icon: 'none',
+              duration: 2500
+            });
+          } else {
+            console.log('[词库] 首次选择词库，默认全选');
+          }
           selectedLibraries = newLibraryIds;
           
-          // 🆕 清除本地缓存中的旧词库配置
-          const userConfig = wx.getStorageSync('userConfig') || {};
+          // 🆕 更新本地缓存
           userConfig.vocab_library = newLibraryIds;
           wx.setStorageSync('userConfig', userConfig);
-          
-          // 🆕 显示提示
-          wx.showToast({
-            title: '词库已更新，已为您全选新词库',
-            icon: 'none',
-            duration: 2500
-          });
         } else {
           // 有有效的词库，使用有效的词库
-          selectedLibraries = validLibraries.length > 0 ? validLibraries : newLibraryIds;
+          selectedLibraries = validLibraries;
         }
         
         // 🆕 为每个词库添加 selected 状态
