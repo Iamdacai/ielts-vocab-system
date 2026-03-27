@@ -821,26 +821,22 @@ app.get('/api/review/dashboard', authenticateToken, async (req, res) => {
     
     console.log('[九宫格] 过滤条件:', whereClause, '参数:', params);
     
-    // 1. 获取所有单词的进度数据（按词库过滤）- 🆕 使用 DISTINCT 按 word 去重
+    // 1. 获取所有单词的进度数据（按词库过滤）- 🆕 直接使用 LEFT JOIN
     const words = await db.all(`
       SELECT 
-        MIN(w.id) as id,
+        w.id,
         w.word,
         w.phonetic,
         w.part_of_speech,
         w.definition,
         w.example_sentences,
-        MAX(p.next_review_at) as next_review_at,
-        MAX(p.mastery_score) as mastery_score,
-        MAX(p.review_count) as review_count
+        p.next_review_at,
+        p.mastery_score,
+        p.review_count
       FROM ielts_words w
-      LEFT JOIN (
-        SELECT word_id, user_id, next_review_at, mastery_score, review_count
-        FROM user_word_progress
-        WHERE user_id = ?
-      ) p ON w.id = p.word_id
+      LEFT JOIN user_word_progress p ON w.id = p.word_id AND p.user_id = ?
       WHERE (${whereClause})
-      GROUP BY w.word
+      ORDER BY w.id
     `, [userId, ...params]);
     
     // 2. 计算九宫格数据（根据掌握分数和下次复习时间计算阶段）- 🆕 每个阶段颜色不同
