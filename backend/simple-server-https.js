@@ -281,12 +281,20 @@ app.get('/api/config', authenticateToken, async (req, res) => {
         vocab_category: config.vocab_category || ''
       });
     } else {
-      // 默认配置
+      // 🆕 默认配置（7 个标准词库）
       res.json({
         weekly_new_words_days: [1,2,3,4,5,6,7],
         daily_new_words_count: 20,
         review_time: '20:00',
-        vocab_library: ['cambridge'],
+        vocab_library: [
+          'GRE 单词表',
+          '大学英语六级',
+          '大学英语四级',
+          '托福单词表',
+          '考研单词表',
+          '英语单词表汇编',
+          '雅思单词表'
+        ],
         vocab_category: ''
       });
     }
@@ -309,7 +317,7 @@ app.post('/api/config', authenticateToken, async (req, res) => {
     const daysStr = JSON.stringify(weekly_new_words_days || [1,2,3,4,5,6,7]);
     const count = parseInt(daily_new_words_count) || 20;
     const time = review_time || '20:00';
-    const libraryStr = vocab_library ? JSON.stringify(vocab_library) : '["cambridge"]';
+    const libraryStr = vocab_library ? JSON.stringify(vocab_library) : '["GRE 单词表","大学英语六级","大学英语四级","托福单词表","考研单词表","英语单词表汇编","雅思单词表"]';
     const categoryStr = vocab_category || '';
     
     console.log('[配置] 保存配置:', { 
