@@ -346,7 +346,7 @@ Page({
           // 🆕 更新 libraries 的 selected 状态（与服务器同步）
           const updatedLibraries = this.data.libraries.map(lib => ({
             ...lib,
-            selected: selectedLibraries.includes(lib.id)
+            selected: selectedLibraries && selectedLibraries.includes(lib.id)
           }));
           
           this.setData({ 
@@ -354,7 +354,7 @@ Page({
               ...this.data.config,
               ...serverConfig,
               weekly_new_words_days: selectedDays.map(day => parseInt(day)),
-              vocab_library: selectedLibraries  // 🆕 使用服务器返回的词库
+              vocab_library: selectedLibraries || []  // 🆕 使用服务器返回的词库
             },
             daysOfWeek: updatedDays,
             libraries: updatedLibraries,  // 🆕 同步更新词库列表的选中状态
@@ -363,6 +363,7 @@ Page({
             console.log('[配置] 加载完成');
             console.log('[配置] 已选词库:', this.data.config.vocab_library);
             console.log('[配置] 已选天数:', this.data.config.weekly_new_words_days);
+            console.log('[配置] 词库选中状态:', this.data.libraries.filter(l => l.selected).length);
           });
         } else {
           console.error('加载配置失败:', res);
