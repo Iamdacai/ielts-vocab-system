@@ -31,8 +31,8 @@
           data-id="{{item.id}}"
           bindtap="toggleLibrary">
           <view class="library-checkbox">
-            <view class="checkbox-icon {{item.selected ? 'checked' : ''}}">
-              <text wx:if="{{item.selected}}">✓</text>
+            <view class="checkbox-icon {{config.vocab_library.includes(item.id) ? 'checked' : ''}}">
+              <text wx:if="{{config.vocab_library.includes(item.id)}}">✓</text>
             </view>
           </view>
           <view class="library-info">
@@ -42,7 +42,7 @@
           </view>
         </view>
       </view>
-      <view class="selected-hint">已选择 {{config.vocab_library.length}} 个词库</view>
+      <view class="selected-hint">已选择 {{libraries.filter(item => item.selected).length}} 个词库</view>
     </view>
     
     <!-- 🆕 分类选择（仅当选择雅思词汇真经时显示） -->
