@@ -254,8 +254,8 @@ app.get('/health', async (req, res) => {
 app.post('/api/auth/login', (req, res) => {
   const token = jwt.sign(
     { userId: 1, openid: 'test_user' },
-    'dev_secret',
-    { expiresIn: '24h' }
+    JWT_SECRET,
+    { expiresIn: '7d' }
   );
   
   res.json({
