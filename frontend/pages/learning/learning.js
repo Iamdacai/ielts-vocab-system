@@ -467,10 +467,26 @@ Page({
   },
 
   /**
+   * 🆕 切换录音状态（开始/停止）
+   */
+  toggleRecording() {
+    const { isRecording, pronunciationResult } = this.data;
+    
+    if (isRecording) {
+      // 正在录音，停止录音
+      this.stopPronunciationPractice();
+    } else {
+      // 未录音，开始录音（清除之前的评分结果）
+      this.setData({ pronunciationResult: null });
+      this.startPronunciationPractice();
+    }
+  },
+
+  /**
    * 🆕 开始发音练习
    */
   startPronunciationPractice() {
-    const { currentWord, recorderManager, isRecording } = this.data;
+    const { currentWord, recorderManager } = this.data;
     
     if (!currentWord) {
       wx.showToast({
@@ -479,15 +495,6 @@ Page({
       });
       return;
     }
-    
-    if (isRecording) {
-      // 正在录音，停止录音
-      this.stopPronunciationPractice();
-      return;
-    }
-    
-    // 清除之前的评分结果
-    this.setData({ pronunciationResult: null });
     
     // 🆕 先检查权限状态
     wx.getSetting({
