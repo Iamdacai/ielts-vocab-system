@@ -16,7 +16,8 @@
     <view class="word-header">
       <view class="word-main">
         <view class="word-text">{{currentWord.word}}</view>
-        <view class="word-phonetic">{{currentWord.phonetic}}</view>
+        <!-- 🆕 音标显示（从词库取，没有则隐藏） -->
+        <view wx:if="{{currentWord.phonetic}}" class="word-phonetic">/{{currentWord.phonetic}}/</view>
       </view>
       
       <!-- 🆕 单词发音按钮（小喇叭图标） -->
@@ -44,9 +45,15 @@
           <text>准确度：{{pronunciationResult.accuracy}}</text>
           <text wx:if="{{pronunciationResult.fluency}}"> | 流利度：{{pronunciationResult.fluency}}</text>
         </view>
+        <!-- 🆕 播放录音功能 -->
+        <view wx:if="{{pronunciationResult.audioPath}}" class="audio-playback">
+          <button class="play-audio-button" bindtap="playMyPronunciation">
+            🔊 播放我的录音
+          </button>
+        </view>
         <view class="result-actions">
           <button class="retry-button" bindtap="startPronunciationPractice">
-            🔄 重新练习
+            🔄 重新录制
           </button>
           <button class="history-button" bindtap="goToPronunciationHistory">
             📊 历史记录
@@ -69,7 +76,10 @@
     <!-- 释义 -->
     <view class="translation-section">
       <view class="translation-title">📖 释义</view>
-      <view class="translation-text">{{currentWord.translation}}</view>
+      <!-- 🆕 中文释义（从词库取） -->
+      <view wx:if="{{currentWord.translation_cn}}" class="translation-cn">{{currentWord.translation_cn}}</view>
+      <!-- 🆕 英文释义（从词库取） -->
+      <view wx:if="{{currentWord.translation}}" class="translation-text">{{currentWord.translation}}</view>
       <view wx:if="{{currentWord.pos}}" class="pos-tag">{{currentWord.pos}}</view>
     </view>
 

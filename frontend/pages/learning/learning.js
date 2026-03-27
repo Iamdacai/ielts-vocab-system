@@ -36,7 +36,8 @@ Page({
     recordingTime: 0,
     recordingTimer: null,
     recorderManager: null,
-    pronunciationResult: null
+    pronunciationResult: null,
+    pronunciationAudioContext: null  // 🆕 播放录音的音频上下文
   },
 
   onLoad() {
@@ -96,6 +97,10 @@ Page({
     }
     if (this.data.recorderManager) {
       this.data.recorderManager.stop();
+    }
+    // 🆕 清理播放录音的音频上下文
+    if (this.data.pronunciationAudioContext) {
+      this.data.pronunciationAudioContext.destroy();
     }
   },
 
@@ -620,7 +625,8 @@ Page({
                     score: result.score || 0,
                     accuracy: result.accuracy || 0,
                     fluency: result.fluency || 0,
-                    feedback: result.feedback || '请继续练习'
+                    feedback: result.feedback || '请继续练习',
+                    audioPath: tempFilePath  // 🆕 保存录音路径用于播放
                   }
                 });
                 
@@ -663,6 +669,54 @@ Page({
           icon: 'error'
         });
       }
+    });
+  },
+
+  /**
+   * 🆕 播放我的录音
+   */
+  playMyPronunciation() {
+    const { pronunciationResult, pronunciationAudioContext } = this.data;
+    
+    if (!pronunciationResult || !pronunciationResult.audioPath) {
+      wx.showToast({
+        title: '没有录音',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    // 创建音频上下文（如果不存在）
+    if (!pronunciationAudioContext) {
+      const audioContext = wx.createInnerAudioContext();
+      audioContext.autoplay = false;
+      
+      audioContext.onPlay(() => {
+        console.log('录音播放开始');
+      });
+      
+      audioContext.onEnded(() => {
+        console.log('录音播放结束');
+      });
+      
+      audioContext.onError((res) => {
+        console.error('录音播放错误:', res.errMsg);
+        wx.showToast({
+          title: '播放失败',
+          icon: 'none'
+        });
+      });
+      
+      this.setData({ pronunciationAudioContext: audioContext });
+    }
+    
+    // 播放录音
+    this.data.pronunciationAudioContext.src = pronunciationResult.audioPath;
+    this.data.pronunciationAudioContext.play();
+    
+    wx.showToast({
+      title: '播放中...',
+      icon: 'none'
     });
   },
 

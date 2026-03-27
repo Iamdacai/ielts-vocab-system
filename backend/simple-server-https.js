@@ -578,11 +578,17 @@ app.get('/api/words/new', authenticateToken, async (req, res) => {
       // 🆕 字段映射：数据库字段 → 前端期望字段
       const definition = word.definition || '';
       
+      // 🆕 分离中英文释义（假设定义中包含中英文）
+      // 如果 definition 包含英文，则作为 translation，否则作为 translation_cn
+      const isEnglish = /[a-zA-Z]/.test(definition);
+      
       return {
         ...word,
-        // 核心字段映射
-        translation: definition,
-        translation_cn: '',  // 预留中文翻译字段（将由有道 API 补充）
+        // 🆕 音标字段（从词库直接取）
+        phonetic: word.phonetic || '',
+        // 🆕 字段映射：数据库字段 → 前端期望字段
+        translation: isEnglish ? definition : '',  // 英文释义
+        translation_cn: isEnglish ? '' : definition,  // 中文释义（从词库直接取）
         pos: word.part_of_speech || '',
         examples: exampleSentences,
         example: Array.isArray(exampleSentences) && exampleSentences.length > 0 ? exampleSentences[0] : '',
