@@ -44,14 +44,9 @@ Page({
     
     // 如果已登录，加载词库和配置
     if (app.globalData.hasLogin && app.globalData.token) {
-      // 只在 libraries 为空时加载（避免重复加载）
-      if (this.data.libraries.length === 0) {
-        await this.loadLibraries();
-      }
-      // 只在 loading 时加载配置（避免重复加载）
-      if (this.data.loading) {
-        this.loadConfig();
-      }
+      // 每次都重新加载词库和配置（确保数据最新）
+      await this.loadLibraries();
+      this.loadConfig();
     }
   },
 
@@ -338,6 +333,9 @@ Page({
         if (res.statusCode === 200) {
           const serverConfig = res.data || {};
           const selectedDays = serverConfig.weekly_new_words_days || this.data.config.weekly_new_words_days;
+          const selectedLibraries = serverConfig.vocab_library || [];
+          
+          console.log('[配置] 服务器返回的词库:', selectedLibraries);
           
           // 🆕 更新 daysOfWeek 的 selected 状态
           const updatedDays = this.data.daysOfWeek.map(day => ({
@@ -345,16 +343,26 @@ Page({
             selected: selectedDays.includes(day.value)
           }));
           
+          // 🆕 更新 libraries 的 selected 状态（与服务器同步）
+          const updatedLibraries = this.data.libraries.map(lib => ({
+            ...lib,
+            selected: selectedLibraries.includes(lib.id)
+          }));
+          
           this.setData({ 
             config: {
               ...this.data.config,
               ...serverConfig,
-              weekly_new_words_days: selectedDays.map(day => parseInt(day))
+              weekly_new_words_days: selectedDays.map(day => parseInt(day)),
+              vocab_library: selectedLibraries  // 🆕 使用服务器返回的词库
             },
             daysOfWeek: updatedDays,
+            libraries: updatedLibraries,  // 🆕 同步更新词库列表的选中状态
             loading: false
           }, () => {
-            console.log('配置加载完成，当前选中天数:', this.data.config.weekly_new_words_days);
+            console.log('[配置] 加载完成');
+            console.log('[配置] 已选词库:', this.data.config.vocab_library);
+            console.log('[配置] 已选天数:', this.data.config.weekly_new_words_days);
           });
         } else {
           console.error('加载配置失败:', res);

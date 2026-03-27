@@ -273,11 +273,30 @@ app.get('/api/config', authenticateToken, async (req, res) => {
     const config = await db.get('SELECT * FROM user_configs WHERE user_id = ?', [userId]);
     
     if (config) {
+      let vocabLibrary = config.vocab_library ? JSON.parse(config.vocab_library) : [];
+      
+      // 🆕 清理无效词库（cambridge、zhenjing 等）
+      const INVALID_LIBRARIES = ['cambridge', 'zhenjing'];
+      vocabLibrary = vocabLibrary.filter(lib => !INVALID_LIBRARIES.includes(lib));
+      
+      // 🆕 如果清理后为空，则使用 7 个标准词库
+      if (vocabLibrary.length === 0) {
+        vocabLibrary = [
+          'GRE 单词表',
+          '大学英语六级',
+          '大学英语四级',
+          '托福单词表',
+          '考研单词表',
+          '英语单词表汇编',
+          '雅思单词表'
+        ];
+      }
+      
       res.json({
         weekly_new_words_days: JSON.parse(config.weekly_new_words_days || '[1,2,3,4,5,6,7]'),
         daily_new_words_count: config.daily_new_words_count || 20,
         review_time: config.review_time || '20:00',
-        vocab_library: config.vocab_library ? JSON.parse(config.vocab_library) : ['cambridge'],
+        vocab_library: vocabLibrary,
         vocab_category: config.vocab_category || ''
       });
     } else {
