@@ -1495,12 +1495,12 @@ app.post('/api/pronunciation/analyze', upload.single('audio'), async (req, res) 
       );
       
       if (wordRecord) {
-        // 保存发音记录
+        // 🆕 保存发音记录（修复表名）
         await db.run(
-          `INSERT INTO pronunciation_records 
-           (user_id, word_id, pronunciation_score, feedback, created_at) 
-           VALUES (?, ?, ?, ?, datetime('now'))`,
-          [1, wordRecord.id, finalScore, feedback]
+          `INSERT INTO pronunciation_practice_records 
+           (user_id, word_id, audio_file_path, pronunciation_score, feedback, created_at) 
+           VALUES (?, ?, ?, ?, ?, datetime('now'))`,
+          [1, wordRecord.id, audioPath, finalScore, feedback]
         );
         console.log(`[Pronunciation] Record saved for word: ${word}`);
       }
