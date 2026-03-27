@@ -303,13 +303,25 @@ Page({
         categoryName = currentWord.category.replace(/^\d+_/, '');
       }
       
+      // 🆕 切换单词时重置跟读练习状态
+      // 停止录音（如果正在录音）
+      if (this.data.isRecording) {
+        this.stopPronunciationPractice();
+      }
+      
       this.setData({
         currentWord: {
           ...currentWord,
           categoryName: categoryName
         },
-        progress: ((currentIndex + 1) / totalWords) * 100
+        progress: ((currentIndex + 1) / totalWords) * 100,
+        // 🆕 重置跟读练习相关状态
+        pronunciationResult: null,  // 清除上一个单词的评分结果
+        isRecording: false,         // 清除录音状态
+        recordingTime: 0            // 重置录音时间
       });
+      
+      console.log('[切换单词] 已重置跟读练习状态');
     } else {
       // 完成所有单词，显示学时确认
       this.showDurationModal();
