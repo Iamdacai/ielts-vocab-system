@@ -533,22 +533,43 @@ app.get('/api/words/new', authenticateToken, async (req, res) => {
     
     console.log('[新词] 用户词库配置:', selectedLibraries, '分类:', selectedCategory);
     
-    // 🆕 构建词库过滤条件
+    // 🆕 构建词库过滤条件（支持 7 个标准词库）
     let whereClause = '';
     const params = [];
     
-    if (selectedLibraries.includes('cambridge') && selectedLibraries.includes('zhenjing')) {
+    // 标准词库列表
+    const STANDARD_LIBRARIES = [
+      'GRE 单词表',
+      '大学英语六级',
+      '大学英语四级',
+      '托福单词表',
+      '考研单词表',
+      '英语单词表汇编',
+      '雅思单词表'
+    ];
+    
+    // 检查是否选择了标准词库
+    const hasStandardLibrary = selectedLibraries.some(lib => STANDARD_LIBRARIES.includes(lib));
+    
+    if (hasStandardLibrary) {
+      // 使用标准词库过滤
+      const placeholders = selectedLibraries.map(() => '?').join(',');
+      whereClause = `category IN (${placeholders})`;
+      params.push(...selectedLibraries);
+    } else if (selectedLibraries.includes('cambridge') && selectedLibraries.includes('zhenjing')) {
       // 两个词库都选了，不过滤
       whereClause = '1=1';
     } else if (selectedLibraries.includes('cambridge')) {
-      // 只选剑桥
+      // 只选剑桥（兼容旧配置）
       whereClause = 'cambridge_book BETWEEN 1 AND 18';
     } else if (selectedLibraries.includes('zhenjing')) {
-      // 只选真经
+      // 只选真经（兼容旧配置）
       whereClause = "frequency_level IN ('high', 'medium', 'low')";
     } else {
-      // 默认剑桥
-      whereClause = 'cambridge_book BETWEEN 1 AND 18';
+      // 默认：从 7 个标准词库随机
+      const placeholders = STANDARD_LIBRARIES.map(() => '?').join(',');
+      whereClause = `category IN (${placeholders})`;
+      params.push(...STANDARD_LIBRARIES);
     }
     
     // 🆕 添加分类过滤（仅当真经词库且选择了分类）
