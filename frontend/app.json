@@ -16,7 +16,7 @@
     "navigationBarTextStyle": "white"
   },
   "permission": {
-    "scope.record": {
+    "record": {
       "desc": "用于跟读练习功能，录制您的发音进行智能评分"
     }
   },
