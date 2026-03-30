@@ -17,9 +17,20 @@
       <text class="topic-type">{{currentTopic.topic}}</text>
     </view>
     <view class="topic-question">{{currentTopic.question}}</view>
-    <view class="topic-requirements">
+    <view class="topic-requirements" wx:if="{{currentTopic.requirements}}">
       <text wx:for="{{currentTopic.requirements}}" wx:key="*this" class="requirement-item">• {{item}}</text>
     </view>
+  </view>
+  
+  <!-- 加载状态 -->
+  <view class="loading-card" wx:elif="{{topicLoading}}">
+    <text class="loading-text">📝 题目加载中...</text>
+  </view>
+  
+  <!-- 加载失败 -->
+  <view class="error-card" wx:elif="{{topicLoadError}}">
+    <text class="error-text">⚠️ 题目加载失败</text>
+    <button class="retry-button" bindtap="loadTopic">重试</button>
   </view>
 
   <!-- 写作区域 -->

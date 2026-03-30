@@ -11,7 +11,9 @@ Page({
     timer: 0,
     timerInterval: null,
     writingResult: null,
-    submitting: false
+    submitting: false,
+    topicLoading: false,
+    topicLoadError: false
   },
 
   onLoad() {
@@ -26,10 +28,26 @@ Page({
    * 加载题目
    */
   async loadTopic() {
-    wx.showLoading({ title: '加载中...' });
+    this.setData({ topicLoading: true, topicLoadError: false });
+    wx.showLoading({ title: '加载题目...' });
     
     try {
       const token = wx.getStorageSync('token');
+      
+      if (!token) {
+        console.error('[写作] 未登录，token 为空');
+        this.setData({ topicLoadError: true, topicLoading: false });
+        wx.hideLoading();
+        wx.showModal({
+          title: '提示',
+          content: '请先登录',
+          showCancel: false,
+          success: () => {
+            wx.navigateBack();
+          }
+        });
+        return;
+      }
       
       // 随机获取题目
       const res = await wx.request({
@@ -37,11 +55,37 @@ Page({
         header: { 'Authorization': `Bearer ${token}` }
       });
       
-      if (res.data && res.data.data && res.data.data.length > 0) {
-        this.setData({ currentTopic: res.data.data[0] });
+      console.log('[写作] 题目响应:', res.data);
+      
+      if (res.statusCode === 200 && res.data && res.data.data && res.data.data.length > 0) {
+        this.setData({ 
+          currentTopic: res.data.data[0],
+          topicLoading: false
+        });
+        console.log('[写作] 题目加载成功:', res.data.data[0]);
+      } else {
+        console.error('[写作] 题目数据为空:', res.data);
+        this.setData({ topicLoadError: true, topicLoading: false });
+        wx.showModal({
+          title: '提示',
+          content: '题目加载失败，请重试',
+          showCancel: false,
+          success: () => {
+            this.loadTopic();
+          }
+        });
       }
     } catch (error) {
       console.error('[写作] 加载题目失败:', error);
+      this.setData({ topicLoadError: true, topicLoading: false });
+      wx.showModal({
+        title: '提示',
+        content: '网络错误，请检查连接后重试',
+        showCancel: false,
+        success: () => {
+          this.loadTopic();
+        }
+      });
     } finally {
       wx.hideLoading();
     }
@@ -115,14 +159,30 @@ Page({
    * 提交作文
    */
   async submitEssay() {
-    const { essayContent, wordCount, currentTopic, essayType } = this.data;
+    const { essayContent, wordCount, currentTopic, essayType, topicLoading, topicLoadError } = this.data;
+    
+    // 验证题目是否正在加载
+    if (topicLoading) {
+      wx.showModal({
+        title: '提示',
+        content: '题目加载中，请稍候...',
+        showCancel: false
+      });
+      return;
+    }
     
     // 验证题目是否加载成功
     if (!currentTopic || !currentTopic.id) {
+      console.error('[写作] 提交时题目为空:', currentTopic);
       wx.showModal({
         title: '提示',
-        content: '题目未加载成功，请刷新页面重试',
-        showCancel: false
+        content: topicLoadError ? '题目加载失败，请刷新页面重试' : '题目未加载成功，请刷新页面重试',
+        showCancel: false,
+        success: () => {
+          if (topicLoadError) {
+            this.loadTopic();
+          }
+        }
       });
       return;
     }

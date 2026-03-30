@@ -41,6 +41,51 @@
   border-left: 4rpx solid #3b82f6;
 }
 
+/* 加载状态 */
+.loading-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16rpx;
+  padding: 60rpx 30rpx;
+  margin-bottom: 30rpx;
+  text-align: center;
+  border: 2rpx dashed rgba(255, 255, 255, 0.2);
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: #94a3b8;
+}
+
+/* 错误状态 */
+.error-card {
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 16rpx;
+  padding: 40rpx 30rpx;
+  margin-bottom: 30rpx;
+  text-align: center;
+  border: 2rpx solid rgba(239, 68, 68, 0.3);
+}
+
+.error-text {
+  display: block;
+  font-size: 28rpx;
+  color: #f87171;
+  margin-bottom: 20rpx;
+}
+
+.retry-button {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  padding: 16rpx 40rpx;
+}
+
+.retry-button::after {
+  border: none;
+}
+
 .topic-header {
   display: flex;
   justify-content: space-between;
