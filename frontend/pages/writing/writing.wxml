@@ -32,6 +32,14 @@
     <text class="error-text">⚠️ 题目加载失败</text>
     <button class="retry-button" bindtap="loadTopic">重试</button>
   </view>
+  
+  <!-- 调试信息（开发用） -->
+  <view class="debug-card" wx:if="{{false}}">
+    <text>topicLoading: {{topicLoading}}</text>
+    <text>topicLoadError: {{topicLoadError}}</text>
+    <text>currentTopic: {{currentTopic ? 'loaded' : 'null'}}</text>
+    <text>currentTopic.id: {{currentTopic ? currentTopic.id : 'N/A'}}</text>
+  </view>
 
   <!-- 写作区域 -->
   <view class="writing-section">

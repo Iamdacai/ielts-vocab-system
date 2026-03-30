@@ -56,19 +56,27 @@ Page({
       });
       
       console.log('[写作] 题目响应:', res.data);
+      console.log('[写作] statusCode:', res.statusCode);
+      console.log('[写作] data.data:', res.data ? res.data.data : 'undefined');
+      console.log('[写作] data.data.length:', res.data && res.data.data ? res.data.data.length : 0);
       
-      if (res.statusCode === 200 && res.data && res.data.data && res.data.data.length > 0) {
+      if (res.statusCode === 200 && res.data && res.data.success && res.data.data && res.data.data.length > 0) {
+        const topic = res.data.data[0];
+        console.log('[写作] 题目加载成功:', topic);
+        console.log('[写作] topic.id:', topic.id);
+        console.log('[写作] topic.topic:', topic.topic);
+        console.log('[写作] topic.question:', topic.question ? topic.question.substring(0, 50) : 'undefined');
+        
         this.setData({ 
-          currentTopic: res.data.data[0],
+          currentTopic: topic,
           topicLoading: false
         });
-        console.log('[写作] 题目加载成功:', res.data.data[0]);
       } else {
-        console.error('[写作] 题目数据为空:', res.data);
+        console.error('[写作] 题目数据为空或 success=false:', res.data);
         this.setData({ topicLoadError: true, topicLoading: false });
         wx.showModal({
           title: '提示',
-          content: '题目加载失败，请重试',
+          content: `题目加载失败 (status: ${res.statusCode})，请重试`,
           showCancel: false,
           success: () => {
             this.loadTopic();
