@@ -1,0 +1,149 @@
+<!--pages/speaking/speaking.wxml-->
+<view class="container">
+  <!-- 练习类型选择 -->
+  <view class="type-selector">
+    <view class="selector-title">选择练习类型</view>
+    <view class="type-grid">
+      <view 
+        class="type-item {{practiceType === item.id ? 'active' : ''}}"
+        wx:for="{{practiceModes}}"
+        wx:key="id"
+        bindtap="selectType"
+        data-type="{{item.id}}">
+        <view class="type-icon">{{item.icon}}</view>
+        <view class="type-name">{{item.name}}</view>
+        <view class="type-desc">{{item.desc}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 练习区域 -->
+  <view class="practice-section">
+    <!-- 题目显示 -->
+    <view class="question-card">
+      <view class="question-label">
+        <text wx:if="{{practiceType === 'word'}}">📖 单词</text>
+        <text wx:if="{{practiceType === 'sentence'}}">💬 句子</text>
+        <text wx:if="{{practiceType === 'conversation'}}">🤖 AI 对话</text>
+        <text wx:if="{{practiceType === 'mock'}}">📝 模拟考场</text>
+      </view>
+      
+      <view class="question-content">
+        <text wx:if="{{currentWord}}">{{currentWord.word}}</text>
+        <text wx:if="{{currentQuestion}}">{{currentQuestion}}</text>
+        <text wx:if="{{!currentWord && !currentQuestion}}">点击开始练习</text>
+      </view>
+    </view>
+
+    <!-- 录音按钮 -->
+    <view class="record-section">
+      <view 
+        class="record-button {{isRecording ? 'recording' : ''}}"
+        bindtap="toggleRecording">
+        <view class="mic-icon">🎤</view>
+        <text class="record-text">{{isRecording ? '停止录音' : '点击录音'}}</text>
+      </view>
+      
+      <view class="recording-timer" wx:if="{{isRecording}}">
+        <text>{{recordingTime}}s</text>
+        <view class="wave-animation"></view>
+      </view>
+    </view>
+
+    <!-- 评分结果 -->
+    <view class="result-section" wx:if="{{practiceResult}}">
+      <!-- 总分 -->
+      <view class="score-overview">
+        <view class="score-circle">
+          <text class="score-number">{{practiceResult.score}}</text>
+          <text class="score-label">总分</text>
+        </view>
+        
+        <view class="score-feedback">
+          <text class="feedback-text">{{practiceResult.feedback}}</text>
+        </view>
+      </view>
+
+      <!-- 详细评分 -->
+      <view class="score-details">
+        <view class="score-item" wx:if="{{practiceResult.accuracy}}">
+          <text class="item-label">准确度</text>
+          <progress class="progress-bar" percent="{{practiceResult.accuracy}}" activeColor="#22c55e" />
+          <text class="item-value">{{practiceResult.accuracy}}</text>
+        </view>
+        
+        <view class="score-item" wx:if="{{practiceResult.fluency}}">
+          <text class="item-label">流利度</text>
+          <progress class="progress-bar" percent="{{practiceResult.fluency}}" activeColor="#3b82f6" />
+          <text class="item-value">{{practiceResult.fluency}}</text>
+        </view>
+        
+        <view class="score-item" wx:if="{{practiceResult.pronunciation}}">
+          <text class="item-label">发音</text>
+          <progress class="progress-bar" percent="{{practiceResult.pronunciation}}" activeColor="#8b5cf6" />
+          <text class="item-value">{{practiceResult.pronunciation}}</text>
+        </view>
+        
+        <view class="score-item" wx:if="{{practiceResult.vocabulary}}">
+          <text class="item-label">词汇</text>
+          <progress class="progress-bar" percent="{{practiceResult.vocabulary}}" activeColor="#f59e0b" />
+          <text class="item-value">{{practiceResult.vocabulary}}</text>
+        </view>
+        
+        <view class="score-item" wx:if="{{practiceResult.grammar}}">
+          <text class="item-label">语法</text>
+          <progress class="progress-bar" percent="{{practiceResult.grammar}}" activeColor="#ef4444" />
+          <text class="item-value">{{practiceResult.grammar}}</text>
+        </view>
+      </view>
+
+      <!-- 优点和改进建议 -->
+      <view class="suggestions-section">
+        <view class="suggestion-block strengths" wx:if="{{practiceResult.strengths && practiceResult.strengths.length > 0}}">
+          <view class="block-title">✅ 优点</view>
+          <view class="suggestion-item" wx:for="{{practiceResult.strengths}}" wx:key="*this">
+            <text>• {{item}}</text>
+          </view>
+        </view>
+        
+        <view class="suggestion-block weaknesses" wx:if="{{practiceResult.weaknesses && practiceResult.weaknesses.length > 0}}">
+          <view class="block-title">💡 需改进</view>
+          <view class="suggestion-item" wx:for="{{practiceResult.weaknesses}}" wx:key="*this">
+            <text>• {{item}}</text>
+          </view>
+        </view>
+        
+        <view class="suggestion-block tips" wx:if="{{practiceResult.suggestions && practiceResult.suggestions.length > 0}}">
+          <view class="block-title">📝 建议</view>
+          <view class="suggestion-item" wx:for="{{practiceResult.suggestions}}" wx:key="*this">
+            <text>• {{item}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="result-actions">
+        <button class="retry-button" bindtap="retryPractice">🔄 重新练习</button>
+      </view>
+    </view>
+
+    <!-- 统计数据 -->
+    <view class="stats-section" wx:if="{{stats}}">
+      <view class="stats-title">📊 我的口语统计</view>
+      <view class="stats-grid">
+        <view class="stat-card">
+          <text class="stat-value">{{stats.total.total_practices || 0}}</text>
+          <text class="stat-label">总练习次数</text>
+        </view>
+        <view class="stat-card">
+          <text class="stat-value">{{stats.total.total_minutes || 0}}</text>
+          <text class="stat-label">总练习时长 (分钟)</text>
+        </view>
+        <view class="stat-card">
+          <text class="stat-value">{{stats.total.avg_score || 0}}</text>
+          <text class="stat-label">平均分数</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

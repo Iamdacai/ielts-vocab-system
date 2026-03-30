@@ -1,0 +1,339 @@
+/* pages/speaking/speaking.wxss */
+
+.container {
+  padding: 30rpx;
+  padding-bottom: 60rpx;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+  min-height: 100vh;
+}
+
+/* 类型选择器 */
+.type-selector {
+  margin-bottom: 40rpx;
+}
+
+.selector-title {
+  font-size: 32rpx;
+  color: #ffffff;
+  font-weight: bold;
+  margin-bottom: 20rpx;
+  text-align: center;
+}
+
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20rpx;
+}
+
+.type-item {
+  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20rpx;
+  padding: 30rpx 20rpx;
+  text-align: center;
+  border: 2rpx solid transparent;
+  transition: all 0.3s;
+}
+
+.type-item.active {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  border-color: #60a5fa;
+  box-shadow: 0 4rpx 20rpx rgba(59, 130, 246, 0.4);
+}
+
+.type-icon {
+  font-size: 64rpx;
+  margin-bottom: 10rpx;
+}
+
+.type-name {
+  font-size: 28rpx;
+  color: #ffffff;
+  font-weight: bold;
+  margin-bottom: 8rpx;
+}
+
+.type-desc {
+  font-size: 24rpx;
+  color: #94a3b8;
+}
+
+/* 练习区域 */
+.practice-section {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 24rpx;
+  padding: 40rpx;
+}
+
+/* 题目卡片 */
+.question-card {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 40rpx;
+  text-align: center;
+}
+
+.question-label {
+  font-size: 28rpx;
+  color: #94a3b8;
+  margin-bottom: 15rpx;
+}
+
+.question-content {
+  font-size: 36rpx;
+  color: #ffffff;
+  font-weight: bold;
+  line-height: 1.6;
+}
+
+/* 录音区域 */
+.record-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 40rpx;
+}
+
+.record-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 200rpx;
+  height: 200rpx;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-radius: 50%;
+  box-shadow: 0 8rpx 32rpx rgba(59, 130, 246, 0.4);
+  transition: all 0.3s;
+}
+
+.record-button.recording {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 8rpx 32rpx rgba(239, 68, 68, 0.4);
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.mic-icon {
+  font-size: 80rpx;
+  margin-bottom: 10rpx;
+}
+
+.record-text {
+  font-size: 26rpx;
+  color: #ffffff;
+}
+
+.recording-timer {
+  margin-top: 20rpx;
+  text-align: center;
+}
+
+.recording-timer text {
+  font-size: 32rpx;
+  color: #ef4444;
+  font-weight: bold;
+}
+
+.wave-animation {
+  width: 100rpx;
+  height: 4rpx;
+  background: linear-gradient(90deg, transparent, #ef4444, transparent);
+  margin-top: 10rpx;
+  animation: wave 1s infinite;
+}
+
+@keyframes wave {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* 评分结果 */
+.result-section {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 16rpx;
+  padding: 30rpx;
+}
+
+.score-overview {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30rpx;
+}
+
+.score-circle {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-right: 30rpx;
+  box-shadow: 0 4rpx 20rpx rgba(59, 130, 246, 0.4);
+}
+
+.score-number {
+  font-size: 56rpx;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.score-label {
+  font-size: 24rpx;
+  color: #e0e7ff;
+}
+
+.score-feedback {
+  flex: 1;
+}
+
+.feedback-text {
+  font-size: 28rpx;
+  color: #e2e8f0;
+  line-height: 1.6;
+}
+
+/* 详细评分 */
+.score-details {
+  margin-bottom: 30rpx;
+}
+
+.score-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.item-label {
+  width: 100rpx;
+  font-size: 26rpx;
+  color: #94a3b8;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 16rpx;
+  border-radius: 8rpx;
+  margin: 0 15rpx;
+}
+
+.item-value {
+  width: 60rpx;
+  text-align: right;
+  font-size: 26rpx;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+/* 建议区域 */
+.suggestions-section {
+  margin-bottom: 30rpx;
+}
+
+.suggestion-block {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin-bottom: 15rpx;
+}
+
+.suggestion-block.strengths {
+  border-left: 4rpx solid #22c55e;
+}
+
+.suggestion-block.weaknesses {
+  border-left: 4rpx solid #f59e0b;
+}
+
+.suggestion-block.tips {
+  border-left: 4rpx solid #3b82f6;
+}
+
+.block-title {
+  font-size: 28rpx;
+  color: #ffffff;
+  font-weight: bold;
+  margin-bottom: 15rpx;
+}
+
+.suggestion-item {
+  font-size: 26rpx;
+  color: #cbd5e1;
+  line-height: 1.8;
+  margin-bottom: 8rpx;
+}
+
+.suggestion-item:last-child {
+  margin-bottom: 0;
+}
+
+/* 操作按钮 */
+.result-actions {
+  text-align: center;
+}
+
+.retry-button {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 12rpx;
+  font-size: 30rpx;
+  padding: 24rpx 0;
+  width: 100%;
+}
+
+.retry-button::after {
+  border: none;
+}
+
+/* 统计区域 */
+.stats-section {
+  margin-top: 40rpx;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16rpx;
+  padding: 30rpx;
+}
+
+.stats-title {
+  font-size: 28rpx;
+  color: #ffffff;
+  font-weight: bold;
+  margin-bottom: 20rpx;
+  text-align: center;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20rpx;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 12rpx;
+  padding: 20rpx;
+  text-align: center;
+}
+
+.stat-value {
+  display: block;
+  font-size: 36rpx;
+  color: #3b82f6;
+  font-weight: bold;
+  margin-bottom: 8rpx;
+}
+
+.stat-label {
+  display: block;
+  font-size: 24rpx;
+  color: #94a3b8;
+  line-height: 1.4;
+}

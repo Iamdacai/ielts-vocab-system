@@ -8,7 +8,8 @@
     "pages/login/login",
     "pages/profile/profile",
     "pages/admin/index",
-    "pages/ai-interests/ai-interests"
+    "pages/ai-interests/ai-interests",
+    "pages/speaking/speaking"
   ],
   "window": {
     "backgroundTextStyle": "light",
