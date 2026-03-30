@@ -1,0 +1,386 @@
+/* pages/writing/writing.wxss */
+
+.container {
+  padding: 30rpx;
+  padding-bottom: 60rpx;
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+  min-height: 100vh;
+}
+
+/* 类型选择 */
+.type-selector {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 30rpx;
+}
+
+.type-item {
+  flex: 1;
+  padding: 20rpx;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12rpx;
+  text-align: center;
+  font-size: 28rpx;
+  color: #94a3b8;
+  border: 2rpx solid transparent;
+  transition: all 0.3s;
+}
+
+.type-item.active {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  border-color: #60a5fa;
+  color: #ffffff;
+}
+
+/* 题目卡片 */
+.topic-card {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 30rpx;
+  border-left: 4rpx solid #3b82f6;
+}
+
+.topic-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.topic-label {
+  font-size: 26rpx;
+  color: #94a3b8;
+  font-weight: bold;
+}
+
+.topic-type {
+  font-size: 24rpx;
+  color: #60a5fa;
+  background: rgba(59, 130, 246, 0.2);
+  padding: 6rpx 16rpx;
+  border-radius: 20rpx;
+}
+
+.topic-question {
+  font-size: 30rpx;
+  color: #ffffff;
+  line-height: 1.8;
+  margin-bottom: 20rpx;
+  font-weight: 500;
+}
+
+.topic-requirements {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12rpx;
+  padding: 20rpx;
+}
+
+.requirement-item {
+  display: block;
+  font-size: 26rpx;
+  color: #cbd5e1;
+  line-height: 1.8;
+  margin-bottom: 8rpx;
+}
+
+.requirement-item:last-child {
+  margin-bottom: 0;
+}
+
+/* 写作区域 */
+.writing-section {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16rpx;
+  padding: 30rpx;
+  margin-bottom: 30rpx;
+}
+
+.writing-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.status-icon {
+  font-size: 32rpx;
+}
+
+.status-text {
+  font-size: 28rpx;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.start-button {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  padding: 16rpx 32rpx;
+}
+
+.start-button::after {
+  border: none;
+}
+
+.essay-input {
+  width: 100%;
+  min-height: 400rpx;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 12rpx;
+  padding: 20rpx;
+  font-size: 28rpx;
+  color: #ffffff;
+  line-height: 1.8;
+  margin-bottom: 20rpx;
+}
+
+.submit-button {
+  width: 100%;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 12rpx;
+  font-size: 30rpx;
+  padding: 24rpx 0;
+}
+
+.submit-button::after {
+  border: none;
+}
+
+.submit-button[disabled] {
+  background: #475569;
+  color: #94a3b8;
+}
+
+/* 批改结果 */
+.result-section {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16rpx;
+  padding: 30rpx;
+}
+
+.score-overview {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  margin-bottom: 30rpx;
+  padding-bottom: 30rpx;
+  border-bottom: 2rpx solid rgba(255, 255, 255, 0.1);
+}
+
+.score-circle {
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 20rpx rgba(59, 130, 246, 0.4);
+}
+
+.score-number {
+  font-size: 64rpx;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+.score-label {
+  font-size: 24rpx;
+  color: #e0e7ff;
+}
+
+.score-band {
+  text-align: center;
+}
+
+.band-label {
+  display: block;
+  font-size: 26rpx;
+  color: #94a3b8;
+  margin-bottom: 10rpx;
+}
+
+.band-value {
+  display: block;
+  font-size: 48rpx;
+  color: #22c55e;
+  font-weight: bold;
+}
+
+/* 反馈 */
+.feedback-section {
+  background: rgba(59, 130, 246, 0.1);
+  border-left: 4rpx solid #3b82f6;
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin-bottom: 30rpx;
+}
+
+.feedback-text {
+  font-size: 28rpx;
+  color: #e2e8f0;
+  line-height: 1.6;
+}
+
+/* 详细评分 */
+.score-details {
+  margin-bottom: 30rpx;
+}
+
+.score-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.item-label {
+  width: 120rpx;
+  font-size: 26rpx;
+  color: #94a3b8;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 16rpx;
+  border-radius: 8rpx;
+  margin: 0 15rpx;
+}
+
+.item-value {
+  width: 60rpx;
+  text-align: right;
+  font-size: 26rpx;
+  color: #ffffff;
+  font-weight: bold;
+}
+
+/* 建议区域 */
+.suggestions-section {
+  margin-bottom: 30rpx;
+}
+
+.suggestion-block {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12rpx;
+  padding: 20rpx;
+  margin-bottom: 15rpx;
+}
+
+.suggestion-block.strengths {
+  border-left: 4rpx solid #22c55e;
+}
+
+.suggestion-block.weaknesses {
+  border-left: 4rpx solid #f59e0b;
+}
+
+.suggestion-block.tips {
+  border-left: 4rpx solid #3b82f6;
+}
+
+.block-title {
+  font-size: 28rpx;
+  color: #ffffff;
+  font-weight: bold;
+  margin-bottom: 15rpx;
+}
+
+.suggestion-item {
+  font-size: 26rpx;
+  color: #cbd5e1;
+  line-height: 1.8;
+  margin-bottom: 8rpx;
+}
+
+/* 错误标注 */
+.error-section {
+  margin-bottom: 30rpx;
+}
+
+.section-title {
+  font-size: 28rpx;
+  color: #ffffff;
+  font-weight: bold;
+  margin-bottom: 20rpx;
+}
+
+.error-list {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12rpx;
+  padding: 20rpx;
+}
+
+.error-item {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8rpx;
+  padding: 15rpx;
+  margin-bottom: 15rpx;
+}
+
+.error-item:last-child {
+  margin-bottom: 0;
+}
+
+.error-original {
+  font-size: 26rpx;
+  color: #ef4444;
+  margin-bottom: 8rpx;
+}
+
+.error-arrow {
+  font-size: 24rpx;
+  color: #94a3b8;
+  text-align: center;
+  margin-bottom: 8rpx;
+}
+
+.error-corrected {
+  font-size: 26rpx;
+  color: #22c55e;
+  margin-bottom: 8rpx;
+}
+
+.error-explanation {
+  font-size: 24rpx;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+/* 操作按钮 */
+.result-actions {
+  display: flex;
+  gap: 20rpx;
+}
+
+.retry-button,
+.new-topic-button {
+  flex: 1;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  padding: 20rpx 0;
+}
+
+.retry-button::after,
+.new-topic-button::after {
+  border: none;
+}
+
+.new-topic-button {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}

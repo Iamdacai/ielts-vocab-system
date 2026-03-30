@@ -1,0 +1,149 @@
+<!--pages/writing/writing.wxml-->
+<view class="container">
+  <!-- 类型选择 -->
+  <view class="type-selector">
+    <view class="type-item {{essayType === 'task2' ? 'active' : ''}}" bindtap="switchType" data-type="task2">
+      Task 2
+    </view>
+    <view class="type-item {{essayType === 'task1' ? 'active' : ''}}" bindtap="switchType" data-type="task1">
+      Task 1
+    </view>
+  </view>
+
+  <!-- 题目卡片 -->
+  <view class="topic-card" wx:if="{{currentTopic}}">
+    <view class="topic-header">
+      <text class="topic-label">{{essayType === 'task2' ? 'Task 2 议论文' : 'Task 1 图表/书信'}}</text>
+      <text class="topic-type">{{currentTopic.topic}}</text>
+    </view>
+    <view class="topic-question">{{currentTopic.question}}</view>
+    <view class="topic-requirements">
+      <text wx:for="{{currentTopic.requirements}}" wx:key="*this" class="requirement-item">• {{item}}</text>
+    </view>
+  </view>
+
+  <!-- 写作区域 -->
+  <view class="writing-section">
+    <!-- 状态栏 -->
+    <view class="writing-status">
+      <view class="status-item">
+        <text class="status-icon">⏱️</text>
+        <text class="status-text">{{timer}}s</text>
+      </view>
+      <view class="status-item">
+        <text class="status-icon">📝</text>
+        <text class="status-text">{{wordCount}}词</text>
+      </view>
+      <button class="start-button" wx:if="{{!isWriting}}" bindtap="startWriting">
+        开始写作
+      </button>
+    </view>
+
+    <!-- 作文输入框 -->
+    <textarea 
+      class="essay-input"
+      placeholder="{{isWriting ? '开始写作...' : '请点击\"开始写作\"'}}"
+      bindinput="onInput"
+      value="{{essayContent}}"
+      maxlength="-1"
+      disabled="{{!isWriting}}"
+      auto-height
+    />
+
+    <!-- 提交按钮 -->
+    <button 
+      class="submit-button" 
+      bindtap="submitEssay" 
+      loading="{{submitting}}"
+      disabled="{{!isWriting || wordCount < 50}}">
+      提交作文
+    </button>
+  </view>
+
+  <!-- 批改结果 -->
+  <view class="result-section" wx:if="{{writingResult}}">
+    <!-- 总分 -->
+    <view class="score-overview">
+      <view class="score-circle">
+        <text class="score-number">{{writingResult.score}}</text>
+        <text class="score-label">总分</text>
+      </view>
+      <view class="score-band">
+        <text class="band-label">预估分数</text>
+        <text class="band-value">{{writingResult.bandScore}}</text>
+      </view>
+    </view>
+
+    <!-- 总体反馈 -->
+    <view class="feedback-section">
+      <text class="feedback-text">{{writingResult.feedback}}</text>
+    </view>
+
+    <!-- 四维评分 -->
+    <view class="score-details">
+      <view class="score-item">
+        <text class="item-label">任务回应</text>
+        <progress class="progress-bar" percent="{{writingResult.score}}" activeColor="#22c55e" />
+        <text class="item-value">{{writingResult.task_response}}</text>
+      </view>
+      <view class="score-item">
+        <text class="item-label">连贯衔接</text>
+        <progress class="progress-bar" percent="{{writingResult.coherence}}" activeColor="#3b82f6" />
+        <text class="item-value">{{writingResult.coherence}}</text>
+      </view>
+      <view class="score-item">
+        <text class="item-label">词汇</text>
+        <progress class="progress-bar" percent="{{writingResult.vocabulary}}" activeColor="#8b5cf6" />
+        <text class="item-value">{{writingResult.vocabulary}}</text>
+      </view>
+      <view class="score-item">
+        <text class="item-label">语法</text>
+        <progress class="progress-bar" percent="{{writingResult.grammar}}" activeColor="#f59e0b" />
+        <text class="item-value">{{writingResult.grammar}}</text>
+      </view>
+    </view>
+
+    <!-- 优点和改进 -->
+    <view class="suggestions-section">
+      <view class="suggestion-block strengths" wx:if="{{writingResult.strengths && writingResult.strengths.length > 0}}">
+        <view class="block-title">✅ 优点</view>
+        <view class="suggestion-item" wx:for="{{writingResult.strengths}}" wx:key="*this">
+          <text>• {{item}}</text>
+        </view>
+      </view>
+      
+      <view class="suggestion-block weaknesses" wx:if="{{writingResult.weaknesses && writingResult.weaknesses.length > 0}}">
+        <view class="block-title">💡 需改进</view>
+        <view class="suggestion-item" wx:for="{{writingResult.weaknesses}}" wx:key="*this">
+          <text>• {{item}}</text>
+        </view>
+      </view>
+      
+      <view class="suggestion-block tips" wx:if="{{writingResult.suggestions && writingResult.suggestions.length > 0}}">
+        <view class="block-title">📝 建议</view>
+        <view class="suggestion-item" wx:for="{{writingResult.suggestions}}" wx:key="*this">
+          <text>• {{item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 错误标注 -->
+    <view class="error-section" wx:if="{{writingResult.errorCorrections && writingResult.errorCorrections.length > 0}}">
+      <view class="section-title">📝 错误标注</view>
+      <view class="error-list">
+        <view class="error-item" wx:for="{{writingResult.errorCorrections}}" wx:key="*this">
+          <view class="error-original">❌ {{item.original}}</view>
+          <view class="error-arrow">↓</view>
+          <view class="error-corrected">✅ {{item.corrected}}</view>
+          <view class="error-explanation">{{item.explanation}}</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 操作按钮 -->
+    <view class="result-actions">
+      <button class="retry-button" bindtap="retryWriting">🔄 重新写作</button>
+      <button class="new-topic-button" bindtap="newTopic">📚 换一题</button>
+    </view>
+  </view>
+</view>

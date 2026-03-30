@@ -9,7 +9,8 @@
     "pages/profile/profile",
     "pages/admin/index",
     "pages/ai-interests/ai-interests",
-    "pages/speaking/speaking"
+    "pages/speaking/speaking",
+    "pages/writing/writing"
   ],
   "window": {
     "backgroundTextStyle": "light",
