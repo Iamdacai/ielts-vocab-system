@@ -33,6 +33,12 @@ Page({
     
     try {
       const token = wx.getStorageSync('token');
+      const requestUrl = `${app.globalData.apiUrl}/writing/topics?task_type=${this.data.essayType}&count=1`;
+      
+      console.log('[写作] ========== 开始加载题目 ==========');
+      console.log('[写作] token:', token ? '已获取 (长度:' + token.length + ')' : '未获取到');
+      console.log('[写作] apiUrl:', app.globalData.apiUrl);
+      console.log('[写作] requestUrl:', requestUrl);
       
       if (!token) {
         console.error('[写作] 未登录，token 为空');
@@ -50,51 +56,68 @@ Page({
       }
       
       // 随机获取题目
-      const res = await wx.request({
-        url: `${app.globalData.apiUrl}/writing/topics?task_type=${this.data.essayType}&count=1`,
-        header: { 'Authorization': `Bearer ${token}` }
-      });
+      console.log('[写作] 发起 wx.request...');
       
-      console.log('[写作] 题目响应:', res.data);
-      console.log('[写作] statusCode:', res.statusCode);
-      console.log('[写作] data.data:', res.data ? res.data.data : 'undefined');
-      console.log('[写作] data.data.length:', res.data && res.data.data ? res.data.data.length : 0);
-      
-      if (res.statusCode === 200 && res.data && res.data.success && res.data.data && res.data.data.length > 0) {
-        const topic = res.data.data[0];
-        console.log('[写作] 题目加载成功:', topic);
-        console.log('[写作] topic.id:', topic.id);
-        console.log('[写作] topic.topic:', topic.topic);
-        console.log('[写作] topic.question:', topic.question ? topic.question.substring(0, 50) : 'undefined');
-        
-        this.setData({ 
-          currentTopic: topic,
-          topicLoading: false
-        });
-      } else {
-        console.error('[写作] 题目数据为空或 success=false:', res.data);
-        this.setData({ topicLoadError: true, topicLoading: false });
-        wx.showModal({
-          title: '提示',
-          content: `题目加载失败 (status: ${res.statusCode})，请重试`,
-          showCancel: false,
-          success: () => {
-            this.loadTopic();
+      return new Promise((resolve, reject) => {
+        wx.request({
+          url: requestUrl,
+          header: { 'Authorization': `Bearer ${token}` },
+          method: 'GET',
+          timeout: 10000,
+          success: (result) => {
+            console.log('[写作] ✅ request success');
+            console.log('[写作] statusCode:', result.statusCode);
+            console.log('[写作] data:', JSON.stringify(result.data, null, 2));
+            
+            if (result.statusCode === 200 && result.data && result.data.success && result.data.data && result.data.data.length > 0) {
+              const topic = result.data.data[0];
+              console.log('[写作] ✅ 题目解析成功:', topic.id, topic.topic);
+              this.setData({ 
+                currentTopic: topic,
+                topicLoading: false
+              });
+              resolve();
+            } else {
+              console.error('[写作] ❌ 数据格式错误:', result.data);
+              reject(new Error('数据格式错误'));
+            }
+          },
+          fail: (error) => {
+            console.error('[写作] ❌ request fail');
+            console.error('[写作] errMsg:', error.errMsg);
+            console.error('[写作] errno:', error.errno);
+            console.error('[写作] 完整 error:', JSON.stringify(error, null, 2));
+            
+            this.setData({ topicLoadError: true, topicLoading: false });
+            reject(error);
           }
         });
-      }
+      });
     } catch (error) {
-      console.error('[写作] 加载题目失败:', error);
+      console.error('[写作] ========== 加载题目失败 ==========');
+      console.error('[写作] error:', error);
+      
       this.setData({ topicLoadError: true, topicLoading: false });
+      
+      let errorMsg = '网络错误';
+      if (error.errMsg) {
+        if (error.errMsg.includes('timeout')) {
+          errorMsg = '请求超时，请检查网络连接';
+        } else if (error.errMsg.includes('fail')) {
+          errorMsg = `请求失败：${error.errMsg}`;
+        }
+      }
+      
       wx.showModal({
         title: '提示',
-        content: '网络错误，请检查连接后重试',
+        content: `${errorMsg}\n\n请检查：\n1. 网络连接\n2. 服务器是否运行\n3. 域名是否配置`,
         showCancel: false,
         success: () => {
           this.loadTopic();
         }
       });
     } finally {
+      console.log('[写作] ========== 加载结束 ==========');
       wx.hideLoading();
     }
   },
