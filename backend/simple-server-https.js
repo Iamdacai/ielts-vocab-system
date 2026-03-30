@@ -2149,6 +2149,22 @@ app.get('/api/words/categories', optionalAuth, async (req, res) => {
   }
 });
 
+// ============================================
+// 🤖 AI 功能路由注册（Phase 1-3）
+// ============================================
+const aiContextRoutes = require('./routes/ai-context');
+const speakingRoutes = require('./routes/speaking');
+const writingRoutes = require('./routes/writing');
+
+app.use('/api/ai', aiContextRoutes);
+app.use('/api/speaking', speakingRoutes);
+app.use('/api/writing', writingRoutes);
+
+console.log('[AI] AI 功能路由已注册：/api/ai, /api/speaking, /api/writing');
+console.log('[AI] Phase 1: AI 语境生成 ✅');
+console.log('[AI] Phase 2: AI 口语陪练 ✅');
+console.log('[AI] Phase 3: AI 写作辅助 ✅');
+
 // HTTPS 配置 - 修正路径
 const sslPath = path.join(__dirname, '..', 'ssl');
 const options = {

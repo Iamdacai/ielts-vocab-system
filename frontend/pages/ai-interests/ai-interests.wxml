@@ -50,13 +50,13 @@
     
     <view class="topics-list">
       <view 
-        class="topic-item {{selectedTopics.includes(item) ? 'selected' : ''}}"
-        wx:for="{{topics}}"
+        class="topic-item {{item.selected ? 'selected' : ''}}"
+        wx:for="{{topicList}}"
         wx:key="*this"
         bindtap="toggleTopic"
         data-topic="{{item}}">
         {{item}}
-        <text class="topic-check" wx:if="{{selectedTopics.includes(item)}}">✓</text>
+        <text class="topic-check" wx:if="{{item.selected}}">✓</text>
       </view>
     </view>
   </view>

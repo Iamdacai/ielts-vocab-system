@@ -281,3 +281,51 @@
   font-size: 24rpx;
   color: #9ca3af;
 }
+
+/* 🤖 AI 功能专区 */
+.ai-section {
+  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+  border: 2rpx solid #3b82f6;
+}
+
+.ai-section .card-title {
+  color: #ffffff;
+}
+
+.ai-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20rpx;
+}
+
+.ai-feature-item {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 16rpx;
+  padding: 24rpx 16rpx;
+  text-align: center;
+  border: 1rpx solid rgba(59, 130, 246, 0.3);
+  transition: all 0.3s;
+}
+
+.ai-feature-item:active {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(0.98);
+}
+
+.ai-feature-icon {
+  font-size: 56rpx;
+  margin-bottom: 12rpx;
+}
+
+.ai-feature-name {
+  font-size: 26rpx;
+  color: #ffffff;
+  font-weight: bold;
+  margin-bottom: 8rpx;
+}
+
+.ai-feature-desc {
+  font-size: 22rpx;
+  color: #93c5fd;
+  line-height: 1.4;
+}

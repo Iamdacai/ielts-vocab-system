@@ -99,5 +99,49 @@
         <view class="mastery-desc">已掌握 {{stats.mastered_words}} / 总计 {{stats.total_words}}</view>
       </view>
     </view>
+
+    <!-- 🤖 AI 功能专区 -->
+    <view class="card ai-section">
+      <view class="card-title">🤖 AI 智能陪练</view>
+      <view class="ai-feature-grid">
+        <view class="ai-feature-item" bindtap="goToAIInterests">
+          <view class="ai-feature-icon">📝</view>
+          <view class="ai-feature-name">AI 定制例句</view>
+          <view class="ai-feature-desc">根据兴趣生成</view>
+        </view>
+        <view class="ai-feature-item" bindtap="goToSpeaking">
+          <view class="ai-feature-icon">🎤</view>
+          <view class="ai-feature-name">口语陪练</view>
+          <view class="ai-feature-desc">AI 智能评分</view>
+        </view>
+        <view class="ai-feature-item" bindtap="goToWriting">
+          <view class="ai-feature-icon">✍️</view>
+          <view class="ai-feature-name">写作批改</view>
+          <view class="ai-feature-desc">四维评分系统</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 🤖 AI 功能专区 -->
+    <view class="card ai-section">
+      <view class="card-title">🤖 AI 智能陪练</view>
+      <view class="ai-feature-grid">
+        <view class="ai-feature-item" bindtap="goToAIInterests">
+          <view class="ai-feature-icon">📝</view>
+          <view class="ai-feature-name">AI 定制例句</view>
+          <view class="ai-feature-desc">根据兴趣生成</view>
+        </view>
+        <view class="ai-feature-item" bindtap="goToSpeaking">
+          <view class="ai-feature-icon">🎤</view>
+          <view class="ai-feature-name">口语陪练</view>
+          <view class="ai-feature-desc">AI 智能评分</view>
+        </view>
+        <view class="ai-feature-item" bindtap="goToWriting">
+          <view class="ai-feature-icon">✍️</view>
+          <view class="ai-feature-name">写作批改</view>
+          <view class="ai-feature-desc">四维评分系统</view>
+        </view>
+      </view>
+    </view>
   </view>
 </view>

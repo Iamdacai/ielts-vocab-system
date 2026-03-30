@@ -289,5 +289,26 @@ Page({
       return;
     }
     wx.navigateTo({ url: '/pages/config/config' });
+  },
+
+  /**
+   * 🤖 跳转到 AI 兴趣设置页
+   */
+  goToAIInterests() {
+    wx.navigateTo({ url: '/pages/ai-interests/ai-interests' });
+  },
+
+  /**
+   * 🎤 跳转到口语陪练页
+   */
+  goToSpeaking() {
+    wx.navigateTo({ url: '/pages/speaking/speaking' });
+  },
+
+  /**
+   * ✍️ 跳转到写作辅助页
+   */
+  goToWriting() {
+    wx.navigateTo({ url: '/pages/writing/writing' });
   }
 });

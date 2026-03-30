@@ -20,15 +20,30 @@ Page({
     ],
     
     // 雅思场景分类（22 个）
-    topics: [
-      '自然地理', '植物研究', '动物保护', '太空探索',
-      '学校教育', '科技发明', '文化历史', '语言演化',
-      '娱乐运动', '物品材料', '时尚潮流', '饮食健康',
-      '建筑场所', '交通旅行', '国家政府', '社会经济',
-      '法律法规', '沙场争锋', '社会角色', '行为动作',
-      '身心健康', '时间日期'
+    topicList: [
+      { name: '自然地理', selected: false },
+      { name: '植物研究', selected: false },
+      { name: '动物保护', selected: false },
+      { name: '太空探索', selected: false },
+      { name: '学校教育', selected: false },
+      { name: '科技发明', selected: false },
+      { name: '文化历史', selected: false },
+      { name: '语言演化', selected: false },
+      { name: '娱乐运动', selected: false },
+      { name: '物品材料', selected: false },
+      { name: '时尚潮流', selected: false },
+      { name: '饮食健康', selected: false },
+      { name: '建筑场所', selected: false },
+      { name: '交通旅行', selected: false },
+      { name: '国家政府', selected: false },
+      { name: '社会经济', selected: false },
+      { name: '法律法规', selected: false },
+      { name: '沙场争锋', selected: false },
+      { name: '社会角色', selected: false },
+      { name: '行为动作', selected: false },
+      { name: '身心健康', selected: false },
+      { name: '时间日期', selected: false }
     ],
-    selectedTopics: [],
     
     // AI 语境开关
     aiEnabled: true,
@@ -75,9 +90,15 @@ Page({
           selected: interests.includes(item.name)
         }));
         
+        // 恢复场景选择
+        const topicData = this.data.topicList.map(item => ({
+          ...item,
+          selected: preferred_topics && preferred_topics.includes(item.name)
+        }));
+        
         this.setData({
           interests: interestsData,
-          selectedTopics: preferred_topics || [],
+          topicList: topicData,
           aiEnabled: ai_context_enabled !== false
         });
       }
@@ -105,19 +126,11 @@ Page({
    */
   toggleTopic(e) {
     const { topic } = e.currentTarget.dataset;
-    const { selectedTopics } = this.data;
+    const key = `topicList[${this.data.topicList.findIndex(t => t.name === topic)}].selected`;
     
-    const index = selectedTopics.indexOf(topic);
-    
-    if (index > -1) {
-      // 已存在，移除
-      selectedTopics.splice(index, 1);
-    } else {
-      // 不存在，添加
-      selectedTopics.push(topic);
-    }
-    
-    this.setData({ selectedTopics });
+    this.setData({
+      [key]: !this.data.topicList.find(t => t.name === topic).selected
+    });
   },
 
   /**
