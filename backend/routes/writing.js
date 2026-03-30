@@ -8,15 +8,30 @@ const writingService = require('../services/writing-service');
 const corpusService = require('../services/corpus-service');
 
 /**
- * 中间件：验证用户登录
+ * 中间件：验证用户登录（使用 JWT token）
  */
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET || 'ielts_vocab_dev_secret_2026_change_in_production';
+
 async function requireAuth(req, res, next) {
-  const userId = req.headers['x-user-id'];
-  if (!userId) {
-    return res.status(401).json({ success: false, error: '未授权访问' });
+  try {
+    const authHeader = req.headers['authorization'];
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ success: false, error: '未授权访问' });
+    }
+    
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, JWT_SECRET);
+    
+    req.userId = decoded.userId || 1;
+    next();
+  } catch (error) {
+    console.error('[Writing Auth] Token 验证失败:', error.message);
+    return res.status(401).json({
+      success: false,
+      error: 'Token 无效或已过期'
+    });
   }
-  req.userId = parseInt(userId);
-  next();
 }
 
 /**
