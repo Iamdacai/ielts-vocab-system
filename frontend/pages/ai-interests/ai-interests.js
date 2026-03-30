@@ -64,11 +64,8 @@ Page({
     
     const token = wx.getStorageSync('token');
     if (!token) {
-      wx.showModal({
-        title: '请先登录',
-        showCancel: false,
-        success: () => wx.navigateBack()
-      });
+      console.log('[AI 兴趣] 未登录，使用默认配置');
+      this.setData({ loading: false });
       return;
     }
 
@@ -87,7 +84,7 @@ Page({
         // 恢复兴趣选择
         const interestsData = this.data.interests.map(item => ({
           ...item,
-          selected: interests.includes(item.name)
+          selected: interests && interests.includes(item.name)
         }));
         
         // 恢复场景选择
@@ -101,10 +98,12 @@ Page({
           topicList: topicData,
           aiEnabled: ai_context_enabled !== false
         });
+      } else if (res.statusCode === 401) {
+        console.log('[AI 兴趣] Token 无效，使用默认配置');
+        this.setData({ loading: false });
       }
     } catch (error) {
-      console.error('加载兴趣配置失败:', error);
-    } finally {
+      console.error('[AI 兴趣] 加载失败:', error);
       this.setData({ loading: false });
     }
   },
@@ -126,10 +125,18 @@ Page({
    */
   toggleTopic(e) {
     const { topic } = e.currentTarget.dataset;
-    const key = `topicList[${this.data.topicList.findIndex(t => t.name === topic)}].selected`;
+    const index = this.data.topicList.findIndex(t => t.name === topic);
+    
+    if (index === -1) {
+      console.error('找不到场景:', topic);
+      return;
+    }
+    
+    const key = `topicList[${index}].selected`;
+    const newValue = !this.data.topicList[index].selected;
     
     this.setData({
-      [key]: !this.data.topicList.find(t => t.name === topic).selected
+      [key]: newValue
     });
   },
 

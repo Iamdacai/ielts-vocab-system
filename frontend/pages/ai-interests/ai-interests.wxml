@@ -52,10 +52,10 @@
       <view 
         class="topic-item {{item.selected ? 'selected' : ''}}"
         wx:for="{{topicList}}"
-        wx:key="*this"
+        wx:key="name"
         bindtap="toggleTopic"
-        data-topic="{{item}}">
-        {{item}}
+        data-topic="{{item.name}}">
+        {{item.name}}
         <text class="topic-check" wx:if="{{item.selected}}">✓</text>
       </view>
     </view>
