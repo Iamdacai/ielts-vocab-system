@@ -12,6 +12,7 @@ const sessionsRoutes = require('./sessions');
 const achievementsRoutes = require('./achievements');
 const remindersRoutes = require('./reminders');
 const mistakesRoutes = require('./mistakes');       // 新增：错题本 2.0
+const aiContextRoutes = require('./ai-context');    // AI 语境生成
 const usersRoutes = require('../users');            // 用户管理
 const adminRoutes = require('../admin');            // 管理员后台
 
@@ -26,6 +27,7 @@ router.use('/sessions', sessionsRoutes);       // 学习会话
 router.use('/achievements', achievementsRoutes); // 成就系统
 router.use('/reminders', remindersRoutes);       // 智能提醒
 router.use('/mistakes', mistakesRoutes);         // 错题本 2.0
+router.use('/ai', aiContextRoutes);              // AI 语境生成
 router.use('/users', usersRoutes);               // 用户管理（个人中心）
 router.use('/admin', adminRoutes);               // 管理员后台
 
