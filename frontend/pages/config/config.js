@@ -67,6 +67,15 @@ Page({
     });
   },
 
+  /**
+   * 🆕 跳转到 AI 兴趣设置页
+   */
+  goToAIInterests() {
+    wx.navigateTo({
+      url: '/pages/ai-interests/ai-interests'
+    });
+  },
+
   // 改进的登录状态检查
   async checkLoginStatus() {
     const token = wx.getStorageSync('token');

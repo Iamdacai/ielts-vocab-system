@@ -37,7 +37,13 @@ Page({
     recordingTimer: null,
     recorderManager: null,
     pronunciationResult: null,
-    pronunciationAudioContext: null  // 🆕 播放录音的音频上下文
+    pronunciationAudioContext: null,  // 🆕 播放录音的音频上下文
+    
+    // 🆕 AI 例句
+    aiExamples: [],
+    aiExplanation: '',
+    fromCache: false,
+    aiLoading: false
   },
 
   onLoad() {
@@ -335,8 +341,15 @@ Page({
         // 🆕 重置跟读练习相关状态
         pronunciationResult: null,  // 清除上一个单词的评分结果
         isRecording: false,         // 清除录音状态
-        recordingTime: 0            // 重置录音时间
+        recordingTime: 0,           // 重置录音时间
+        // 🆕 重置 AI 例句状态
+        aiExamples: [],
+        aiExplanation: '',
+        fromCache: false
       });
+      
+      // 🆕 加载 AI 例句
+      this.loadAIExamples(currentWord.word, currentWord.id);
       
       console.log('[切换单词] 已重置跟读练习状态');
     } else {
@@ -739,6 +752,102 @@ Page({
         });
       }
     });
+  },
+
+  /**
+   * 🆕 加载 AI 例句
+   */
+  async loadAIExamples(word, wordId) {
+    // 检查 AI 语境是否开启
+    const aiContextEnabled = wx.getStorageSync('aiContextEnabled') !== false;
+    if (!aiContextEnabled) {
+      return;
+    }
+    
+    this.setData({ aiLoading: true });
+    
+    const token = wx.getStorageSync('token');
+    if (!token) {
+      this.setData({ aiLoading: false });
+      return;
+    }
+    
+    try {
+      const res = await wx.request({
+        url: `${app.globalData.apiUrl}/ai/generate-example`,
+        method: 'POST',
+        header: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        data: {
+          word: word,
+          word_id: wordId,
+          count: 3,
+          difficulty: 'medium'
+        }
+      });
+      
+      if (res.statusCode === 200 && res.data.success) {
+        const { examples, ai_explanation, from_cache } = res.data.data;
+        
+        this.setData({
+          aiExamples: examples,
+          aiExplanation: ai_explanation || '',
+          fromCache: from_cache || false,
+          aiLoading: false
+        });
+        
+        console.log('[AI 例句] 加载成功:', word, '缓存:', from_cache);
+      }
+    } catch (error) {
+      console.error('[AI 例句] 加载失败:', error);
+      this.setData({ aiLoading: false });
+    }
+  },
+
+  /**
+   * 🆕 例句反馈
+   */
+  onExampleFeedback(e) {
+    const { exampleId, feedback } = e.currentTarget.dataset;
+    
+    const token = wx.getStorageSync('token');
+    if (!token) return;
+    
+    wx.request({
+      url: `${app.globalData.apiUrl}/ai/example-feedback`,
+      method: 'POST',
+      header: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      data: {
+        example_id: exampleId,
+        feedback: feedback
+      }
+    });
+    
+    wx.showToast({
+      title: feedback === 'like' ? '感谢喜欢！' : '我们会改进',
+      icon: 'none',
+      duration: 1500
+    });
+  },
+
+  /**
+   * 🆕 重新生成例句
+   */
+  regenerateExamples() {
+    const { currentWord } = this.data;
+    if (!currentWord) return;
+    
+    wx.showLoading({ title: '生成中...' });
+    this.loadAIExamples(currentWord.word, currentWord.id, true);
+    
+    setTimeout(() => {
+      wx.hideLoading();
+    }, 2000);
   },
 
   /**

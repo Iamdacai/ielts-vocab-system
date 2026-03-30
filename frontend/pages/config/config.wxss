@@ -238,3 +238,57 @@
   text-align: center;
   color: #999;
 }
+
+/* AI 语境设置卡片 */
+.ai-feature-card {
+  display: flex;
+  align-items: center;
+  padding: 30rpx;
+  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+  border-radius: 16rpx;
+  border: 2rpx solid #3b82f6;
+  box-shadow: 0 4rpx 20rpx rgba(59, 130, 246, 0.3);
+  margin-top: 20rpx;
+  position: relative;
+  overflow: hidden;
+}
+
+.ai-feature-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.ai-feature-icon {
+  font-size: 64rpx;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+}
+
+.ai-feature-info {
+  flex: 1;
+}
+
+.ai-feature-title {
+  font-size: 30rpx;
+  color: #ffffff;
+  font-weight: bold;
+  margin-bottom: 8rpx;
+}
+
+.ai-feature-desc {
+  font-size: 24rpx;
+  color: #93c5fd;
+  line-height: 1.4;
+}
+
+.ai-feature-arrow {
+  font-size: 48rpx;
+  color: #60a5fa;
+  margin-left: 16rpx;
+}

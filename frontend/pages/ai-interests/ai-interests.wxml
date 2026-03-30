@@ -1,0 +1,79 @@
+<!--pages/ai-interests/ai-interests.wxml-->
+<view class="container">
+  <!-- 头部说明 -->
+  <view class="header">
+    <view class="title">🤖 AI 语境生成设置</view>
+    <view class="subtitle">根据你的兴趣定制专属例句，让背单词更有趣</view>
+  </view>
+
+  <!-- AI 语境开关 -->
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">AI 语境生成</text>
+      <switch 
+        checked="{{aiEnabled}}" 
+        bindchange="toggleAISwitch"
+        color="#1890ff" />
+    </view>
+    <view class="section-desc">
+      关闭后将使用传统固定例句，开启后 AI 会根据你的兴趣生成个性化例句
+    </view>
+  </view>
+
+  <!-- 兴趣标签选择 -->
+  <view class="section" wx:if="{{aiEnabled}}">
+    <view class="section-header">
+      <text class="section-title">你的兴趣领域</text>
+      <text class="section-tip">多选</text>
+    </view>
+    
+    <view class="interests-grid">
+      <view 
+        class="interest-item {{item.selected ? 'selected' : ''}}"
+        wx:for="{{interests}}"
+        wx:key="id"
+        bindtap="toggleInterest"
+        data-index="{{index}}">
+        <view class="interest-icon">{{item.icon}}</view>
+        <view class="interest-name">{{item.name}}</view>
+        <view class="interest-check" wx:if="{{item.selected}}">✓</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 雅思场景分类 -->
+  <view class="section" wx:if="{{aiEnabled}}">
+    <view class="section-header">
+      <text class="section-title">偏好雅思场景</text>
+      <text class="section-tip">多选（可选）</text>
+    </view>
+    
+    <view class="topics-list">
+      <view 
+        class="topic-item {{selectedTopics.includes(item) ? 'selected' : ''}}"
+        wx:for="{{topics}}"
+        wx:key="*this"
+        bindtap="toggleTopic"
+        data-topic="{{item}}">
+        {{item}}
+        <text class="topic-check" wx:if="{{selectedTopics.includes(item)}}">✓</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部按钮 -->
+  <view class="footer">
+    <button class="btn-reset" bindtap="resetToDefault">重置</button>
+    <button class="btn-save" bindtap="saveInterests" loading="{{saving}}">
+      保存配置
+    </button>
+  </view>
+
+  <!-- 加载提示 -->
+  <view class="loading-mask" wx:if="{{loading}}">
+    <view class="loading-content">
+      <view class="spinner"></view>
+      <text>加载中...</text>
+    </view>
+  </view>
+</view>

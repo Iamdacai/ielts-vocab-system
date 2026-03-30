@@ -87,8 +87,42 @@
       <view wx:if="{{currentWord.pos}}" class="pos-tag">{{currentWord.pos}}</view>
     </view>
 
-    <!-- 例句（显示全部例句） -->
-    <view wx:if="{{currentWord.examples && currentWord.examples.length > 0}}" class="example-section">
+    <!-- AI 例句区域（优先显示） -->
+    <view wx:if="{{aiExamples && aiExamples.length > 0}}" class="ai-example-section">
+      <view class="section-header">
+        <view class="section-title">🤖 AI 定制例句</view>
+        <view class="ai-badges">
+          <text class="ai-badge" wx:if="{{!fromCache}}">实时生成</text>
+          <text class="ai-badge cache" wx:else>缓存</text>
+        </view>
+      </view>
+      
+      <view wx:if="{{aiExplanation}}" class="ai-explanation">
+        <text>{{aiExplanation}}</text>
+      </view>
+      
+      <view class="example-list">
+        <view class="example-item ai-example" wx:for="{{aiExamples}}" wx:key="id">
+          <view class="example-en">{{item.en}}</view>
+          <view class="example-cn">{{item.cn}}</view>
+          
+          <view class="collocations" wx:if="{{item.collocations && item.collocations.length > 0}}">
+            <text class="collocation" wx:for="{{item.collocations}}" wx:key="*this">
+              📌 {{item}}
+            </text>
+          </view>
+          
+          <view class="feedback-actions">
+            <button class="feedback-btn like" bindtap="onExampleFeedback" data-example-id="{{item.id}}" data-feedback="like">👍</button>
+            <button class="feedback-btn dislike" bindtap="onExampleFeedback" data-example-id="{{item.id}}" data-feedback="dislike">👎</button>
+            <button class="regenerate-btn" bindtap="regenerateExamples">🔄 换一批</button>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 传统例句（AI 例句为空时显示） -->
+    <view wx:if="{{currentWord.examples && currentWord.examples.length > 0 && (!aiExamples || aiExamples.length === 0)}}" class="example-section">
       <view class="example-header">
         <view class="example-title">💬 例句</view>
         <!-- 🆕 例句发音按钮（小喇叭图标） -->
