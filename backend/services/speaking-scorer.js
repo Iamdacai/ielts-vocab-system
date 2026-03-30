@@ -1,14 +1,14 @@
 /**
  * 口语评分服务
- * 基于 Bailian AI 进行雅思口语评分
+ * 基于 MiniMax AI 进行雅思口语评分
  */
 
-const BailianClient = require('./bailian-client');
+const MiniMaxClient = require('./minimax-client');
 
 class SpeakingScorer {
   constructor() {
-    this.bailian = new BailianClient({
-      model: 'qwen-max',
+    this.minimax = new MiniMaxClient({
+      model: process.env.MINIMAX_MODEL || 'abab6.5s-chat',
       timeout: 60000 // 评分需要更长时间
     });
   }
@@ -75,7 +75,7 @@ ${transcript}
 `.trim();
 
     try {
-      const result = await this.bailian.generate(prompt, {
+      const result = await this.minimax.generate(prompt, {
         temperature: 0.3, // 降低随机性
         maxTokens: 800,
         jsonMode: true
@@ -164,7 +164,7 @@ ${transcript}
 `.trim();
 
     try {
-      const result = await this.bailian.generate(prompt, {
+      const result = await this.minimax.generate(prompt, {
         temperature: 0.3,
         maxTokens: 1200,
         jsonMode: true
@@ -231,7 +231,7 @@ ${JSON.stringify(conversationHistory, null, 2)}
 `.trim();
 
     try {
-      const result = await this.bailian.generate(prompt, {
+      const result = await this.minimax.generate(prompt, {
         temperature: 0.4,
         maxTokens: 1000,
         jsonMode: true

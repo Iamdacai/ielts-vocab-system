@@ -4,6 +4,7 @@
  * 
  * 配置：
  * - API Key: process.env.BAILIAN_API_KEY
+ * - Base URL: process.env.BAILIAN_BASE_URL（可选，Coding Plan 专用）
  * - 模型：qwen-max（默认）或 qwen-plus
  */
 
@@ -13,12 +14,30 @@ const crypto = require('crypto');
 class BailianClient {
   constructor(options = {}) {
     this.apiKey = process.env.BAILIAN_API_KEY;
-    this.endpoint = 'dashscope.aliyuncs.com';
+    // 支持自定义 Base URL（Coding Plan 专用）
+    this.baseUrl = process.env.BAILIAN_BASE_URL || '';
     this.model = options.model || 'qwen-max'; // qwen-max | qwen-plus | qwen-turbo
     this.timeout = options.timeout || 30000; // 30 秒超时
     
     if (!this.apiKey) {
       console.error('[Bailian] ⚠️ 警告：BAILIAN_API_KEY 未配置');
+    }
+    
+    // 解析 Base URL
+    if (this.baseUrl) {
+      try {
+        const urlObj = new URL(this.baseUrl);
+        this.endpoint = urlObj.hostname;
+        this.basePath = urlObj.pathname.replace(/\/$/, ''); // 去掉末尾斜杠
+        console.log(`[Bailian] 使用自定义 Base URL: ${this.baseUrl}`);
+      } catch (e) {
+        console.error('[Bailian] Base URL 格式错误:', e.message);
+        this.endpoint = 'dashscope.aliyuncs.com';
+        this.basePath = '/api/v1';
+      }
+    } else {
+      this.endpoint = 'dashscope.aliyuncs.com';
+      this.basePath = '/api/v1';
     }
   }
 
@@ -95,19 +114,39 @@ class BailianClient {
    */
   _callAPI(messages, temperature, maxTokens) {
     return new Promise((resolve, reject) => {
-      const requestBody = JSON.stringify({
-        model: this.model,
-        input: { messages },
-        parameters: {
+      // 检查是否是 OpenAI 兼容格式（Coding Plan 使用 /v1）
+      const isOpenAICompat = this.baseUrl && (this.baseUrl.includes('compatible-mode') || this.baseUrl.endsWith('/v1'));
+      
+      let requestBody;
+      let path;
+      
+      if (isOpenAICompat) {
+        // OpenAI 兼容格式（Coding Plan）
+        requestBody = JSON.stringify({
+          model: this.model,
+          messages,
           temperature,
-          max_tokens: maxTokens,
-          result_format: 'message'
-        }
-      });
+          max_tokens: maxTokens
+        });
+        path = `${this.basePath}/chat/completions`;
+        console.log(`[Bailian] 使用 OpenAI 兼容格式，模型：${this.model}`);
+      } else {
+        //  DashScope 原生格式
+        requestBody = JSON.stringify({
+          model: this.model,
+          input: { messages },
+          parameters: {
+            temperature,
+            max_tokens: maxTokens,
+            result_format: 'message'
+          }
+        });
+        path = `${this.basePath}/services/aigc/text-generation/generation`;
+      }
 
       const req = https.request({
         hostname: this.endpoint,
-        path: '/api/v1/services/aigc/text-generation/generation',
+        path,
         method: 'POST',
         timeout: this.timeout,
         headers: {
@@ -123,21 +162,44 @@ class BailianClient {
           try {
             const result = JSON.parse(body);
             
-            // 检查错误
-            if (result.code) {
-              const error = new Error(result.message || 'API 调用失败');
-              error.code = result.code;
+            // 检查错误（OpenAI 格式）
+            if (result.error) {
+              const error = new Error(result.error.message || 'API 调用失败');
+              error.code = result.error.code;
               error.requestId = result.request_id;
+              console.error(`[Bailian] API 错误：`, result.error);
               reject(error);
               return;
             }
             
-            // 返回使用量信息
-            resolve({
-              output: result.output,
-              usage: result.usage,
-              requestId: result.request_id
-            });
+            // 检查错误（DashScope 原生格式）
+            if (result.code) {
+              const error = new Error(result.message || 'API 调用失败');
+              error.code = result.code;
+              error.requestId = result.request_id;
+              console.error(`[Bailian] API 错误：`, result);
+              reject(error);
+              return;
+            }
+            
+            // 返回结果（兼容两种格式）
+            if (isOpenAICompat) {
+              // OpenAI 格式
+              resolve({
+                output: {
+                  choices: result.choices
+                },
+                usage: result.usage,
+                requestId: result.id
+              });
+            } else {
+              // DashScope 原生格式
+              resolve({
+                output: result.output,
+                usage: result.usage,
+                requestId: result.request_id
+              });
+            }
           } catch (error) {
             reject(new Error(`响应解析失败：${error.message}`));
           }

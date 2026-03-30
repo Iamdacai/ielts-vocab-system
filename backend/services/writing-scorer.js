@@ -1,14 +1,14 @@
 /**
  * 写作评分服务
- * 基于 Bailian AI 进行雅思写作评分
+ * 基于 MiniMax AI 进行雅思写作评分
  */
 
-const BailianClient = require('./bailian-client');
+const MiniMaxClient = require('./minimax-client');
 
 class WritingScorer {
   constructor() {
-    this.bailian = new BailianClient({
-      model: 'qwen-max',
+    this.minimax = new MiniMaxClient({
+      model: process.env.MINIMAX_MODEL || 'abab6.5s-chat',
       timeout: 90000 // 作文评分需要更长时间
     });
   }
@@ -125,7 +125,7 @@ ${essay}
 `.trim();
 
     try {
-      const result = await this.bailian.generate(prompt, {
+      const result = await this.minimax.generate(prompt, {
         temperature: 0.3, // 降低随机性
         maxTokens: 2000,
         jsonMode: true,

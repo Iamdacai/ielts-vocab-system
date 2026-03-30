@@ -4,7 +4,9 @@
  */
 
 const db = require('../database');
-const writingScorer = require('./writing-scorer');
+// 使用简化评分（无需外部 API）
+const writingScorer = require('./writing-scorer-simple');
+// const writingScorer = require('./writing-scorer'); // AI 评分（需要配置 API Key）
 
 class WritingService {
   /**

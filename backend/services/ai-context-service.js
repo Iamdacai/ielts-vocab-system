@@ -4,12 +4,12 @@
  */
 
 const db = require('../database');
-const BailianClient = require('./bailian-client');
+const MiniMaxClient = require('./minimax-client');
 const crypto = require('crypto');
 
 class AIContextService {
   constructor() {
-    this.bailian = new BailianClient({
+    this.bailian = new MiniMaxClient({
       model: 'qwen-max', // 使用 qwen-max 获得最佳质量
       timeout: 30000
     });
@@ -122,7 +122,7 @@ class AIContextService {
     
     let result;
     try {
-      result = await this.bailian.generate(prompt, {
+      result = await this.minimax.generate(prompt, {
         temperature: 0.7,
         maxTokens: 1500,
         jsonMode: true,
