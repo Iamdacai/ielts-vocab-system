@@ -117,6 +117,16 @@ Page({
   async submitEssay() {
     const { essayContent, wordCount, currentTopic, essayType } = this.data;
     
+    // 验证题目是否加载成功
+    if (!currentTopic || !currentTopic.id) {
+      wx.showModal({
+        title: '提示',
+        content: '题目未加载成功，请刷新页面重试',
+        showCancel: false
+      });
+      return;
+    }
+    
     // 验证
     if (wordCount < 50) {
       wx.showModal({
