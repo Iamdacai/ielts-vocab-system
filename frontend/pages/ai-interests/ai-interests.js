@@ -178,9 +178,14 @@ Page({
       .filter(item => item.selected)
       .map(item => item.name);
     
+    // 🆕 从 topicList 中提取选中的场景
+    const selectedTopics = this.data.topicList
+      .filter(item => item.selected)
+      .map(item => item.name);
+    
     console.log('[AI 兴趣] ========== 开始保存 ==========');
     console.log('[AI 兴趣] 选择的兴趣:', selectedInterests);
-    console.log('[AI 兴趣] selectedTopics:', this.data.selectedTopics);
+    console.log('[AI 兴趣] 选择的场景:', selectedTopics);
     console.log('[AI 兴趣] aiEnabled:', this.data.aiEnabled);
     
     if (selectedInterests.length === 0) {
@@ -205,7 +210,7 @@ Page({
       },
       data: {
         interests: selectedInterests,
-        preferred_topics: this.data.selectedTopics || [],
+        preferred_topics: selectedTopics,
         ai_context_enabled: this.data.aiEnabled
       },
       timeout: 10000,
