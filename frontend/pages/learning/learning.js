@@ -43,7 +43,8 @@ Page({
     aiExamples: [],
     aiExplanation: '',
     fromCache: false,
-    aiLoading: false
+    aiLoading: false,
+    showExamples: false  // 🆕 控制例句区域显示/隐藏
   },
 
   onLoad() {
@@ -752,6 +753,21 @@ Page({
         });
       }
     });
+  },
+
+  /**
+   * 🆕 切换例句显示/隐藏
+   */
+  toggleExamples() {
+    const showExamples = !this.data.showExamples;
+    console.log('[AI 例句] 切换显示:', showExamples);
+    
+    this.setData({ showExamples });
+    
+    // 首次显示时加载例句
+    if (showExamples && this.data.currentWord && (!this.data.aiExamples || this.data.aiExamples.length === 0)) {
+      this.loadAIExamples(this.data.currentWord.word, this.data.currentWord.id);
+    }
   },
 
   /**

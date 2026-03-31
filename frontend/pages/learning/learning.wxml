@@ -87,8 +87,14 @@
       <view wx:if="{{currentWord.pos}}" class="pos-tag">{{currentWord.pos}}</view>
     </view>
 
-    <!-- AI 例句区域（优先显示） -->
-    <view wx:if="{{aiExamples && aiExamples.length > 0}}" class="ai-example-section">
+    <!-- 🆕 更多例句按钮 -->
+    <view class="more-examples-button" bindtap="toggleExamples">
+      <text wx:if="{{!showExamples}}">📝 更多例句</text>
+      <text wx:else>🔼 收起例句</text>
+    </view>
+    
+    <!-- AI 例句区域（点击按钮后显示） -->
+    <view wx:if="{{showExamples}}" class="ai-example-section">
       <view class="section-header">
         <view class="section-title">🤖 AI 定制例句</view>
         <view class="ai-badges">
@@ -97,27 +103,37 @@
         </view>
       </view>
       
-      <view wx:if="{{aiExplanation}}" class="ai-explanation">
-        <text>{{aiExplanation}}</text>
+      <view wx:if="{{aiLoading}}" class="ai-loading">
+        <text>🤖 AI 正在生成例句...</text>
       </view>
       
-      <view class="example-list">
-        <view class="example-item ai-example" wx:for="{{aiExamples}}" wx:key="id">
-          <view class="example-en">{{item.en}}</view>
-          <view class="example-cn">{{item.cn}}</view>
-          
-          <view class="collocations" wx:if="{{item.collocations && item.collocations.length > 0}}">
-            <text class="collocation" wx:for="{{item.collocations}}" wx:key="*this">
-              📌 {{item}}
-            </text>
-          </view>
-          
-          <view class="feedback-actions">
-            <button class="feedback-btn like" bindtap="onExampleFeedback" data-example-id="{{item.id}}" data-feedback="like">👍</button>
-            <button class="feedback-btn dislike" bindtap="onExampleFeedback" data-example-id="{{item.id}}" data-feedback="dislike">👎</button>
-            <button class="regenerate-btn" bindtap="regenerateExamples">🔄 换一批</button>
+      <view wx:if="{{!aiLoading && aiExamples && aiExamples.length > 0}}">
+        <view wx:if="{{aiExplanation}}" class="ai-explanation">
+          <text>{{aiExplanation}}</text>
+        </view>
+        
+        <view class="example-list">
+          <view class="example-item ai-example" wx:for="{{aiExamples}}" wx:key="id">
+            <view class="example-en">{{item.en}}</view>
+            <view class="example-cn">{{item.cn}}</view>
+            
+            <view class="collocations" wx:if="{{item.collocations && item.collocations.length > 0}}">
+              <text class="collocation" wx:for="{{item.collocations}}" wx:key="*this">
+                📌 {{item}}
+              </text>
+            </view>
+            
+            <view class="feedback-actions">
+              <button class="feedback-btn like" bindtap="onExampleFeedback" data-example-id="{{item.id}}" data-feedback="like">👍</button>
+              <button class="feedback-btn dislike" bindtap="onExampleFeedback" data-example-id="{{item.id}}" data-feedback="dislike">👎</button>
+              <button class="regenerate-btn" bindtap="regenerateExamples">🔄 换一批</button>
+            </view>
           </view>
         </view>
+      </view>
+      
+      <view wx:if="{{!aiLoading && (!aiExamples || aiExamples.length === 0)}}" class="no-examples">
+        <text>暂无例句，点击按钮生成</text>
       </view>
     </view>
 

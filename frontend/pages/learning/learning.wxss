@@ -10,6 +10,24 @@
   margin-bottom: 30rpx;
 }
 
+/* 🆕 更多例句按钮 */
+.more-examples-button {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #ffffff;
+  border-radius: 12rpx;
+  padding: 20rpx 30rpx;
+  text-align: center;
+  font-size: 28rpx;
+  font-weight: bold;
+  margin: 20rpx 0;
+  box-shadow: 0 4rpx 12rpx rgba(59, 130, 246, 0.4);
+}
+
+.more-examples-button:active {
+  opacity: 0.8;
+  transform: scale(0.98);
+}
+
 .progress-info {
   display: flex;
   justify-content: space-between;
@@ -175,6 +193,28 @@
 
 .example-item:last-child {
   margin-bottom: 0;
+}
+
+/* AI 例句加载状态 */
+.ai-loading {
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 12rpx;
+  padding: 30rpx;
+  text-align: center;
+  color: #60a5fa;
+  font-size: 28rpx;
+  margin-bottom: 20rpx;
+}
+
+/* 无例句提示 */
+.no-examples {
+  background: rgba(156, 163, 175, 0.1);
+  border-radius: 12rpx;
+  padding: 30rpx;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 28rpx;
+  margin-bottom: 20rpx;
 }
 
 /* AI 例句区域 */
