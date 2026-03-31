@@ -79,12 +79,24 @@ class MiniMaxClient {
         // JSON 模式尝试解析
         if (jsonMode) {
           try {
-            // 清理可能的 markdown 标记
-            const jsonStr = content.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+            // 清理可能的 markdown 标记和思考过程
+            let jsonStr = content
+              .replace(/<think>[\s\S]*?<\/?f(?:or)?thoughts?>/g, '')  // 清理 <think>...</think>
+              .replace(/```json\s*/g, '')
+              .replace(/```\s*/g, '')
+              .trim();
+            
+            // 提取 JSON 部分（如果有多个 JSON 对象，取第一个完整的）
+            const jsonMatch = jsonStr.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              jsonStr = jsonMatch[0];
+            }
+            
+            console.log('[MiniMax] 清理后的 JSON:', jsonStr.substring(0, 200) + '...');
             return JSON.parse(jsonStr);
           } catch (parseError) {
             console.error('[MiniMax] JSON 解析失败:', parseError);
-            console.error('[MiniMax] 原始响应:', content);
+            console.error('[MiniMax] 原始响应:', content.substring(0, 500));
             throw new Error('AI 返回的 JSON 格式无效');
           }
         }
