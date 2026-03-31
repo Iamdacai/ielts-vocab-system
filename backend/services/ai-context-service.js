@@ -9,8 +9,8 @@ const crypto = require('crypto');
 
 class AIContextService {
   constructor() {
-    this.bailian = new MiniMaxClient({
-      model: 'qwen-max', // 使用 qwen-max 获得最佳质量
+    this.minimax = new MiniMaxClient({
+      model: process.env.MINIMAX_MODEL || 'MiniMax-M2.5',
       timeout: 30000
     });
     
