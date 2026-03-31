@@ -236,36 +236,58 @@ Page({
     try {
       const token = wx.getStorageSync('token');
       
-      const res = await wx.request({
-        url: `${app.globalData.apiUrl}/writing/submit`,
-        method: 'POST',
-        header: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        data: {
-          topic_id: currentTopic.id,
-          topic: currentTopic.topic,
-          essay_type: essayType,
-          content: essayContent,
-          word_count: wordCount
-        }
-      });
+      console.log('[写作提交] ========== 开始提交作文 ==========');
+      console.log('[写作提交] topic_id:', currentTopic.id);
+      console.log('[写作提交] word_count:', wordCount);
+      console.log('[写作提交] essay 长度:', essayContent.length);
       
-      if (res.data.success) {
-        this.setData({ writingResult: res.data.data });
-        this.stopTimer();
-        
-        wx.showModal({
-          title: '批改完成',
-          content: `总分：${res.data.data.score}\n${res.data.data.feedback}`,
-          showCancel: false
+      return new Promise((resolve, reject) => {
+        wx.request({
+          url: `${app.globalData.apiUrl}/writing/submit`,
+          method: 'POST',
+          header: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          data: {
+            topic_id: currentTopic.id,
+            topic: currentTopic.topic,
+            essay_type: essayType,
+            content: essayContent,
+            word_count: wordCount
+          },
+          timeout: 60000, // 60 秒超时（AI 评分需要时间）
+          success: (result) => {
+            console.log('[写作提交] ✅ submit success');
+            console.log('[写作提交] statusCode:', result.statusCode);
+            console.log('[写作提交] data:', result.data);
+            
+            if (result.statusCode === 200 && result.data && result.data.success) {
+              this.setData({ writingResult: result.data.data });
+              this.stopTimer();
+              
+              wx.showModal({
+                title: '批改完成',
+                content: `总分：${result.data.data.score}\n${result.data.data.feedback}`,
+                showCancel: false
+              });
+              resolve();
+            } else {
+              console.error('[写作提交] ❌ 批改失败:', result.data);
+              reject(new Error(result.data ? result.data.error : '响应格式错误'));
+            }
+          },
+          fail: (error) => {
+            console.error('[写作提交] ❌ submit fail');
+            console.error('[写作提交] errMsg:', error.errMsg);
+            reject(error);
+          }
         });
-      } else {
-        throw new Error(res.data.error);
-      }
+      });
     } catch (error) {
-      console.error('[写作] 提交失败:', error);
+      console.error('[写作提交] ========== 提交失败 ==========');
+      console.error('[写作提交] error:', error);
+      
       wx.showModal({
         title: '批改失败',
         content: error.message || '请稍后重试',
