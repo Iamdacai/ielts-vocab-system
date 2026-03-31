@@ -1,10 +1,11 @@
 /**
- * MiniMax API 客户端封装
- * 用于 MiniMax 大模型调用
+ * MiniMax API 客户端封装（使用 Anthropic 兼容格式）
+ * 用于 MiniMax Coding Plan 调用
  * 
  * 配置：
  * - API Key: process.env.MINIMAX_API_KEY
- * - 模型：abab6.5s-chat（默认）或 abab6.5-chat
+ * - Base URL: https://api.minimaxi.com/anthropic/v1/messages
+ * - 模型：MiniMax-M2.5（默认）
  */
 
 const https = require('https');
@@ -12,13 +13,17 @@ const https = require('https');
 class MiniMaxClient {
   constructor(options = {}) {
     this.apiKey = process.env.MINIMAX_API_KEY;
-    this.endpoint = 'api.minimax.chat';
-    this.model = options.model || process.env.MINIMAX_MODEL || 'abab6.5s-chat';
-    this.timeout = options.timeout || 60000; // 60 秒超时（写作评分需要更长时间）
+    // Coding Plan 使用 Anthropic 兼容格式
+    this.endpoint = 'api.minimaxi.com';
+    this.basePath = '/anthropic/v1/messages';
+    this.model = options.model || process.env.MINIMAX_MODEL || 'MiniMax-M2.5';
+    this.timeout = options.timeout || 60000; // 60 秒超时
     
     if (!this.apiKey) {
       console.error('[MiniMax] ⚠️ 警告：MINIMAX_API_KEY 未配置');
     }
+    
+    console.log(`[MiniMax] 初始化：模型=${this.model}, endpoint=${this.endpoint}`);
   }
 
   /**
@@ -89,21 +94,26 @@ class MiniMaxClient {
   }
 
   /**
-   * 调用 MiniMax API
+   * 调用 MiniMax API（Anthropic 兼容格式）
    * @private
    */
   _callAPI(messages, temperature, maxTokens) {
     return new Promise((resolve, reject) => {
+      // Anthropic Messages API 格式
       const requestBody = JSON.stringify({
         model: this.model,
-        messages,
-        temperature,
-        max_tokens: maxTokens
+        max_tokens: maxTokens,
+        messages: messages.map(m => ({
+          role: m.role,
+          content: m.content
+        }))
       });
+
+      console.log(`[MiniMax] 请求：${this.model}, max_tokens=${maxTokens}`);
 
       const req = https.request({
         hostname: this.endpoint,
-        path: '/v1/text/chatcompletion_v2',
+        path: this.basePath,
         method: 'POST',
         timeout: this.timeout,
         headers: {
@@ -119,20 +129,42 @@ class MiniMaxClient {
           try {
             const result = JSON.parse(body);
             
-            // 检查错误
-            if (result.base_resp && result.base_resp.status_code !== 0) {
-              const error = new Error(result.base_resp.status_msg || 'API 调用失败');
-              error.code = result.base_resp.status_code;
+            // 检查错误（Anthropic 格式）
+            if (result.error) {
+              const error = new Error(result.error.message || 'API 调用失败');
+              error.code = result.error.code;
+              console.error('[MiniMax] API 错误:', result.error);
               reject(error);
               return;
             }
             
-            // 返回结果
-            resolve({
-              choices: result.choices,
-              usage: result.usage,
-              id: result.id
-            });
+            // 检查 base_resp（MiniMax 特有）
+            if (result.base_resp && result.base_resp.status_code !== 0) {
+              const error = new Error(result.base_resp.status_msg || 'API 调用失败');
+              error.code = result.base_resp.status_code;
+              console.error('[MiniMax] API 错误:', result.base_resp);
+              reject(error);
+              return;
+            }
+            
+            // Anthropic 格式响应
+            if (result.content && Array.isArray(result.content)) {
+              // 提取文本内容（跳过 thinking）
+              const textContent = result.content
+                .filter(c => c.type === 'text')
+                .map(c => c.text)
+                .join('');
+              
+              console.log(`[MiniMax] ✅ 成功，output_tokens=${result.usage?.output_tokens}`);
+              
+              resolve({
+                content: textContent,
+                usage: result.usage,
+                id: result.id
+              });
+            } else {
+              reject(new Error('响应格式未知'));
+            }
           } catch (error) {
             reject(new Error(`响应解析失败：${error.message}`));
           }
