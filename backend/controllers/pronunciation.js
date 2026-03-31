@@ -60,7 +60,7 @@ async function fetchTTSFromYoudao(word) {
 }
 
 /**
- * 发音评分入口
+ * 发音评分入口（内部函数）
  */
 async function analyzePronunciation(userAudioPath, targetWord) {
   // 如果启用了真实 API，使用讯飞发音评测
@@ -71,6 +71,9 @@ async function analyzePronunciation(userAudioPath, targetWord) {
   // 否则使用模拟评分（带一些智能逻辑）
   return await analyzeWithSimulation(userAudioPath, targetWord);
 }
+
+// 🆕 导出内部函数供 simple-server-https.js 调用
+module.exports.analyzePronunciation = analyzePronunciation;
 
 const crypto = require('crypto');
 
@@ -447,9 +450,9 @@ exports.getWordAudio = async (req, res) => {
 };
 
 /**
- * 上传用户录音并进行发音评分
+ * 上传用户录音并进行发音评分（HTTP 处理函数）
  */
-exports.analyzePronunciation = async (req, res) => {
+exports.analyzePronunciationHTTP = async (req, res) => {
   try {
     // 检查是否有上传的文件
     if (!req.file) {

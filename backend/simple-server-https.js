@@ -1452,7 +1452,7 @@ app.post('/api/pronunciation/analyze', upload.single('audio'), async (req, res) 
     console.log(`[Pronunciation] 单词：${word}`);
     console.log(`[Pronunciation] 文件：${audioPath}`);
     
-    // 🆕 调用讯飞/模拟评分
+    // 🆕 调用讯飞/模拟评分（内部函数）
     console.log(`[Pronunciation] 调用 analyzePronunciation...`);
     const result = await analyzePronunciation(audioPath, word);
     console.log(`[Pronunciation] ✅ 评分完成：${result.score}分`);

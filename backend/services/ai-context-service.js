@@ -130,7 +130,20 @@ class AIContextService {
       });
     } catch (error) {
       console.error('[AI] ❌ Bailian API 调用失败:', error.message);
-      throw new Error(`AI 生成失败：${error.message}`);
+      console.log('[AI] 🔄 降级到模拟数据...');
+      
+      // 降级：返回模拟例句
+      const mockExamples = this._generateMockExamples(word, count, difficulty);
+      const mockResult = {
+        word,
+        examples: mockExamples,
+        ai_explanation: `AI 服务暂时不可用，已返回模拟例句。请稍后重试。`,
+        from_cache: false,
+        isMock: true
+      };
+      
+      await this._logGeneration(userId, word, wordId, '', mockResult, Date.now() - startTime, false);
+      return mockResult;
     }
 
     // 6. 验证和清理结果
@@ -280,6 +293,32 @@ class AIContextService {
     }
 
     return savedIds;
+  }
+
+  /**
+   * 生成模拟例句（降级用）
+   * @private
+   */
+  _generateMockExamples(word, count, difficulty) {
+    const mockExamples = [
+      {
+        sentence: `The ${word} is widely used in academic research.`,
+        translation: `${word} 广泛应用于学术研究中。`,
+        context: 'academic'
+      },
+      {
+        sentence: `Many experts recommend using ${word} in daily communication.`,
+        translation: `许多专家建议在日常交流中使用 ${word}。`,
+        context: 'daily'
+      },
+      {
+        sentence: `The concept of ${word} has gained significant attention in recent years.`,
+        translation: `${word} 的概念近年来受到了广泛关注。`,
+        context: 'general'
+      }
+    ];
+    
+    return mockExamples.slice(0, count);
   }
 
   /**
