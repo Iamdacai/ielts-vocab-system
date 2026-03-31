@@ -17,9 +17,10 @@ const axios = require('axios');
 // 配置
 const CONFIG = {
   // 是否启用真实发音评分 API（讯飞语音评测）
-  enableRealPronunciationAPI: true,  // ✅ 启用真实评分
+  // ⚠️ 讯飞 API 域名频繁变更，暂时使用模拟评分
+  enableRealPronunciationAPI: false,  // ❌ 暂时禁用
   
-  // 讯飞语音评测配置
+  // 讯飞语音评测配置（保留配置，后续启用）
   iflytekPronunciationAPI: {
     appId: process.env.IFLYTEK_APP_ID || '',
     apiKey: process.env.IFLYTEK_API_KEY || '',
