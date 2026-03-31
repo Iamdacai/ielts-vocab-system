@@ -13,7 +13,9 @@
   <!-- 题目卡片 -->
   <view class="topic-card" wx:if="{{currentTopic}}">
     <view class="topic-header">
-      <text class="topic-label">{{essayType === 'task2' ? 'Task 2 议论文' : 'Task 1 图表/书信'}}</text>
+      <text class="topic-label">
+        {{essayType === 'task2' ? 'Task 2 议论文' : (currentTopic.task_type === 'task1_academic' ? 'Task 1 学术类' : 'Task 1 培训类')}}
+      </text>
       <text class="topic-type">{{currentTopic.topic}}</text>
     </view>
     <view class="topic-question">{{currentTopic.question}}</view>

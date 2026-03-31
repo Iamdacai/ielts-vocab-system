@@ -33,11 +33,20 @@ Page({
     
     try {
       const token = wx.getStorageSync('token');
-      const requestUrl = `${app.globalData.apiUrl}/writing/topics?task_type=${this.data.essayType}&count=1`;
+      
+      // 🆕 Task1 分为学术类和培训类，随机选择
+      let taskType = this.data.essayType;
+      if (taskType === 'task1') {
+        // 随机选择 task1_academic 或 task1_general
+        taskType = Math.random() > 0.5 ? 'task1_academic' : 'task1_general';
+      }
+      
+      const requestUrl = `${app.globalData.apiUrl}/writing/topics?task_type=${taskType}&count=1`;
       
       console.log('[写作] ========== 开始加载题目 ==========');
+      console.log('[写作] essayType:', this.data.essayType);
+      console.log('[写作] 实际请求 task_type:', taskType);
       console.log('[写作] token:', token ? '已获取 (长度:' + token.length + ')' : '未获取到');
-      console.log('[写作] apiUrl:', app.globalData.apiUrl);
       console.log('[写作] requestUrl:', requestUrl);
       
       if (!token) {
@@ -79,7 +88,8 @@ Page({
               resolve();
             } else {
               console.error('[写作] ❌ 数据格式错误:', result.data);
-              reject(new Error('数据格式错误'));
+              console.error('[写作] ❌ data.data 为空数组或 undefined');
+              reject(new Error('题目数据为空，请重试'));
             }
           },
           fail: (error) => {
