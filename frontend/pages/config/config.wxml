@@ -107,19 +107,6 @@
     <button class="button" bindtap="saveConfig">保存配置</button>
     <button class="button" style="background:#666" bindtap="goBackHome">返回首页</button>
     
-    <!-- 🆕 AI 语境设置入口 -->
-    <view class="config-section" style="margin-top: 40rpx; border-top: 2rpx solid #3b82f6; padding-top: 30rpx;">
-      <view class="subtitle">🤖 AI 语境生成</view>
-      <view class="ai-feature-card" bindtap="goToAIInterests">
-        <view class="ai-feature-icon">🤖</view>
-        <view class="ai-feature-info">
-          <view class="ai-feature-title">AI 定制例句</view>
-          <view class="ai-feature-desc">根据你的兴趣生成个性化例句，让背单词更有趣</view>
-        </view>
-        <view class="ai-feature-arrow">›</view>
-      </view>
-    </view>
-    
     <!-- 🆕 录音权限说明 -->
     <view class="config-section" style="margin-top: 40rpx; border-top: 2rpx solid #eee; padding-top: 30rpx;">
       <view class="subtitle">🎤 录音权限说明</view>
