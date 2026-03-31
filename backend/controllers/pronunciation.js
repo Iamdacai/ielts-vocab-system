@@ -95,8 +95,8 @@ async function analyzeWithIFlyTek(userAudioPath, targetWord) {
     const audioBuffer = await fs.readFile(userAudioPath);
     const audioBase64 = audioBuffer.toString('base64');
     
-    // 讯飞语音评测 API（听写接口）
-    const host = 'api-open.xfyun.cn';
+    // 讯飞语音评测 API（备用域名：api.xfyun.cn）
+    const host = 'api.xfyun.cn';
     const apiPath = '/v2/openservice/roll_call';
     const url = `https://${host}${apiPath}`;
     
