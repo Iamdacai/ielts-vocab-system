@@ -1429,7 +1429,9 @@ app.post('/api/sessions', async (req, res) => {
   }
 });
 
-// 🆕 发音评分 API - 分析用户发音并保存记录
+// 🆕 发音评分 API - 分析用户发音并保存记录（使用讯飞/模拟）
+const { analyzePronunciation } = require('./controllers/pronunciation');
+
 app.post('/api/pronunciation/analyze', upload.single('audio'), async (req, res) => {
   try {
     // 检查是否有上传的文件
@@ -1446,44 +1448,13 @@ app.post('/api/pronunciation/analyze', upload.single('audio'), async (req, res) 
     }
     
     const audioPath = req.file.path;
-    console.log(`[Pronunciation] Analyzing: "${word}", file: ${audioPath}`);
+    console.log(`[Pronunciation] ========== 开始评分 ==========`);
+    console.log(`[Pronunciation] 单词：${word}`);
+    console.log(`[Pronunciation] 文件：${audioPath}`);
     
-    // 获取音频文件信息
-    const stats = fs.statSync(audioPath);
-    const fileSize = stats.size;
-    
-    // 基于文件大小的简单验证（太短或太长都不好）
-    // 正常 3-8 秒的录音应该在 50KB-200KB 之间
-    let baseScore = 75;
-    
-    if (fileSize < 30000) {
-      // 录音太短
-      baseScore = Math.floor(Math.random() * 20) + 50; // 50-70
-    } else if (fileSize > 300000) {
-      // 录音太长
-      baseScore = Math.floor(Math.random() * 20) + 60; // 60-80
-    } else {
-      // 正常范围，给个较好的分数
-      baseScore = Math.floor(Math.random() * 30) + 70; // 70-100
-    }
-    
-    // 添加一些随机性
-    const randomFactor = Math.floor(Math.random() * 10) - 5; // -5 to +5
-    const finalScore = Math.max(0, Math.min(100, baseScore + randomFactor));
-    
-    // 生成反馈
-    let feedback;
-    if (finalScore >= 90) {
-      feedback = '发音非常标准！继续保持！🎉';
-    } else if (finalScore >= 80) {
-      feedback = '发音很好，注意个别音节的重音位置。👍';
-    } else if (finalScore >= 70) {
-      feedback = '发音基本正确，但某些音素需要改进。💪';
-    } else if (finalScore >= 60) {
-      feedback = '发音需要更多练习，建议多听标准发音并跟读。📚';
-    } else {
-      feedback = '继续加油！多听多练会进步的！🔥';
-    }
+    // 🆕 调用讯飞/模拟评分
+    const result = await analyzePronunciation(audioPath, word);
+    console.log(`[Pronunciation] ✅ 评分完成：${result.score}分`);
     
     // 🆕 保存到数据库
     const db = await initializeDatabase();
@@ -1495,18 +1466,17 @@ app.post('/api/pronunciation/analyze', upload.single('audio'), async (req, res) 
       );
       
       if (wordRecord) {
-        // 🆕 保存发音记录（修复表名）
+        // 🆕 保存发音记录
         await db.run(
           `INSERT INTO pronunciation_practice_records 
            (user_id, word_id, audio_file_path, pronunciation_score, feedback, created_at) 
            VALUES (?, ?, ?, ?, ?, datetime('now'))`,
-          [1, wordRecord.id, audioPath, finalScore, feedback]
+          [1, wordRecord.id, audioPath, result.score, result.feedback]
         );
-        console.log(`[Pronunciation] Record saved for word: ${word}`);
+        console.log(`[Pronunciation] 📝 记录已保存`);
       }
     } catch (dbError) {
-      console.error('[Pronunciation] Save record error:', dbError.message);
-      // 不阻断主流程，继续返回评分结果
+      console.error('[Pronunciation] 保存记录失败:', dbError.message);
     }
     
     // 清理临时文件
@@ -1516,16 +1486,17 @@ app.post('/api/pronunciation/analyze', upload.single('audio'), async (req, res) 
       console.error('清理临时文件失败:', e);
     }
     
-    console.log(`[Pronunciation] Analysis complete: ${finalScore}/100`);
-    
+    // 返回结果
     res.json({
-      score: finalScore,
-      accuracy: Math.round(finalScore * 0.95), // 模拟准确度
-      fluency: Math.round(finalScore * 0.9),   // 模拟流利度
-      feedback: feedback,
+      score: result.score,
+      accuracy: result.accuracy || Math.round(result.score * 0.95),
+      fluency: result.fluency || Math.round(result.score * 0.9),
+      completeness: result.completeness,
+      feedback: result.feedback,
       word: word,
-      timestamp: new Date().toISOString(),
-      isRecorded: true // 标记已保存记录
+      timestamp: result.timestamp,
+      isRealScore: result.isRealScore || false,
+      isRecorded: true
     });
     
   } catch (error) {

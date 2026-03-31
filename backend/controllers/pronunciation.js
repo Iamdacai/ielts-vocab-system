@@ -1,3 +1,4 @@
+require('dotenv').config();
 const path = require('path');
 const fs = require('fs').promises;
 const https = require('https');
@@ -29,6 +30,12 @@ const CONFIG = {
     type: 'read_word'
   }
 };
+
+// 🆕 打印配置检查
+console.log('[讯飞配置] enableRealPronunciationAPI:', CONFIG.enableRealPronunciationAPI);
+console.log('[讯飞配置] appId:', CONFIG.iflytekPronunciationAPI.appId ? '已配置 ✅' : '未配置 ❌');
+console.log('[讯飞配置] apiKey:', CONFIG.iflytekPronunciationAPI.apiKey ? '已配置 ✅' : '未配置 ❌');
+console.log('[讯飞配置] apiSecret:', CONFIG.iflytekPronunciationAPI.apiSecret ? '已配置 ✅' : '未配置 ❌');
 
 /**
  * 从有道词典获取 TTS 音频
@@ -152,8 +159,8 @@ async function analyzeWithIFlyTek(userAudioPath, targetWord) {
     const fluency = overall.fls || 0;  // 流利度
     
     console.log('[讯飞] 评分详情:', {
-      总分：score,
-      流利度：fluency
+      score: score,
+      fluency: fluency
     });
     
     // 生成反馈
