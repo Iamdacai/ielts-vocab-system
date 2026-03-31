@@ -1,29 +1,41 @@
 /**
- * MiniMax API 客户端封装（使用 Anthropic 兼容格式）
- * 用于 MiniMax Coding Plan 调用
+ * MiniMax API 客户端封装（支持标准格式和 Anthropic 兼容格式）
  * 
  * 配置：
  * - API Key: process.env.MINIMAX_API_KEY
- * - Base URL: https://api.minimaxi.com/anthropic/v1/messages
- * - 模型：MiniMax-M2.5（默认）
+ * - Base URL: process.env.MINIMAX_BASE_URL
+ * - 模型：M2-her（默认，免费）或 MiniMax-M2.7（付费）
  */
 
 const https = require('https');
+const { URL } = require('url');
 
 class MiniMaxClient {
   constructor(options = {}) {
     this.apiKey = process.env.MINIMAX_API_KEY;
-    // Coding Plan 使用 Anthropic 兼容格式
-    this.endpoint = 'api.minimaxi.com';
-    this.basePath = '/anthropic/v1/messages';
-    this.model = options.model || process.env.MINIMAX_MODEL || 'MiniMax-M2.5';
+    this.baseUrl = process.env.MINIMAX_BASE_URL || 'https://api.minimaxi.com/v1';
+    this.model = options.model || process.env.MINIMAX_MODEL || 'M2-her';
     this.timeout = options.timeout || 60000; // 60 秒超时
+    
+    // 解析 Base URL
+    try {
+      const urlObj = new URL(this.baseUrl);
+      this.endpoint = urlObj.hostname;
+      this.basePath = urlObj.pathname.replace(/\/$/, ''); // 去掉末尾斜杠
+    } catch (e) {
+      console.error('[MiniMax] Base URL 格式错误:', e.message);
+      this.endpoint = 'api.minimaxi.com';
+      this.basePath = '/v1';
+    }
+    
+    // 判断是否使用 Anthropic 兼容格式
+    this.isAnthropicCompat = this.baseUrl.includes('/anthropic/');
     
     if (!this.apiKey) {
       console.error('[MiniMax] ⚠️ 警告：MINIMAX_API_KEY 未配置');
     }
     
-    console.log(`[MiniMax] 初始化：模型=${this.model}, endpoint=${this.endpoint}`);
+    console.log(`[MiniMax] 初始化：模型=${this.model}, 端点=${this.endpoint}${this.basePath}, 格式=${this.isAnthropicCompat ? 'Anthropic' : '标准'}`);
   }
 
   /**
@@ -94,26 +106,43 @@ class MiniMaxClient {
   }
 
   /**
-   * 调用 MiniMax API（Anthropic 兼容格式）
+   * 调用 MiniMax API（支持标准格式和 Anthropic 兼容格式）
    * @private
    */
   _callAPI(messages, temperature, maxTokens) {
     return new Promise((resolve, reject) => {
-      // Anthropic Messages API 格式
-      const requestBody = JSON.stringify({
-        model: this.model,
-        max_tokens: maxTokens,
-        messages: messages.map(m => ({
-          role: m.role,
-          content: m.content
-        }))
-      });
+      let requestBody;
+      let path;
+      
+      if (this.isAnthropicCompat) {
+        // Anthropic 兼容格式
+        requestBody = JSON.stringify({
+          model: this.model,
+          max_tokens: maxTokens,
+          messages: messages.map(m => ({
+            role: m.role,
+            content: m.content
+          }))
+        });
+        path = this.basePath;
+        console.log(`[MiniMax] 使用 Anthropic 兼容格式：${this.model}`);
+      } else {
+        // 标准格式（M2-her 等）
+        requestBody = JSON.stringify({
+          model: this.model,
+          messages: messages,
+          temperature: temperature,
+          max_tokens: maxTokens
+        });
+        path = `${this.basePath}/chat/completions`;
+        console.log(`[MiniMax] 使用标准格式：${this.model}`);
+      }
 
       console.log(`[MiniMax] 请求：${this.model}, max_tokens=${maxTokens}`);
 
       const req = https.request({
         hostname: this.endpoint,
-        path: this.basePath,
+        path,
         method: 'POST',
         timeout: this.timeout,
         headers: {
@@ -129,7 +158,7 @@ class MiniMaxClient {
           try {
             const result = JSON.parse(body);
             
-            // 检查错误（Anthropic 格式）
+            // 检查错误
             if (result.error) {
               const error = new Error(result.error.message || 'API 调用失败');
               error.code = result.error.code;
@@ -147,24 +176,31 @@ class MiniMaxClient {
               return;
             }
             
-            // Anthropic 格式响应
-            if (result.content && Array.isArray(result.content)) {
-              // 提取文本内容（跳过 thinking）
-              const textContent = result.content
+            // 提取响应内容（兼容两种格式）
+            let content = '';
+            if (this.isAnthropicCompat && result.content && Array.isArray(result.content)) {
+              // Anthropic 格式
+              content = result.content
                 .filter(c => c.type === 'text')
                 .map(c => c.text)
                 .join('');
-              
-              console.log(`[MiniMax] ✅ 成功，output_tokens=${result.usage?.output_tokens}`);
-              
-              resolve({
-                content: textContent,
-                usage: result.usage,
-                id: result.id
-              });
-            } else {
-              reject(new Error('响应格式未知'));
+            } else if (result.choices && result.choices.length > 0) {
+              // 标准格式（OpenAI 兼容）
+              content = result.choices[0].message?.content || '';
             }
+            
+            if (!content) {
+              reject(new Error('响应内容为空'));
+              return;
+            }
+            
+            console.log(`[MiniMax] ✅ 成功`);
+            
+            resolve({
+              content,
+              usage: result.usage,
+              id: result.id || result.request_id
+            });
           } catch (error) {
             reject(new Error(`响应解析失败：${error.message}`));
           }
