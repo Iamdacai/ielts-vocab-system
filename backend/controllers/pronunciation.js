@@ -155,33 +155,49 @@ async function analyzeWithIFlyTek(userAudioPath, targetWord) {
     const ssb = data.ssb || {};
     const overall = ssb.overall || {};
     
-    const score = overall.score || 0;
-    const fluency = overall.fls || 0;  // 流利度
+    // 多维度评分
+    const score = overall.score || 0;        // 总分
+    const fluency = overall.fls || 0;        // 流利度
+    const accuracy = overall.acc || 0;       // 准确度
+    const completeness = overall.com || 0;   // 完整度
+    const prosody = overall.pro || 0;        // 韵律
     
     console.log('[讯飞] 评分详情:', {
       score: score,
-      fluency: fluency
+      fluency: fluency,
+      accuracy: accuracy,
+      completeness: completeness,
+      prosody: prosody
     });
     
-    // 生成反馈
-    const feedback = generateIFlyTekFeedback(score, fluency, targetWord);
+    // 生成详细反馈
+    const feedback = generateIFlyTekFeedback(score, fluency, targetWord, result);
     
     return {
       score: Math.round(score),
       fluency: Math.round(fluency),
+      accuracy: Math.round(accuracy),
+      completeness: Math.round(completeness),
+      prosody: Math.round(prosody),
       feedback: feedback,
       word: targetWord,
       timestamp: new Date().toISOString(),
       detailedResult: result,
-      isRealScore: true  // 标记为真实评分
+      isRealScore: true,  // 标记为真实评分
+      // 评分等级
+      grade: score >= 90 ? 'A+' : score >= 85 ? 'A' : score >= 80 ? 'A-' : 
+             score >= 75 ? 'B+' : score >= 70 ? 'B' : score >= 60 ? 'C' : 'D'
     };
   } catch (error) {
-    console.error('[讯飞] ❌ 评分失败:', error.response?.data || error.message);
+    console.error('[讯飞] ❌ 评分失败:', error);
+    console.error('[讯飞] error.response:', error.response);
+    console.error('[讯飞] error.message:', error.message);
+    console.error('[讯飞] error.stack:', error.stack);
     
     // 如果是配置错误，给出明确提示
-    if (error.response?.status === 401) {
+    if (error.response && error.response.status === 401) {
       throw new Error('讯飞 API 签名验证失败，请检查 API Key 和 Secret');
-    } else if (error.response?.status === 403) {
+    } else if (error.response && error.response.status === 403) {
       throw new Error('讯飞账户余额不足或权限不足');
     }
     
@@ -190,34 +206,69 @@ async function analyzeWithIFlyTek(userAudioPath, targetWord) {
 }
 
 /**
- * 生成讯飞评分反馈
+ * 生成讯飞评分反馈（增强版）
  */
-function generateIFlyTekFeedback(score, fluency, word) {
+function generateIFlyTekFeedback(score, fluency, word, detailedResult) {
   const parts = [];
+  const details = [];
   
-  // 总体评价
-  if (score >= 90) {
-    parts.push('🎉 发音非常标准！');
-  } else if (score >= 80) {
+  // 📊 总体评价（带 emoji）
+  if (score >= 95) {
+    parts.push('🎉 发音完美！几乎和母语者一样标准！');
+    details.push('你的发音非常准确，继续保持！');
+  } else if (score >= 90) {
+    parts.push('🌟 发音非常标准！');
+    details.push('发音准确度很高，只有极细微的改进空间。');
+  } else if (score >= 85) {
     parts.push('👍 发音很好！');
-  } else if (score >= 70) {
+    details.push('整体发音不错，注意个别音节的细节。');
+  } else if (score >= 80) {
+    parts.push('😊 发音良好！');
+    details.push('发音基本准确，可以多听标准发音模仿。');
+  } else if (score >= 75) {
     parts.push('💪 发音基本正确，可以改进。');
+    details.push('主要音节发音正确，但有些细节需要调整。');
+  } else if (score >= 70) {
+    parts.push('📚 发音尚可，需要更多练习。');
+    details.push('建议分解单词，逐个音节练习。');
   } else if (score >= 60) {
-    parts.push('📚 需要更多练习。');
+    parts.push('🔍 发音需要改进。');
+    details.push('建议先听标准发音，再跟读练习。');
   } else {
-    parts.push('🔥 继续加油！');
+    parts.push('💪 继续加油！多听多练会进步的！');
+    details.push('不要气馁，发音需要时间和练习。');
   }
   
-  // 流利度分析
-  if (fluency < 70) {
-    parts.push(`流利度 ${Math.round(fluency)} 分：语速可以更自然流畅。`);
+  // 🎯 流利度分析
+  if (fluency >= 90) {
+    details.push(`流利度极佳（${Math.round(fluency)}分）：语速自然流畅！`);
+  } else if (fluency >= 80) {
+    details.push(`流利度良好（${Math.round(fluency)}分）：语速适中。`);
+  } else if (fluency >= 70) {
+    details.push(`流利度尚可（${Math.round(fluency)}分）：可以尝试说得更连贯一些。`);
+  } else {
+    details.push(`流利度待提升（${Math.round(fluency)}分）：语速可以更自然流畅，避免停顿。`);
   }
   
-  return parts.join(' ');
+  // 💡 针对性建议（根据分数段）
+  if (score < 80) {
+    details.push('💡 练习建议：');
+    details.push('  1. 先听标准发音 3-5 遍');
+    details.push('  2. 分解单词，逐个音节跟读');
+    details.push('  3. 录音后对比标准发音');
+    details.push('  4. 重复练习直到接近标准');
+  } else if (score < 90) {
+    details.push('💡 提升建议：多听原声材料，模仿语音语调。');
+  }
+  
+  // 🎓 单词信息
+  details.push(`📝 目标单词：${word}`);
+  
+  return parts.join(' ') + '\n\n' + details.join('\n');
 }
 
 /**
- * 模拟发音评分（带智能逻辑）
+ * 模拟发音评分（增强版 - 多维度）
  */
 async function analyzeWithSimulation(userAudioPath, targetWord) {
   try {
@@ -225,61 +276,124 @@ async function analyzeWithSimulation(userAudioPath, targetWord) {
     const stats = await fs.stat(userAudioPath);
     const fileSize = stats.size;
     
-    // 基于文件大小的简单验证（太短或太长都不好）
+    // 基于文件大小的智能评分（模拟多维度）
     // 正常 3-8 秒的录音应该在 50KB-200KB 之间
     let baseScore = 75;
+    let fluency = 75;
+    let accuracy = 75;
+    let completeness = 75;
     
     if (fileSize < 30000) {
-      // 录音太短
+      // 录音太短（可能没读完）
       baseScore = Math.floor(Math.random() * 20) + 50; // 50-70
+      completeness = Math.floor(Math.random() * 30) + 40; // 完整度较低
     } else if (fileSize > 300000) {
-      // 录音太长
+      // 录音太长（可能有停顿或重复）
       baseScore = Math.floor(Math.random() * 20) + 60; // 60-80
+      fluency = Math.floor(Math.random() * 30) + 50; // 流利度较低
     } else {
       // 正常范围，给个较好的分数
       baseScore = Math.floor(Math.random() * 30) + 70; // 70-100
+      fluency = baseScore + (Math.floor(Math.random() * 10) - 5);
+      accuracy = baseScore + (Math.floor(Math.random() * 10) - 5);
+      completeness = baseScore + (Math.floor(Math.random() * 10) - 5);
     }
     
     // 添加一些随机性
     const randomFactor = Math.floor(Math.random() * 10) - 5; // -5 to +5
     const finalScore = Math.max(0, Math.min(100, baseScore + randomFactor));
+    fluency = Math.max(0, Math.min(100, fluency + randomFactor));
+    accuracy = Math.max(0, Math.min(100, accuracy + randomFactor));
+    completeness = Math.max(0, Math.min(100, completeness + randomFactor));
     
-    const feedback = generateFeedback(finalScore);
+    // 生成详细反馈
+    const feedback = generateDetailedFeedback(finalScore, fluency, accuracy, completeness, targetWord);
     
     return {
       score: finalScore,
+      fluency: Math.round(fluency),
+      accuracy: Math.round(accuracy),
+      completeness: Math.round(completeness),
       feedback: feedback,
       word: targetWord,
       timestamp: new Date().toISOString(),
-      audioSize: fileSize
+      audioSize: fileSize,
+      isRealScore: false,  // 标记为模拟评分
+      grade: finalScore >= 90 ? 'A+' : finalScore >= 85 ? 'A' : finalScore >= 80 ? 'A-' : 
+             finalScore >= 75 ? 'B+' : finalScore >= 70 ? 'B' : finalScore >= 60 ? 'C' : 'D'
     };
   } catch (error) {
     console.error('Simulation analysis error:', error);
     // 如果分析失败，返回一个保守分数
     return {
       score: 60,
+      fluency: 60,
+      accuracy: 60,
+      completeness: 60,
       feedback: '发音分析失败，请重试',
       word: targetWord,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      isRealScore: false,
+      grade: 'C'
     };
   }
 }
 
 /**
- * 根据评分生成反馈
+ * 生成详细反馈（模拟评分用）
  */
-function generateFeedback(score, accuracy, fluency) {
-  if (score >= 90) {
-    return '发音非常标准！继续保持！🎉';
+function generateDetailedFeedback(score, fluency, accuracy, completeness, word) {
+  const parts = [];
+  const details = [];
+  
+  // 📊 总体评价
+  if (score >= 95) {
+    parts.push('🎉 发音完美！');
+    details.push('你的发音非常准确，继续保持！');
+  } else if (score >= 90) {
+    parts.push('🌟 发音非常标准！');
+    details.push('发音准确度很高，只有极细微的改进空间。');
+  } else if (score >= 85) {
+    parts.push('👍 发音很好！');
+    details.push('整体发音不错，注意个别音节的细节。');
   } else if (score >= 80) {
-    return '发音很好，注意个别音节的重音位置。👍';
+    parts.push('😊 发音良好！');
+    details.push('发音基本准确，可以多听标准发音模仿。');
+  } else if (score >= 75) {
+    parts.push('💪 发音基本正确，可以改进。');
+    details.push('主要音节发音正确，但有些细节需要调整。');
   } else if (score >= 70) {
-    return '发音基本正确，但某些音素需要改进。💪';
+    parts.push('📚 发音尚可，需要更多练习。');
+    details.push('建议分解单词，逐个音节练习。');
   } else if (score >= 60) {
-    return '发音需要更多练习，建议多听标准发音并跟读。📚';
+    parts.push('🔍 发音需要改进。');
+    details.push('建议先听标准发音，再跟读练习。');
   } else {
-    return '继续加油！多听多练会进步的！🔥';
+    parts.push('💪 继续加油！多听多练会进步的！');
+    details.push('不要气馁，发音需要时间和练习。');
   }
+  
+  // 🎯 维度分析
+  details.push(`\n📊 评分详情:`);
+  details.push(`  准确度：${accuracy}分`);
+  details.push(`  流利度：${fluency}分`);
+  details.push(`  完整度：${completeness}分`);
+  
+  // 💡 针对性建议
+  if (score < 80) {
+    details.push(`\n💡 练习建议:`);
+    details.push('  1. 先听标准发音 3-5 遍');
+    details.push('  2. 分解单词，逐个音节跟读');
+    details.push('  3. 录音后对比标准发音');
+    details.push('  4. 重复练习直到接近标准');
+  } else if (score < 90) {
+    details.push(`\n💡 提升建议：多听原声材料，模仿语音语调。`);
+  }
+  
+  // 📝 单词信息
+  details.push(`\n📝 目标单词：${word}`);
+  
+  return parts.join(' ') + '\n\n' + details.join('\n');
 }
 
 /**

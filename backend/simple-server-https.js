@@ -1453,8 +1453,10 @@ app.post('/api/pronunciation/analyze', upload.single('audio'), async (req, res) 
     console.log(`[Pronunciation] 文件：${audioPath}`);
     
     // 🆕 调用讯飞/模拟评分
+    console.log(`[Pronunciation] 调用 analyzePronunciation...`);
     const result = await analyzePronunciation(audioPath, word);
     console.log(`[Pronunciation] ✅ 评分完成：${result.score}分`);
+    console.log(`[Pronunciation] 结果：`, JSON.stringify(result, null, 2));
     
     // 🆕 保存到数据库
     const db = await initializeDatabase();
@@ -1500,7 +1502,8 @@ app.post('/api/pronunciation/analyze', upload.single('audio'), async (req, res) 
     });
     
   } catch (error) {
-    console.error('[Pronunciation] Analyze error:', error.message);
+    console.error('[Pronunciation] ❌ Analyze error:', error);
+    console.error('[Pronunciation] error.stack:', error.stack);
     res.status(500).json({ 
       error: 'Pronunciation analysis failed',
       message: error.message 

@@ -40,21 +40,43 @@
         <text>正在录音... {{recordingTime}}s</text>
       </view>
       <view wx:if="{{pronunciationResult}}" class="pronunciation-result">
+        <!-- 🆕 等级徽章 -->
+        <view class="grade-badge grade-{{pronunciationResult.grade || 'C'}}">
+          <text class="grade-text">{{pronunciationResult.grade || 'C'}}</text>
+        </view>
+        
+        <!-- 📊 总分显示 -->
         <view class="score-display">
           <text class="score-number">{{pronunciationResult.score}}</text>
           <text class="score-label">分</text>
         </view>
+        
+        <!-- 💬 详细反馈 -->
         <view class="feedback-text">{{pronunciationResult.feedback}}</view>
+        
+        <!-- 📊 多维度评分 -->
         <view class="score-details" wx:if="{{pronunciationResult.accuracy}}">
-          <text>准确度：{{pronunciationResult.accuracy}}</text>
-          <text wx:if="{{pronunciationResult.fluency}}"> | 流利度：{{pronunciationResult.fluency}}</text>
+          <view class="detail-row">
+            <text class="detail-label">🎯 准确度</text>
+            <text class="detail-value {{pronunciationResult.accuracy >= 80 ? 'good' : pronunciationResult.accuracy >= 60 ? 'medium' : 'low'}}">{{pronunciationResult.accuracy}}</text>
+          </view>
+          <view class="detail-row" wx:if="{{pronunciationResult.fluency}}">
+            <text class="detail-label">🌊 流利度</text>
+            <text class="detail-value {{pronunciationResult.fluency >= 80 ? 'good' : pronunciationResult.fluency >= 60 ? 'medium' : 'low'}}">{{pronunciationResult.fluency}}</text>
+          </view>
+          <view class="detail-row" wx:if="{{pronunciationResult.completeness}}">
+            <text class="detail-label">✅ 完整度</text>
+            <text class="detail-value {{pronunciationResult.completeness >= 80 ? 'good' : pronunciationResult.completeness >= 60 ? 'medium' : 'low'}}">{{pronunciationResult.completeness}}</text>
+          </view>
         </view>
+        
         <!-- 🆕 播放录音功能 -->
         <view wx:if="{{pronunciationResult.audioPath}}" class="audio-playback">
           <button class="play-audio-button" bindtap="playMyPronunciation">
             🔊 播放我的录音
           </button>
         </view>
+        
         <view class="result-actions">
           <button class="retry-button" bindtap="toggleRecording">
             🔄 重新录制
