@@ -172,11 +172,16 @@ Page({
   /**
    * 保存配置
    */
-  async saveInterests() {
+  saveInterests() {
     // 验证至少选择一个兴趣
     const selectedInterests = this.data.interests
       .filter(item => item.selected)
       .map(item => item.name);
+    
+    console.log('[AI 兴趣] ========== 开始保存 ==========');
+    console.log('[AI 兴趣] 选择的兴趣:', selectedInterests);
+    console.log('[AI 兴趣] selectedTopics:', this.data.selectedTopics);
+    console.log('[AI 兴趣] aiEnabled:', this.data.aiEnabled);
     
     if (selectedInterests.length === 0) {
       wx.showModal({
@@ -189,46 +194,58 @@ Page({
 
     this.setData({ saving: true });
 
-    try {
-      const token = wx.getStorageSync('token');
-      
-      const res = await wx.request({
-        url: `${app.globalData.apiUrl}/ai/user-interests`,
-        method: 'PUT',
-        header: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        data: {
-          interests: selectedInterests,
-          preferred_topics: this.data.selectedTopics,
-          ai_context_enabled: this.data.aiEnabled
-        }
-      });
-
-      if (res.statusCode === 200 && res.data.success) {
-        wx.showToast({
-          title: '保存成功',
-          icon: 'success'
-        });
+    const token = wx.getStorageSync('token');
+    
+    wx.request({
+      url: `${app.globalData.apiUrl}/ai/user-interests`,
+      method: 'PUT',
+      header: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      data: {
+        interests: selectedInterests,
+        preferred_topics: this.data.selectedTopics || [],
+        ai_context_enabled: this.data.aiEnabled
+      },
+      timeout: 10000,
+      success: (res) => {
+        console.log('[AI 兴趣] ✅ save success');
+        console.log('[AI 兴趣] statusCode:', res.statusCode);
+        console.log('[AI 兴趣] data:', res.data);
         
-        // 延迟返回
-        setTimeout(() => {
-          wx.navigateBack();
-        }, 1500);
-      } else {
-        throw new Error('保存失败');
+        if (res.statusCode === 200 && res.data && res.data.success) {
+          wx.showToast({
+            title: '保存成功',
+            icon: 'success'
+          });
+          
+          // 延迟返回
+          setTimeout(() => {
+            wx.navigateBack();
+          }, 1500);
+        } else {
+          console.error('[AI 兴趣] ❌ 保存失败:', res.data);
+          wx.showModal({
+            title: '保存失败',
+            content: res.data ? res.data.error : '响应错误',
+            showCancel: false
+          });
+        }
+      },
+      fail: (error) => {
+        console.error('[AI 兴趣] ❌ save fail');
+        console.error('[AI 兴趣] errMsg:', error.errMsg);
+        wx.showModal({
+          title: '保存失败',
+          content: '网络错误，请重试',
+          showCancel: false
+        });
+      },
+      complete: () => {
+        this.setData({ saving: false });
       }
-    } catch (error) {
-      console.error('保存兴趣配置失败:', error);
-      wx.showModal({
-        title: '保存失败',
-        content: error.message || '请稍后重试',
-        showCancel: false
-      });
-    } finally {
-      this.setData({ saving: false });
-    }
+    });
   },
 
   /**
