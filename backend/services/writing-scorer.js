@@ -8,7 +8,7 @@ const MiniMaxClient = require('./minimax-client');
 class WritingScorer {
   constructor() {
     this.minimax = new MiniMaxClient({
-      model: process.env.MINIMAX_MODEL || 'abab6.5s-chat',
+      model: process.env.MINIMAX_MODEL || 'MiniMax-M2.5',
       timeout: 90000 // 作文评分需要更长时间
     });
   }

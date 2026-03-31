@@ -757,53 +757,66 @@ Page({
   /**
    * 🆕 加载 AI 例句
    */
-  async loadAIExamples(word, wordId) {
+  loadAIExamples(word, wordId) {
     // 检查 AI 语境是否开启
     const aiContextEnabled = wx.getStorageSync('aiContextEnabled') !== false;
     if (!aiContextEnabled) {
+      console.log('[AI 例句] AI 语境已关闭');
       return;
     }
+    
+    console.log('[AI 例句] ========== 开始加载 ==========');
+    console.log('[AI 例句] word:', word, 'wordId:', wordId);
     
     this.setData({ aiLoading: true });
     
     const token = wx.getStorageSync('token');
     if (!token) {
+      console.log('[AI 例句] 未登录，token 为空');
       this.setData({ aiLoading: false });
       return;
     }
     
-    try {
-      const res = await wx.request({
-        url: `${app.globalData.apiUrl}/ai/generate-example`,
-        method: 'POST',
-        header: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        data: {
-          word: word,
-          word_id: wordId,
-          count: 3,
-          difficulty: 'medium'
+    wx.request({
+      url: `${app.globalData.apiUrl}/ai/generate-example`,
+      method: 'POST',
+      header: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      data: {
+        word: word,
+        word_id: wordId,
+        count: 3,
+        difficulty: 'medium'
+      },
+      timeout: 30000,
+      success: (res) => {
+        console.log('[AI 例句] ✅ request success');
+        console.log('[AI 例句] statusCode:', res.statusCode);
+        console.log('[AI 例句] data:', res.data);
+        
+        if (res.statusCode === 200 && res.data && res.data.success) {
+          const { examples, ai_explanation, from_cache } = res.data.data;
+          console.log('[AI 例句] 例句数量:', examples ? examples.length : 0);
+          
+          this.setData({
+            aiExamples: examples || [],
+            aiExplanation: ai_explanation || '',
+            fromCache: from_cache || false,
+            aiLoading: false
+          });
+        } else {
+          console.error('[AI 例句] ❌ 响应错误:', res.data);
+          this.setData({ aiLoading: false });
         }
-      });
-      
-      if (res.statusCode === 200 && res.data.success) {
-        const { examples, ai_explanation, from_cache } = res.data.data;
-        
-        this.setData({
-          aiExamples: examples,
-          aiExplanation: ai_explanation || '',
-          fromCache: from_cache || false,
-          aiLoading: false
-        });
-        
-        console.log('[AI 例句] 加载成功:', word, '缓存:', from_cache);
+      },
+      fail: (error) => {
+        console.error('[AI 例句] ❌ request fail');
+        console.error('[AI 例句] errMsg:', error.errMsg);
+        this.setData({ aiLoading: false });
       }
-    } catch (error) {
-      console.error('[AI 例句] 加载失败:', error);
-      this.setData({ aiLoading: false });
-    }
+    });
   },
 
   /**
