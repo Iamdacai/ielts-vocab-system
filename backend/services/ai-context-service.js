@@ -4,13 +4,13 @@
  */
 
 const db = require('../database');
-const BailianClient = require('./bailian-client');
+const MiniMaxClient = require('./minimax-client');
 const crypto = require('crypto');
 
 class AIContextService {
   constructor() {
-    this.bailian = new BailianClient({
-      model: process.env.BAILIAN_MODEL || 'qwen-plus',
+    this.minimax = new MiniMaxClient({
+      model: process.env.MINIMAX_MODEL || 'MiniMax-M2.5',
       timeout: 30000
     });
     
@@ -117,19 +117,19 @@ class AIContextService {
     // 4. 构建 Prompt
     const prompt = this._buildPrompt(word, count, difficulty, userInterests);
 
-    // 5. 调用 Bailian API
+    // 5. 调用 MiniMax API
     console.log(`[AI] 🔄 生成例句：${word} (兴趣：${userInterests.interests.join(',')})`);
     
     let result;
     try {
-      result = await this.bailian.generate(prompt, {
+      result = await this.minimax.generate(prompt, {
         temperature: 0.7,
         maxTokens: 1500,
         jsonMode: true,
         retryCount: 3
       });
     } catch (error) {
-      console.error('[AI] ❌ Bailian API 调用失败:', error.message);
+      console.error('[AI] ❌ MiniMax API 调用失败:', error.message);
       console.log('[AI] 🔄 降级到模拟数据...');
       
       // 降级：返回模拟例句
