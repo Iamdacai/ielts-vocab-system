@@ -94,8 +94,8 @@ async function analyzeWithIFlyTek(userAudioPath, targetWord) {
     
     // 讯飞语音评测 API（听写接口）
     const host = 'api-open.xfyun.cn';
-    const path = '/v2/openservice/roll_call';
-    const url = `https://${host}${path}`;
+    const apiPath = '/v2/openservice/roll_call';
+    const url = `https://${host}${apiPath}`;
     
     // 构建请求体
     const body = {
@@ -119,7 +119,7 @@ async function analyzeWithIFlyTek(userAudioPath, targetWord) {
     
     // 生成签名（讯飞需要 HMAC-SHA256 签名）
     const date = new Date().toUTCString();
-    const signatureOrigin = `host: ${host}\ndate: ${date}\nPOST ${path} HTTP/1.1`;
+    const signatureOrigin = `host: ${host}\ndate: ${date}\nPOST ${apiPath} HTTP/1.1`;
     const signatureSha = crypto.createHmac('sha256', CONFIG.iflytekPronunciationAPI.apiSecret)
       .update(signatureOrigin)
       .digest('base64');
