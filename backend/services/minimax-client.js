@@ -61,8 +61,8 @@ class MiniMaxClient {
       try {
         const response = await this._callAPI(messages, temperature, maxTokens);
         
-        // 解析响应
-        const content = response.choices[0].message.content;
+        // Anthropic 格式直接返回 content
+        const content = response.content;
         
         // JSON 模式尝试解析
         if (jsonMode) {
