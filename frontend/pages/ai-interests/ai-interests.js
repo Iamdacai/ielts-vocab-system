@@ -59,53 +59,73 @@ Page({
   /**
    * 加载用户兴趣配置
    */
-  async loadUserInterests() {
+  loadUserInterests() {
     this.setData({ loading: true });
     
     const token = wx.getStorageSync('token');
+    console.log('[AI 兴趣] ========== 开始加载 ==========');
+    console.log('[AI 兴趣] token:', token ? '已获取' : '未获取');
+    console.log('[AI 兴趣] apiUrl:', app.globalData.apiUrl);
+    
     if (!token) {
       console.log('[AI 兴趣] 未登录，使用默认配置');
       this.setData({ loading: false });
       return;
     }
 
-    try {
-      const res = await wx.request({
-        url: `${app.globalData.apiUrl}/ai/user-interests`,
-        method: 'GET',
-        header: {
-          'Authorization': `Bearer ${token}`
+    wx.request({
+      url: `${app.globalData.apiUrl}/ai/user-interests`,
+      method: 'GET',
+      header: {
+        'Authorization': `Bearer ${token}`
+      },
+      timeout: 10000,
+      success: (res) => {
+        console.log('[AI 兴趣] ✅ request success');
+        console.log('[AI 兴趣] statusCode:', res.statusCode);
+        console.log('[AI 兴趣] data:', res.data);
+        
+        if (res.statusCode === 200 && res.data && res.data.success) {
+          const { interests, preferred_topics, ai_context_enabled } = res.data.data;
+          console.log('[AI 兴趣] 数据解析成功:', { interests, preferred_topics, ai_context_enabled });
+          
+          // 恢复兴趣选择
+          const interestsData = this.data.interests.map(item => ({
+            ...item,
+            selected: interests && interests.includes(item.name)
+          }));
+          
+          // 恢复场景选择
+          const topicData = this.data.topicList.map(item => ({
+            ...item,
+            selected: preferred_topics && preferred_topics.includes(item.name)
+          }));
+          
+          this.setData({
+            interests: interestsData,
+            topicList: topicData,
+            aiEnabled: ai_context_enabled !== false,
+            loading: false
+          });
+        } else {
+          console.error('[AI 兴趣] ❌ 响应错误:', res.data);
+          this.setData({ loading: false });
         }
-      });
-
-      if (res.statusCode === 200 && res.data.success) {
-        const { interests, preferred_topics, ai_context_enabled } = res.data.data;
-        
-        // 恢复兴趣选择
-        const interestsData = this.data.interests.map(item => ({
-          ...item,
-          selected: interests && interests.includes(item.name)
-        }));
-        
-        // 恢复场景选择
-        const topicData = this.data.topicList.map(item => ({
-          ...item,
-          selected: preferred_topics && preferred_topics.includes(item.name)
-        }));
-        
-        this.setData({
-          interests: interestsData,
-          topicList: topicData,
-          aiEnabled: ai_context_enabled !== false
-        });
-      } else if (res.statusCode === 401) {
-        console.log('[AI 兴趣] Token 无效，使用默认配置');
+      },
+      fail: (error) => {
+        console.error('[AI 兴趣] ❌ request fail');
+        console.error('[AI 兴趣] errMsg:', error.errMsg);
         this.setData({ loading: false });
+        wx.showModal({
+          title: '提示',
+          content: '加载失败，请重试',
+          showCancel: false,
+          success: () => {
+            this.loadUserInterests();
+          }
+        });
       }
-    } catch (error) {
-      console.error('[AI 兴趣] 加载失败:', error);
-      this.setData({ loading: false });
-    }
+    });
   },
 
   /**
