@@ -15,15 +15,18 @@ const axios = require('axios');
 
 // 配置
 const CONFIG = {
-  // 是否启用真实发音评分 API（Azure Speech）
+  // 是否启用真实发音评分 API（讯飞语音评测）
   enableRealPronunciationAPI: true,  // ✅ 启用真实评分
   
-  // Azure 配置
-  azurePronunciationAPI: {
-    key: process.env.AZURE_SPEECH_KEY || '',
-    region: process.env.AZURE_SPEECH_REGION || 'eastasia',
-    // 参考文本（用于对比）
-    referenceText: ''
+  // 讯飞语音评测配置
+  iflytekPronunciationAPI: {
+    appId: process.env.IFLYTEK_APP_ID || '',
+    apiKey: process.env.IFLYTEK_API_KEY || '',
+    apiSecret: process.env.IFLYTEK_API_SECRET || '',
+    // 评测类型：single_word（单词）/ sentence（句子）
+    category: 'single_word',
+    // 评测维度：read_syllable（音素）/read_word（单词）/read_sentence（句子）
+    type: 'read_word'
   }
 };
 
@@ -50,93 +53,115 @@ async function fetchTTSFromYoudao(word) {
 }
 
 /**
- * 模拟发音评分（可替换为真实 API）
+ * 发音评分入口
  */
 async function analyzePronunciation(userAudioPath, targetWord) {
-  // 如果启用了真实 API，使用 Azure Pronunciation Assessment
-  if (CONFIG.enableRealPronunciationAPI && CONFIG.azurePronunciationAPI.key) {
-    return await analyzeWithAzure(userAudioPath, targetWord);
+  // 如果启用了真实 API，使用讯飞发音评测
+  if (CONFIG.enableRealPronunciationAPI && CONFIG.iflytekPronunciationAPI.appId) {
+    return await analyzeWithIFlyTek(userAudioPath, targetWord);
   }
   
   // 否则使用模拟评分（带一些智能逻辑）
   return await analyzeWithSimulation(userAudioPath, targetWord);
 }
 
+const crypto = require('crypto');
+
 /**
- * 使用 Azure 进行真实发音评分
+ * 使用讯飞进行真实发音评分
  */
-async function analyzeWithAzure(userAudioPath, targetWord) {
+async function analyzeWithIFlyTek(userAudioPath, targetWord) {
   try {
-    console.log('[Azure] ========== 开始发音评分 ==========');
-    console.log('[Azure] 目标单词:', targetWord);
-    console.log('[Azure] 音频文件:', userAudioPath);
+    console.log('[讯飞] ========== 开始发音评分 ==========');
+    console.log('[讯飞] 目标单词:', targetWord);
+    console.log('[讯飞] 音频文件:', userAudioPath);
     
     // 检查配置
-    if (!CONFIG.azurePronunciationAPI.key) {
-      console.error('[Azure] ❌ API Key 未配置');
-      throw new Error('Azure API Key 未配置，请在 .env 中设置 AZURE_SPEECH_KEY');
+    if (!CONFIG.iflytekPronunciationAPI.appId) {
+      console.error('[讯飞] ❌ API 配置未设置');
+      throw new Error('讯飞 API 配置未设置，请在 .env 中设置 IFLYTEK_APP_ID 等参数');
     }
     
     const audioBuffer = await fs.readFile(userAudioPath);
+    const audioBase64 = audioBuffer.toString('base64');
     
-    // Azure Speech 发音评测 API
-    const assessmentUrl = `https://${CONFIG.azurePronunciationAPI.region}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-US&format=detailed`;
+    // 讯飞语音评测 API（听写接口）
+    const host = 'api-open.xfyun.cn';
+    const path = '/v2/openservice/roll_call';
+    const url = `https://${host}${path}`;
     
-    console.log('[Azure] 请求 URL:', assessmentUrl);
-    
-    const headers = {
-      'Ocp-Apim-Subscription-Key': CONFIG.azurePronunciationAPI.key,
-      'Content-Type': 'audio/wav; codecs=audio/pcm; samplerate=16000',
-      'Accept': 'application/json',
-      'SpeechContext': JSON.stringify({
-        'pronunciationAssessment': {
-          'referenceText': targetWord,
-          'gradingSystem': 'HundredMark',  // 百分制
-          'dimension': 'Comprehensive',     // 综合评分
-          'enableMiscue': true              // 检测误读
-        }
-      })
+    // 构建请求体
+    const body = {
+      common: {
+        app_id: CONFIG.iflytekPronunciationAPI.appId
+      },
+      business: {
+        category: CONFIG.iflytekPronunciationAPI.category,  // single_word
+        type: CONFIG.iflytekPronunciationAPI.type,  // read_word
+        cmd: 'ssb',  // 评分请求
+        aus: 'audio/L16;rate=16000',  // 音频格式
+        aue: 'raw',
+        psc: '1'  // 返回详细评分
+      },
+      data: {
+        text: targetWord,  // 参考文本
+        audio: audioBase64,
+        status: 2  // 最后一个数据包
+      }
     };
     
-    console.log('[Azure] 发送请求到 Azure...');
+    // 生成签名（讯飞需要 HMAC-SHA256 签名）
+    const date = new Date().toUTCString();
+    const signatureOrigin = `host: ${host}\ndate: ${date}\nPOST ${path} HTTP/1.1`;
+    const signatureSha = crypto.createHmac('sha256', CONFIG.iflytekPronunciationAPI.apiSecret)
+      .update(signatureOrigin)
+      .digest('base64');
+    const authorizationOrigin = `api_key="${CONFIG.iflytekPronunciationAPI.apiKey}", algorithm="hmac-sha256", headers="host date request-line", signature="${signatureSha}"`;
     
-    const response = await axios.post(assessmentUrl, audioBuffer, { 
+    const headers = {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json,version=1.0',
+      'Host': host,
+      'Date': date,
+      'Authorization': authorizationOrigin
+    };
+    
+    console.log('[讯飞] 发送请求到讯飞...');
+    
+    const response = await axios.post(url, JSON.stringify(body), { 
       headers,
       timeout: 30000  // 30 秒超时
     });
     
     const result = response.data;
-    console.log('[Azure] ✅ 评分成功');
-    console.log('[Azure] 原始结果:', JSON.stringify(result, null, 2));
+    console.log('[讯飞] ✅ 评分成功');
+    console.log('[讯飞] 返回码:', result.code);
     
-    // 提取评分
-    const nBest = result.NBest || [];
-    if (nBest.length === 0) {
-      console.error('[Azure] ❌ 无评分结果');
-      throw new Error('Azure 未返回评分结果');
+    // 检查错误
+    if (result.code !== 0) {
+      console.error('[讯飞] ❌ 评分失败:', result.message);
+      throw new Error(`讯飞评分失败：${result.message}`);
     }
     
-    const assessment = nBest[0].PronunciationAssessment;
-    const score = assessment?.PronScore || 0;
-    const accuracy = assessment?.AccuracyScore || 0;
-    const fluency = assessment?.FluencyScore || 0;
-    const completeness = assessment?.CompletenessScore || 0;
+    // 提取评分（讯飞返回格式）
+    const data = result.data || {};
+    const ssb = data.ssb || {};
+    const overall = ssb.overall || {};
     
-    console.log('[Azure] 评分详情:', {
+    const score = overall.score || 0;
+    const fluency = overall.fls || 0;  // 流利度
+    
+    console.log('[讯飞] 评分详情:', {
       总分：score,
-      准确度：accuracy,
-      流利度：fluency,
-      完整度：completeness
+      流利度：fluency
     });
     
-    // 生成详细反馈
-    const feedback = generateDetailedFeedback(score, accuracy, fluency, completeness, targetWord, nBest[0]);
+    // 生成反馈
+    const feedback = generateIFlyTekFeedback(score, fluency, targetWord);
     
     return {
       score: Math.round(score),
-      accuracy: Math.round(accuracy),
       fluency: Math.round(fluency),
-      completeness: Math.round(completeness),
       feedback: feedback,
       word: targetWord,
       timestamp: new Date().toISOString(),
@@ -144,13 +169,13 @@ async function analyzeWithAzure(userAudioPath, targetWord) {
       isRealScore: true  // 标记为真实评分
     };
   } catch (error) {
-    console.error('[Azure] ❌ 评分失败:', error.response?.data || error.message);
+    console.error('[讯飞] ❌ 评分失败:', error.response?.data || error.message);
     
     // 如果是配置错误，给出明确提示
     if (error.response?.status === 401) {
-      throw new Error('Azure API Key 无效，请检查配置');
+      throw new Error('讯飞 API 签名验证失败，请检查 API Key 和 Secret');
     } else if (error.response?.status === 403) {
-      throw new Error('Azure 账户余额不足或订阅已过期');
+      throw new Error('讯飞账户余额不足或权限不足');
     }
     
     throw new Error(`发音评分失败：${error.message}`);
@@ -158,9 +183,9 @@ async function analyzeWithAzure(userAudioPath, targetWord) {
 }
 
 /**
- * 生成详细反馈（基于 Azure 评分结果）
+ * 生成讯飞评分反馈
  */
-function generateDetailedFeedback(score, accuracy, fluency, completeness, word, recognitionResult) {
+function generateIFlyTekFeedback(score, fluency, word) {
   const parts = [];
   
   // 总体评价
@@ -176,29 +201,9 @@ function generateDetailedFeedback(score, accuracy, fluency, completeness, word, 
     parts.push('🔥 继续加油！');
   }
   
-  // 维度分析
-  if (accuracy < 70) {
-    parts.push(`准确度 ${Math.round(accuracy)} 分：某些音素发音不够准确。`);
-  }
-  
+  // 流利度分析
   if (fluency < 70) {
     parts.push(`流利度 ${Math.round(fluency)} 分：语速可以更自然流畅。`);
-  }
-  
-  if (completeness < 70) {
-    parts.push(`完整度 ${Math.round(completeness)} 分：单词发音不够完整。`);
-  }
-  
-  // 音素级反馈（如果有误读）
-  if (recognitionResult?.Words) {
-    const errorWords = recognitionResult.Words.filter(w => {
-      const wordAssessment = w.PronunciationAssessment;
-      return wordAssessment && wordAssessment.AccuracyScore < 60;
-    });
-    
-    if (errorWords.length > 0) {
-      parts.push(`注意：${errorWords.map(w => w.Word).join(', ')} 发音需要改进。`);
-    }
   }
   
   return parts.join(' ');

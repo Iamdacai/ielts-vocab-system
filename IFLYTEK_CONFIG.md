@@ -1,52 +1,55 @@
-# Azure Speech 发音评测配置指南
+# 讯飞语音评测配置指南
 
 ## 📋 功能说明
 
-使用 **Azure Speech Pronunciation Assessment** 进行专业级发音评分。
+使用 **讯飞语音评测** 进行专业级发音评分。
 
 **评分维度**：
-- ✅ 准确度（Accuracy）- 音素发音是否准确
-- ✅ 流利度（Fluency）- 语速是否自然流畅
-- ✅ 完整度（Completeness）- 单词发音是否完整
 - ✅ 总分（Overall Score）- 综合评分
+- ✅ 流利度（Fluency）- 语速是否自然流畅
+- ✅ 准确度（Accuracy）- 音素发音是否准确（部分接口支持）
 
-**免费额度**：每月 500 分钟（每天约 16 分钟）
+**优势**：
+- 🚀 国内访问快，延迟低
+- 🎯 中文界面，配置简单
+- 💰 有免费额度，够用
 
 ---
 
-## 🔑 获取 Azure API Key
+## 🔑 获取讯飞 API 配置
 
-### 步骤 1：登录 Azure 门户
+### 步骤 1：登录讯飞开放平台
 
-访问：https://portal.azure.com/
+访问：https://www.xfyun.cn/
 
 如果没有账号：
-1. 注册微软账号
-2. 新用户送 $200 美元额度（够用很久）
+1. 注册账号（支持手机号）
+2. 实名认证（需要，为了开通服务）
 
-### 步骤 2：创建 Speech Service
+### 步骤 2：创建应用
 
-1. 点击「创建资源」→ 搜索「Speech」
-2. 选择「Speech service」
-3. 点击「创建」
+1. 进入「控制台」→「我的应用」
+2. 点击「创建新应用」
+3. 填写应用信息：
+   - 应用名称：雅思背单词（自定义）
+   - 应用分类：教育
+   - 图标：随便选
 
-### 步骤 3：配置服务
+### 步骤 3：开通语音评测服务
 
-```
-订阅：你的订阅
-资源组：创建新的（如：ielts-speech）
-区域：East Asia（东亚）
-名称：ielts-pronunciation（自定义）
-定价层：F0（免费层，每月 500 分钟）
-```
+1. 进入应用详情
+2. 点击「开通服务」
+3. 搜索「语音评测」或「发音评测」
+4. 选择「英语发音评测」
+5. 点击「开通」
 
-### 步骤 4：获取 Key 和 Region
+### 步骤 4：获取 API 配置
 
-1. 创建完成后，进入资源页面
-2. 点击「Keys and Endpoint」
-3. 复制以下内容：
-   - **KEY 1**（或 KEY 2）→ 这就是 `AZURE_SPEECH_KEY`
-   - **Location/Region** → 这就是 `AZURE_SPEECH_REGION`
+1. 进入应用详情 → 「接口信息」
+2. 复制以下三个值：
+   - **APPID** → `IFLYTEK_APP_ID`
+   - **APIKey** → `IFLYTEK_API_KEY`
+   - **APISecret** → `IFLYTEK_API_SECRET`
 
 ---
 
@@ -55,20 +58,16 @@
 编辑 `/home/admin/.openclaw/workspace/git-repos/ielts-vocab-system/backend/.env`：
 
 ```bash
-# Azure Speech 发音评测 API 配置
-AZURE_SPEECH_KEY=复制你的 KEY 1（如：a1b2c3d4e5f6...）
-AZURE_SPEECH_REGION=eastasia  # 或你选择的区域
+# 讯飞语音评测 API 配置
+IFLYTEK_APP_ID=你的 APPID（如：12345678）
+IFLYTEK_API_KEY=你的 APIKey（如：abcdef123456...）
+IFLYTEK_API_SECRET=你的 APISecret（如：xyz789...）
 ```
 
-**区域对应表**：
-
-| 区域代码 | 地区 |
-|---------|------|
-| `eastasia` | 东亚（推荐） |
-| `southeastasia` | 东南亚 |
-| `westus` | 美国西部 |
-| `eastus` | 美国东部 |
-| `westeurope` | 西欧 |
+**⚠️ 注意**：
+- APPID 是数字
+- APIKey 和 APISecret 是字符串
+- 不要复制多余的空格
 
 ---
 
