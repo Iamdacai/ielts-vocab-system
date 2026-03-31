@@ -15,13 +15,15 @@ const axios = require('axios');
 
 // 配置
 const CONFIG = {
-  // 是否启用真实发音评分 API（如 Azure Speech）
-  enableRealPronunciationAPI: false,
+  // 是否启用真实发音评分 API（Azure Speech）
+  enableRealPronunciationAPI: true,  // ✅ 启用真实评分
   
-  // Azure 配置（如果需要真实评分）
+  // Azure 配置
   azurePronunciationAPI: {
     key: process.env.AZURE_SPEECH_KEY || '',
-    region: process.env.AZURE_SPEECH_REGION || 'eastasia'
+    region: process.env.AZURE_SPEECH_REGION || 'eastasia',
+    // 参考文本（用于对比）
+    referenceText: ''
   }
 };
 
@@ -65,8 +67,22 @@ async function analyzePronunciation(userAudioPath, targetWord) {
  */
 async function analyzeWithAzure(userAudioPath, targetWord) {
   try {
+    console.log('[Azure] ========== 开始发音评分 ==========');
+    console.log('[Azure] 目标单词:', targetWord);
+    console.log('[Azure] 音频文件:', userAudioPath);
+    
+    // 检查配置
+    if (!CONFIG.azurePronunciationAPI.key) {
+      console.error('[Azure] ❌ API Key 未配置');
+      throw new Error('Azure API Key 未配置，请在 .env 中设置 AZURE_SPEECH_KEY');
+    }
+    
     const audioBuffer = await fs.readFile(userAudioPath);
+    
+    // Azure Speech 发音评测 API
     const assessmentUrl = `https://${CONFIG.azurePronunciationAPI.region}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-US&format=detailed`;
+    
+    console.log('[Azure] 请求 URL:', assessmentUrl);
     
     const headers = {
       'Ocp-Apim-Subscription-Key': CONFIG.azurePronunciationAPI.key,
@@ -75,35 +91,117 @@ async function analyzeWithAzure(userAudioPath, targetWord) {
       'SpeechContext': JSON.stringify({
         'pronunciationAssessment': {
           'referenceText': targetWord,
-          'gradingSystem': 'HundredMark',
-          'dimension': 'Comprehensive',
-          'enableMiscue': true
+          'gradingSystem': 'HundredMark',  // 百分制
+          'dimension': 'Comprehensive',     // 综合评分
+          'enableMiscue': true              // 检测误读
         }
       })
     };
     
-    const response = await axios.post(assessmentUrl, audioBuffer, { headers });
+    console.log('[Azure] 发送请求到 Azure...');
+    
+    const response = await axios.post(assessmentUrl, audioBuffer, { 
+      headers,
+      timeout: 30000  // 30 秒超时
+    });
+    
     const result = response.data;
+    console.log('[Azure] ✅ 评分成功');
+    console.log('[Azure] 原始结果:', JSON.stringify(result, null, 2));
     
-    const score = result.NBest?.[0]?.PronunciationAssessment?.PronScore || 0;
-    const accuracy = result.NBest?.[0]?.PronunciationAssessment?.AccuracyScore || 0;
-    const fluency = result.NBest?.[0]?.PronunciationAssessment?.FluencyScore || 0;
+    // 提取评分
+    const nBest = result.NBest || [];
+    if (nBest.length === 0) {
+      console.error('[Azure] ❌ 无评分结果');
+      throw new Error('Azure 未返回评分结果');
+    }
     
-    const feedback = generateFeedback(score, accuracy, fluency);
+    const assessment = nBest[0].PronunciationAssessment;
+    const score = assessment?.PronScore || 0;
+    const accuracy = assessment?.AccuracyScore || 0;
+    const fluency = assessment?.FluencyScore || 0;
+    const completeness = assessment?.CompletenessScore || 0;
+    
+    console.log('[Azure] 评分详情:', {
+      总分：score,
+      准确度：accuracy,
+      流利度：fluency,
+      完整度：completeness
+    });
+    
+    // 生成详细反馈
+    const feedback = generateDetailedFeedback(score, accuracy, fluency, completeness, targetWord, nBest[0]);
     
     return {
       score: Math.round(score),
       accuracy: Math.round(accuracy),
       fluency: Math.round(fluency),
+      completeness: Math.round(completeness),
       feedback: feedback,
       word: targetWord,
       timestamp: new Date().toISOString(),
-      detailedResult: result
+      detailedResult: result,
+      isRealScore: true  // 标记为真实评分
     };
   } catch (error) {
-    console.error('Azure pronunciation analysis error:', error.response?.data || error.message);
-    throw new Error('Pronunciation analysis failed');
+    console.error('[Azure] ❌ 评分失败:', error.response?.data || error.message);
+    
+    // 如果是配置错误，给出明确提示
+    if (error.response?.status === 401) {
+      throw new Error('Azure API Key 无效，请检查配置');
+    } else if (error.response?.status === 403) {
+      throw new Error('Azure 账户余额不足或订阅已过期');
+    }
+    
+    throw new Error(`发音评分失败：${error.message}`);
   }
+}
+
+/**
+ * 生成详细反馈（基于 Azure 评分结果）
+ */
+function generateDetailedFeedback(score, accuracy, fluency, completeness, word, recognitionResult) {
+  const parts = [];
+  
+  // 总体评价
+  if (score >= 90) {
+    parts.push('🎉 发音非常标准！');
+  } else if (score >= 80) {
+    parts.push('👍 发音很好！');
+  } else if (score >= 70) {
+    parts.push('💪 发音基本正确，可以改进。');
+  } else if (score >= 60) {
+    parts.push('📚 需要更多练习。');
+  } else {
+    parts.push('🔥 继续加油！');
+  }
+  
+  // 维度分析
+  if (accuracy < 70) {
+    parts.push(`准确度 ${Math.round(accuracy)} 分：某些音素发音不够准确。`);
+  }
+  
+  if (fluency < 70) {
+    parts.push(`流利度 ${Math.round(fluency)} 分：语速可以更自然流畅。`);
+  }
+  
+  if (completeness < 70) {
+    parts.push(`完整度 ${Math.round(completeness)} 分：单词发音不够完整。`);
+  }
+  
+  // 音素级反馈（如果有误读）
+  if (recognitionResult?.Words) {
+    const errorWords = recognitionResult.Words.filter(w => {
+      const wordAssessment = w.PronunciationAssessment;
+      return wordAssessment && wordAssessment.AccuracyScore < 60;
+    });
+    
+    if (errorWords.length > 0) {
+      parts.push(`注意：${errorWords.map(w => w.Word).join(', ')} 发音需要改进。`);
+    }
+  }
+  
+  return parts.join(' ');
 }
 
 /**
