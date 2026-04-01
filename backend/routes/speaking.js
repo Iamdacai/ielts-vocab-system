@@ -50,7 +50,7 @@ router.post('/start', requireAuth, async (req, res) => {
       practiceType: practice_type,
       wordId: word_id,
       sentence,
-      topicId,
+      topicId: topic_id,  // ✅ 修复：使用 topic_id
       question
     });
 
