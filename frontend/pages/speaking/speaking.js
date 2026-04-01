@@ -296,13 +296,20 @@ Page({
     try {
       const token = wx.getStorageSync('token');
       
+      if (!token) {
+        console.log('[口语] 未登录，跳过统计加载');
+        return;
+      }
+      
       const res = await wx.request({
         url: `${app.globalData.apiUrl}/speaking/stats`,
         header: { 'Authorization': `Bearer ${token}` }
       });
       
-      if (res.data.success) {
+      if (res.statusCode === 200 && res.data && res.data.success) {
         this.setData({ stats: res.data.data });
+      } else {
+        console.warn('[口语] 统计加载失败:', res.statusCode, res.data);
       }
     } catch (error) {
       console.error('[口语] 加载统计失败:', error);
