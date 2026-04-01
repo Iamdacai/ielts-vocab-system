@@ -226,6 +226,11 @@ Page({
     
     try {
       const token = wx.getStorageSync('token');
+      
+      if (!token) {
+        throw new Error('请先登录');
+      }
+      
       const { practiceType, currentWord, currentQuestion } = this.data;
       
       // 1. 开始练习
@@ -243,7 +248,17 @@ Page({
         }
       });
       
+      // 检查响应
+      if (!startRes.data || !startRes.data.success || !startRes.data.data) {
+        console.error('[口语] 开始练习失败:', startRes);
+        throw new Error('开始练习失败：' + (startRes.data?.error || '未知错误'));
+      }
+      
       const practiceId = startRes.data.data.practiceId;
+      
+      if (!practiceId) {
+        throw new Error('未获取到练习 ID');
+      }
       
       // 2. 上传文件（使用 wx.uploadFile）
       const uploadRes = await new Promise((resolve, reject) => {
@@ -263,12 +278,19 @@ Page({
         });
       });
       
+      if (!uploadRes || !uploadRes.data) {
+        console.error('[口语] 上传失败:', uploadRes);
+        throw new Error('上传失败');
+      }
+      
       const result = JSON.parse(uploadRes.data);
       
-      if (result.success) {
+      if (result && result.success) {
         this.setData({ practiceResult: result.data });
+        wx.showToast({ title: '评分完成', icon: 'success' });
       } else {
-        throw new Error(result.error);
+        console.error('[口语] 评分失败:', result);
+        throw new Error(result?.error || '评分失败');
       }
     } catch (error) {
       console.error('[口语] 评分失败:', error);
