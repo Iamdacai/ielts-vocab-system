@@ -18,6 +18,11 @@ const writingRoutes = require('./writing');         // 写作辅助
 const usersRoutes = require('../users');            // 用户管理
 const adminRoutes = require('../admin');            // 管理员后台
 
+// 🆕 AIielts Phase 1 新增路由
+const readingRoutes = require('./reading');         // 阅读练习
+const listeningRoutes = require('./listening');     // 听力练习
+const studyPlanRoutes = require('./study-plan');    // 学习计划
+
 // 挂载路由
 router.use('/auth', authRoutes);
 router.use('/config', configRoutes);
@@ -34,5 +39,10 @@ router.use('/speaking', speakingRoutes);         // 口语陪练
 router.use('/writing', writingRoutes);           // 写作辅助
 router.use('/users', usersRoutes);               // 用户管理（个人中心）
 router.use('/admin', adminRoutes);               // 管理员后台
+
+// 🆕 AIielts Phase 1 路由
+router.use('/reading', readingRoutes);           // 阅读练习
+router.use('/listening', listeningRoutes);       // 听力练习
+router.use('/plan', studyPlanRoutes);            // 学习计划
 
 module.exports = router;
