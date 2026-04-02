@@ -1,0 +1,110 @@
+<!-- pages/listening/listening.wxml -->
+<view class="container">
+  <!-- 顶部导航 -->
+  <view class="header">
+    <view class="title">🎧 听力练习</view>
+    <view class="stats">
+      <text class="stat-item">已练习：{{practicedCount}} 套</text>
+      <text class="stat-item">正确率：{{accuracyRate}}%</text>
+    </view>
+  </view>
+
+  <!-- 分类选择 -->
+  <view class="filter-section">
+    <view class="filter-title">选择分类</view>
+    <view class="category-tabs">
+      <view 
+        class="category-tab {{category === 'all' ? 'active' : ''}}" 
+        bindtap="selectCategory" 
+        data-value="all">全部</view>
+      <view 
+        class="category-tab {{category === 'section1' ? 'active' : ''}}" 
+        bindtap="selectCategory" 
+        data-value="section1">Section 1</view>
+      <view 
+        class="category-tab {{category === 'section2' ? 'active' : ''}}" 
+        bindtap="selectCategory" 
+        data-value="section2">Section 2</view>
+      <view 
+        class="category-tab {{category === 'section3' ? 'active' : ''}}" 
+        bindtap="selectCategory" 
+        data-value="section3">Section 3</view>
+      <view 
+        class="category-tab {{category === 'section4' ? 'active' : ''}}" 
+        bindtap="selectCategory" 
+        data-value="section4">Section 4</view>
+      <view 
+        class="category-tab {{category === 'dictation' ? 'active' : ''}}" 
+        bindtap="selectCategory" 
+        data-value="dictation">📝 听写</view>
+    </view>
+  </view>
+
+  <!-- 难度选择 -->
+  <view class="difficulty-filter">
+    <view class="difficulty-title">难度</view>
+    <view class="difficulty-buttons">
+      <button 
+        class="diff-btn {{difficulty === 'all' ? 'active' : ''}}" 
+        bindtap="selectDifficulty" 
+        data-value="all">全部</button>
+      <button 
+        class="diff-btn {{difficulty === 'easy' ? 'active' : ''}}" 
+        bindtap="selectDifficulty" 
+        data-value="easy">简单 (5-6)</button>
+      <button 
+        class="diff-btn {{difficulty === 'medium' ? 'active' : ''}}" 
+        bindtap="selectDifficulty" 
+        data-value="medium">中等 (7)</button>
+      <button 
+        class="diff-btn {{difficulty === 'hard' ? 'active' : ''}}" 
+        bindtap="selectDifficulty" 
+        data-value="hard">困难 (8-9)</button>
+    </view>
+  </view>
+
+  <!-- 测试列表 -->
+  <view class="test-list">
+    <view 
+      class="test-card" 
+      wx:for="{{testList}}" 
+      wx:key="id"
+      bindtap="openTest"
+      data-id="{{item.id}}">
+      <view class="test-header">
+        <text class="test-title">{{item.title}}</text>
+        <view class="test-tags">
+          <view class="tag difficulty-{{item.difficulty}}">D{{item.difficulty}}</view>
+          <view class="tag section-tag">S{{item.section_number}}</view>
+        </view>
+      </view>
+      <view class="test-meta">
+        <text class="meta-item">⏱️ {{formatDuration(item.audio_duration)}}</text>
+        <text class="meta-item">📊 {{item.category === 'academic' ? '学术类' : '培训类'}}</text>
+      </view>
+      <view class="test-tags-detail" wx:if="{{item.tags}}">
+        <text class="tag-small" wx:for="{{JSON.parse(item.tags)}}" wx:key="*this">{{item}}</text>
+      </view>
+      <view class="test-footer">
+        <text class="source" wx:if="{{item.source}}">📚 {{item.source}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{testList.length === 0 && !loading}}">
+    <text class="empty-icon">🎧</text>
+    <text class="empty-text">暂无听力测试</text>
+  </view>
+
+  <!-- 加载状态 -->
+  <view class="loading" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+</view>
+
+<!-- 底部按钮 -->
+<view class="bottom-bar">
+  <button class="btn-recommend" bindtap="getRecommendation">🎯 智能推荐</button>
+  <button class="btn-dictation" bindtap="goToDictation" wx:if="{{category !== 'dictation'}}">✍️ 听写训练</button>
+</view>

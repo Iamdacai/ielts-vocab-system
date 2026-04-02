@@ -224,4 +224,34 @@ router.get('/recommend', authMiddleware, async (req, res) => {
     }
 });
 
+/**
+ * GET /api/listening/skill-analysis
+ * 获取用户听力能力诊断
+ */
+router.get('/skill-analysis', authMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        
+        // 获取最新的能力诊断
+        db.get(
+            'SELECT * FROM listening_skill_analysis WHERE user_id = ? ORDER BY analysis_date DESC LIMIT 1',
+            [userId],
+            (err, analysis) => {
+                if (err) {
+                    console.error('获取能力诊断失败:', err);
+                    return res.status(500).json({ error: '获取能力诊断失败' });
+                }
+                
+                res.json({
+                    success: true,
+                    data: analysis || null
+                });
+            }
+        );
+    } catch (error) {
+        console.error('获取能力诊断异常:', error);
+        res.status(500).json({ error: '服务器错误' });
+    }
+});
+
 module.exports = router;
