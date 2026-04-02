@@ -1,0 +1,147 @@
+<!-- pages/writing-practice/writing.wxml -->
+<view class="container">
+  <!-- 顶部统计 -->
+  <view class="header">
+    <view class="title">✍️ 写作练习</view>
+    <view class="stats">
+      <view class="stat-item">
+        <text class="stat-value">{{totalPractices}}</text>
+        <text class="stat-label">已练习</text>
+      </view>
+      <view class="stat-item">
+        <text class="stat-value">{{avgScore}}</text>
+        <text class="stat-label">平均分</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 题目选择 -->
+  <view class="topic-section">
+    <view class="section-header">
+      <text class="section-title">📝 选择题目</text>
+      <button class="btn-random" bindtap="getRandomTopic">🎲 随机题目</button>
+    </view>
+    
+    <view class="topic-tabs">
+      <view 
+        class="topic-tab {{taskType === 'task2' ? 'active' : ''}}" 
+        bindtap="selectTaskType" 
+        data-type="task2">Task 2</view>
+      <view 
+        class="topic-tab {{taskType === 'task1' ? 'active' : ''}}" 
+        bindtap="selectTaskType" 
+        data-type="task1">Task 1</view>
+    </view>
+
+    <view class="topic-list">
+      <view 
+        class="topic-card" 
+        wx:for="{{topicList}}" 
+        wx:key="id"
+        bindtap="selectTopic"
+        data-item="{{item}}">
+        <view class="topic-header">
+          <text class="topic-type">{{item.task_type === 'task2' ? 'Task 2' : 'Task 1'}}</text>
+          <text class="topic-category">{{item.task_category}}</text>
+        </view>
+        <view class="topic-content">{{item.topic}}</view>
+        <view class="topic-footer">
+          <text class="difficulty">难度：{{item.difficulty || '中等'}}</text>
+          <text class="word-limit">字数：{{item.word_limit || '250+'}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 写作区域 -->
+  <view class="writing-section" wx:if="{{selectedTopic}}">
+    <view class="section-header">
+      <text class="section-title">📄 开始写作</text>
+      <button class="btn-submit" bindtap="submitEssay">✅ 提交批改</button>
+    </view>
+
+    <view class="topic-display">
+      <text class="topic-title">{{selectedTopic.topic}}</text>
+      <text class="topic-requirements" wx:if="{{selectedTopic.requirements}}">
+        要求：{{selectedTopic.requirements}}
+      </text>
+    </view>
+
+    <textarea 
+      class="essay-input" 
+      placeholder="请在此输入你的作文..." 
+      value="{{essayText}}"
+      bindinput="onEssayInput"
+      maxlength="5000"
+      show-count/>
+    
+    <view class="word-count">
+      <text>字数：{{wordCount}}</text>
+      <text wx:if="{{selectedTopic.word_limit}}" class="word-limit-hint">
+        建议：{{selectedTopic.word_limit}}词
+      </text>
+    </view>
+  </view>
+
+  <!-- 批改结果 -->
+  <view class="feedback-section" wx:if="{{feedback}}">
+    <view class="section-header">
+      <text class="section-title">📊 批改结果</text>
+      <button class="btn-review" bindtap="reviewFeedback">👁️ 查看详情</button>
+    </view>
+
+    <view class="score-card">
+      <view class="score-main">
+        <text class="score-value">{{feedback.overallScore}}</text>
+        <text class="score-label">总分</text>
+      </view>
+      <view class="score-details">
+        <view class="score-item">
+          <text class="score-name">任务回应</text>
+          <text class="score-num">{{feedback.taskResponseScore}}</text>
+        </view>
+        <view class="score-item">
+          <text class="score-name">连贯衔接</text>
+          <text class="score-num">{{feedback.coherenceScore}}</text>
+        </view>
+        <view class="score-item">
+          <text class="score-name">词汇丰富</text>
+          <text class="score-num">{{feedback.vocabularyScore}}</text>
+        </view>
+        <view class="score-item">
+          <text class="score-name">语法准确</text>
+          <text class="score-num">{{feedback.grammarScore}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="feedback-summary">
+      <text class="feedback-title">📝 总体评价</text>
+      <text class="feedback-text">{{feedback.feedback}}</text>
+    </view>
+  </view>
+</view>
+
+<!-- 批改详情弹窗 -->
+<view class="modal" wx:if="{{showFeedbackModal}}">
+  <view class="modal-content">
+    <view class="modal-header">
+      <text class="modal-title">批改详情</text>
+      <text class="modal-close" bindtap="closeFeedbackModal">✕</text>
+    </view>
+    <view class="modal-body">
+      <view class="detail-section">
+        <text class="detail-title">✅ 优点</text>
+        <text class="detail-text" wx:for="{{feedback.strengths}}" wx:key="*this">• {{item}}</text>
+      </view>
+      <view class="detail-section">
+        <text class="detail-title">⚠️ 需要改进</text>
+        <text class="detail-text" wx:for="{{feedback.weaknesses}}" wx:key="*this">• {{item}}</text>
+      </view>
+      <view class="detail-section">
+        <text class="detail-title">💡 建议</text>
+        <text class="detail-text" wx:for="{{feedback.suggestions}}" wx:key="*this">• {{item}}</text>
+      </view>
+    </view>
+  </view>
+</view>

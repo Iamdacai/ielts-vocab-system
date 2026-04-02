@@ -1,0 +1,356 @@
+/* pages/writing-practice/writing.wxss */
+.container {
+  padding: 20rpx;
+  padding-bottom: 40rpx;
+}
+
+/* 顶部统计 */
+.header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 40rpx 30rpx;
+  border-radius: 20rpx;
+  margin-bottom: 30rpx;
+}
+
+.title {
+  font-size: 44rpx;
+  font-weight: bold;
+  margin-bottom: 30rpx;
+}
+
+.stats {
+  display: flex;
+  gap: 40rpx;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.stat-value {
+  font-size: 40rpx;
+  font-weight: bold;
+}
+
+.stat-label {
+  font-size: 24rpx;
+  opacity: 0.8;
+}
+
+/* 题目选择 */
+.topic-section {
+  background: white;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin-bottom: 30rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.08);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.btn-random {
+  padding: 12rpx 24rpx;
+  font-size: 26rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 50rpx;
+  border: none;
+}
+
+.topic-tabs {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.topic-tab {
+  padding: 16rpx 32rpx;
+  background: #f5f5f5;
+  border-radius: 50rpx;
+  font-size: 28rpx;
+  color: #666;
+  transition: all 0.3s;
+}
+
+.topic-tab.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.topic-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.topic-card {
+  padding: 24rpx;
+  background: #f8f9fa;
+  border-radius: 16rpx;
+  border: 2rpx solid transparent;
+  transition: all 0.3s;
+}
+
+.topic-card:active {
+  border-color: #667eea;
+  background: #f0f2ff;
+}
+
+.topic-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
+}
+
+.topic-type {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #667eea;
+}
+
+.topic-category {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.topic-content {
+  font-size: 28rpx;
+  color: #333;
+  line-height: 1.6;
+  margin-bottom: 12rpx;
+}
+
+.topic-footer {
+  display: flex;
+  gap: 30rpx;
+  font-size: 24rpx;
+  color: #999;
+}
+
+/* 写作区域 */
+.writing-section {
+  background: white;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  margin-bottom: 30rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.08);
+}
+
+.topic-display {
+  margin-bottom: 20rpx;
+  padding: 20rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  border-left: 4rpx solid #667eea;
+}
+
+.topic-title {
+  display: block;
+  font-size: 30rpx;
+  color: #333;
+  font-weight: bold;
+  margin-bottom: 12rpx;
+}
+
+.topic-requirements {
+  display: block;
+  font-size: 26rpx;
+  color: #666;
+}
+
+.essay-input {
+  width: 100%;
+  min-height: 400rpx;
+  padding: 20rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  line-height: 1.8;
+  box-sizing: border-box;
+}
+
+.word-count {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #999;
+}
+
+.word-limit-hint {
+  color: #ff9800;
+}
+
+.btn-submit {
+  padding: 12rpx 24rpx;
+  font-size: 26rpx;
+  background: linear-gradient(135deg, #4caf50 0%, #8bc34a 100%);
+  color: white;
+  border-radius: 50rpx;
+  border: none;
+}
+
+/* 批改结果 */
+.feedback-section {
+  background: white;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.08);
+}
+
+.btn-review {
+  padding: 12rpx 24rpx;
+  font-size: 26rpx;
+  background: linear-gradient(135deg, #ff9800 0%, #ffc107 100%);
+  color: white;
+  border-radius: 50rpx;
+  border: none;
+}
+
+.score-card {
+  margin: 30rpx 0;
+  padding: 30rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20rpx;
+  color: white;
+}
+
+.score-main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 30rpx;
+}
+
+.score-value {
+  font-size: 80rpx;
+  font-weight: bold;
+}
+
+.score-label {
+  font-size: 28rpx;
+  opacity: 0.9;
+}
+
+.score-details {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20rpx;
+}
+
+.score-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.score-name {
+  font-size: 24rpx;
+  opacity: 0.8;
+}
+
+.score-num {
+  font-size: 36rpx;
+  font-weight: bold;
+}
+
+.feedback-summary {
+  padding: 20rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+}
+
+.feedback-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 12rpx;
+}
+
+.feedback-text {
+  display: block;
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.8;
+}
+
+/* 弹窗 */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 24rpx;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30rpx;
+  border-bottom: 1rpx solid #e0e0e0;
+}
+
+.modal-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.modal-close {
+  font-size: 40rpx;
+  color: #999;
+}
+
+.modal-body {
+  padding: 30rpx;
+}
+
+.detail-section {
+  margin-bottom: 30rpx;
+}
+
+.detail-title {
+  display: block;
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 16rpx;
+}
+
+.detail-text {
+  display: block;
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.8;
+  margin-bottom: 8rpx;
+}
