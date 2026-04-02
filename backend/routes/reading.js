@@ -15,6 +15,9 @@ const db = new sqlite3.Database(dbPath);
 // 认证中间件
 const authMiddleware = require('../auth-middleware');
 
+// AI 服务
+const aiService = require('../services/ai-service');
+
 /**
  * GET /api/reading/articles
  * 获取阅读文章列表
@@ -177,39 +180,74 @@ router.get('/analysis/:articleId', authMiddleware, async (req, res) => {
         const articleId = req.params.articleId;
         const userId = req.user.id;
         
-        // 获取用户的答题记录
-        db.all(
-            `SELECT rqa.*, rq.question_text, rq.correct_answer, rq.ai_explanation 
-             FROM reading_user_answers rqa 
-             JOIN reading_questions rq ON rqa.question_id = rq.id 
-             WHERE rqa.user_id = ? AND rqa.article_id = ?`,
-            [userId, articleId],
-            (err, answers) => {
-                if (err) {
-                    console.error('获取解析失败:', err);
-                    return res.status(500).json({ error: '获取解析失败' });
-                }
-                
-                if (answers.length === 0) {
-                    return res.status(404).json({ error: '未找到答题记录' });
-                }
-                
-                res.json({
-                    success: true,
-                    data: {
-                        articleId,
-                        answers: answers.map(a => ({
-                            questionId: a.question_id,
-                            questionText: a.question_text,
-                            userAnswer: a.user_answer,
-                            correctAnswer: a.correct_answer,
-                            isCorrect: a.is_correct === 1,
-                            explanation: a.ai_explanation
-                        }))
-                    }
-                });
+        // 获取文章内容和用户答题记录
+        db.get('SELECT content FROM reading_articles WHERE id = ?', [articleId], async (err, article) => {
+            if (err || !article) {
+                return res.status(404).json({ error: '文章不存在' });
             }
-        );
+            
+            db.all(
+                `SELECT rqa.*, rq.question_text, rq.correct_answer, rq.ai_explanation 
+                 FROM reading_user_answers rqa 
+                 JOIN reading_questions rq ON rqa.question_id = rq.id 
+                 WHERE rqa.user_id = ? AND rqa.article_id = ?`,
+                [userId, articleId],
+                async (err, answers) => {
+                    if (err) {
+                        return res.status(500).json({ error: '获取解析失败' });
+                    }
+                    
+                    if (answers.length === 0) {
+                        return res.status(404).json({ error: '未找到答题记录' });
+                    }
+                    
+                    // 为没有 AI 解析的题目生成解析
+                    const answersWithExplanation = await Promise.all(
+                        answers.map(async (a) => {
+                            let explanation = a.ai_explanation;
+                            
+                            // 如果没有预设解析，调用 AI 生成
+                            if (!explanation) {
+                                try {
+                                    explanation = await aiService.generateReadingExplanation(
+                                        article.content,
+                                        a.question_text,
+                                        a.user_answer,
+                                        a.correct_answer
+                                    );
+                                    
+                                    // 保存 AI 解析到数据库
+                                    db.run(
+                                        'UPDATE reading_questions SET ai_explanation = ? WHERE id = ?',
+                                        [explanation, a.question_id]
+                                    );
+                                } catch (error) {
+                                    console.error('生成 AI 解析失败:', error);
+                                    explanation = '解析生成失败，请稍后重试。';
+                                }
+                            }
+                            
+                            return {
+                                questionId: a.question_id,
+                                questionText: a.question_text,
+                                userAnswer: a.user_answer,
+                                correctAnswer: a.correct_answer,
+                                isCorrect: a.is_correct === 1,
+                                explanation
+                            };
+                        })
+                    );
+                    
+                    res.json({
+                        success: true,
+                        data: {
+                            articleId,
+                            answers: answersWithExplanation
+                        }
+                    });
+                }
+            );
+        });
     } catch (error) {
         console.error('获取解析异常:', error);
         res.status(500).json({ error: '服务器错误' });
@@ -295,6 +333,71 @@ router.get('/skill-analysis', authMiddleware, async (req, res) => {
         );
     } catch (error) {
         console.error('获取能力诊断异常:', error);
+        res.status(500).json({ error: '服务器错误' });
+    }
+});
+
+/**
+ * POST /api/reading/skill-analysis/generate
+ * 生成阅读能力诊断（AI）
+ */
+router.post('/skill-analysis/generate', authMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { articleId } = req.body;
+        
+        // 获取用户在该文章上的答题记录
+        db.all(
+            `SELECT rqa.*, rq.question_type 
+             FROM reading_user_answers rqa 
+             JOIN reading_questions rq ON rqa.question_id = rq.id 
+             WHERE rqa.user_id = ? AND rqa.article_id = ?`,
+            [userId, articleId],
+            async (err, answers) => {
+                if (err) {
+                    return res.status(500).json({ error: '获取答题记录失败' });
+                }
+                
+                if (answers.length === 0) {
+                    return res.status(404).json({ error: '未找到答题记录' });
+                }
+                
+                // 调用 AI 生成诊断
+                const diagnosis = await aiService.generateReadingDiagnosis(
+                    answers.map(a => ({
+                        isCorrect: a.is_correct === 1,
+                        timeSpent: a.time_spent,
+                        questionType: a.question_type
+                    }))
+                );
+                
+                // 保存诊断结果
+                const today = new Date().toISOString().split('T')[0];
+                db.run(
+                    `INSERT INTO reading_skill_analysis (user_id, analysis_date, accuracy_rate, weak_points, improvement_suggestions)
+                     VALUES (?, ?, ?, ?, ?)
+                     ON CONFLICT(user_id, analysis_date) DO UPDATE SET
+                        accuracy_rate = ?, weak_points = ?, improvement_suggestions = ?`,
+                    [
+                        userId, today, diagnosis.accuracyRate, 
+                        JSON.stringify(diagnosis.weakPoints), diagnosis.analysis,
+                        diagnosis.accuracyRate, JSON.stringify(diagnosis.weakPoints), diagnosis.analysis
+                    ],
+                    (err) => {
+                        if (err) {
+                            console.error('保存诊断失败:', err);
+                        }
+                        
+                        res.json({
+                            success: true,
+                            data: diagnosis
+                        });
+                    }
+                );
+            }
+        );
+    } catch (error) {
+        console.error('生成诊断异常:', error);
         res.status(500).json({ error: '服务器错误' });
     }
 });

@@ -1,0 +1,76 @@
+<!-- pages/reading/reading.wxml -->
+<view class="container">
+  <!-- 顶部导航 -->
+  <view class="header">
+    <view class="title">📖 阅读练习</view>
+    <view class="stats">
+      <text class="stat-item">已练习：{{practicedCount}} 篇</text>
+      <text class="stat-item">正确率：{{accuracyRate}}%</text>
+    </view>
+  </view>
+
+  <!-- 难度选择 -->
+  <view class="filter-section">
+    <view class="filter-title">选择难度</view>
+    <view class="difficulty-tabs">
+      <view 
+        class="difficulty-tab {{difficulty === 'all' ? 'active' : ''}}" 
+        bindtap="selectDifficulty" 
+        data-value="all">全部</view>
+      <view 
+        class="difficulty-tab {{difficulty === 'easy' ? 'active' : ''}}" 
+        bindtap="selectDifficulty" 
+        data-value="easy">简单 (5-6)</view>
+      <view 
+        class="difficulty-tab {{difficulty === 'medium' ? 'active' : ''}}" 
+        bindtap="selectDifficulty" 
+        data-value="medium">中等 (7)</view>
+      <view 
+        class="difficulty-tab {{difficulty === 'hard' ? 'active' : ''}}" 
+        bindtap="selectDifficulty" 
+        data-value="hard">困难 (8-9)</view>
+    </view>
+  </view>
+
+  <!-- 文章列表 -->
+  <view class="article-list">
+    <view 
+      class="article-card" 
+      wx:for="{{articleList}}" 
+      wx:key="id"
+      bindtap="openArticle"
+      data-id="{{item.id}}">
+      <view class="article-header">
+        <text class="article-title">{{item.title}}</text>
+        <view class="article-tags">
+          <view class="tag difficulty-{{item.difficulty}}">难度{{item.difficulty}}</view>
+          <view class="tag category-{{item.category}}">{{item.category === 'academic' ? '学术类' : '培训类'}}</view>
+        </view>
+      </view>
+      <view class="article-meta">
+        <text class="meta-item">📝 {{item.word_count}}词</text>
+        <text class="meta-item">⏱️ {{Math.ceil(item.word_count / 200)}}分钟</text>
+        <text class="meta-item">✅ {{item.practiced_count || 0}}人已练</text>
+      </view>
+      <view class="article-tags-detail" wx:if="{{item.tags}}">
+        <text class="tag-small" wx:for="{{JSON.parse(item.tags)}}" wx:key="*this">{{item}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:if="{{articleList.length === 0 && !loading}}">
+    <text class="empty-icon">📚</text>
+    <text class="empty-text">暂无文章</text>
+  </view>
+
+  <!-- 加载状态 -->
+  <view class="loading" wx:if="{{loading}}">
+    <text>加载中...</text>
+  </view>
+</view>
+
+<!-- 底部按钮 -->
+<view class="bottom-bar">
+  <button class="btn-recommend" bindtap="getRecommendation">🎯 智能推荐</button>
+</view>

@@ -1,0 +1,216 @@
+/* pages/reading/reading.wxss */
+.container {
+  padding: 20rpx;
+  padding-bottom: 140rpx;
+}
+
+/* 顶部导航 */
+.header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 40rpx 30rpx;
+  border-radius: 20rpx;
+  margin-bottom: 30rpx;
+}
+
+.title {
+  font-size: 44rpx;
+  font-weight: bold;
+  margin-bottom: 20rpx;
+}
+
+.stats {
+  display: flex;
+  gap: 30rpx;
+}
+
+.stat-item {
+  font-size: 28rpx;
+  opacity: 0.9;
+}
+
+/* 难度选择 */
+.filter-section {
+  margin-bottom: 30rpx;
+}
+
+.filter-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  margin-bottom: 20rpx;
+  color: #333;
+}
+
+.difficulty-tabs {
+  display: flex;
+  gap: 20rpx;
+  flex-wrap: wrap;
+}
+
+.difficulty-tab {
+  padding: 16rpx 32rpx;
+  background: white;
+  border-radius: 50rpx;
+  font-size: 28rpx;
+  color: #666;
+  box-shadow: 0 2rpx 10rpx rgba(0,0,0,0.1);
+  transition: all 0.3s;
+}
+
+.difficulty-tab.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+/* 文章列表 */
+.article-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.article-card {
+  background: white;
+  border-radius: 20rpx;
+  padding: 30rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.08);
+  transition: all 0.3s;
+}
+
+.article-card:active {
+  transform: scale(0.98);
+}
+
+.article-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20rpx;
+}
+
+.article-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  flex: 1;
+  margin-right: 20rpx;
+}
+
+.article-tags {
+  display: flex;
+  gap: 10rpx;
+  flex-shrink: 0;
+}
+
+.tag {
+  padding: 8rpx 16rpx;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  font-weight: 500;
+}
+
+.difficulty-5, .difficulty-6 {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.difficulty-7 {
+  background: #fff3e0;
+  color: #ef6c00;
+}
+
+.difficulty-8, .difficulty-9 {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.category-academic {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.category-general {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.article-meta {
+  display: flex;
+  gap: 30rpx;
+  margin-bottom: 16rpx;
+}
+
+.meta-item {
+  font-size: 26rpx;
+  color: #666;
+}
+
+.article-tags-detail {
+  display: flex;
+  gap: 10rpx;
+  flex-wrap: wrap;
+}
+
+.tag-small {
+  padding: 6rpx 12rpx;
+  background: #f5f5f5;
+  border-radius: 6rpx;
+  font-size: 24rpx;
+  color: #666;
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100rpx 0;
+}
+
+.empty-icon {
+  font-size: 120rpx;
+  margin-bottom: 30rpx;
+}
+
+.empty-text {
+  font-size: 32rpx;
+  color: #999;
+}
+
+/* 加载状态 */
+.loading {
+  text-align: center;
+  padding: 40rpx;
+  color: #999;
+  font-size: 28rpx;
+}
+
+/* 底部按钮 */
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  padding: 20rpx 30rpx;
+  box-shadow: 0 -4rpx 20rpx rgba(0,0,0,0.08);
+  z-index: 100;
+}
+
+.btn-recommend {
+  width: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 50rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+  padding: 28rpx 0;
+  box-shadow: 0 8rpx 20rpx rgba(102, 126, 234, 0.4);
+}
+
+.btn-recommend:active {
+  opacity: 0.9;
+  transform: scale(0.98);
+}
