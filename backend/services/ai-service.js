@@ -1,17 +1,19 @@
 /**
  * AI 服务集成模块
  * AIielts Phase 2 - AI 解析、内容生成、智能推荐
+ * 
+ * ⭐ 复用现有 MiniMax 客户端，不重复造轮子
  */
 
-const axios = require('axios');
+const MiniMaxClient = require('./minimax-client');
 
 class AIService {
     constructor() {
-        // TODO: 从环境变量读取 AI 服务配置
-        // 示例使用通义千问 API
-        this.apiKey = process.env.AI_API_KEY || '';
-        this.apiEndpoint = process.env.AI_API_ENDPOINT || 'https://dashscope.aliyuncs.com/api/v1';
-        this.model = process.env.AI_MODEL || 'qwen-turbo';
+        // ✅ 复用现有 MiniMax 客户端
+        this.minimax = new MiniMaxClient({
+            model: process.env.MINIMAX_MODEL || 'MiniMax-M2.5',
+            timeout: 60000
+        });
     }
 
     /**
@@ -249,40 +251,21 @@ ${essayText}
     /**
      * 调用 AI API（内部方法）
      * @private
+     * ✅ 复用 MiniMax 客户端
      */
     async _callAI(prompt, options = {}) {
-        // TODO: 实现实际的 AI API 调用
-        // 这里是示例代码，使用通义千问 API
-        
-        if (!this.apiKey) {
-            console.warn('AI API Key 未配置，返回模拟响应');
-            return this._getMockResponse(prompt, options);
-        }
-
         try {
-            const response = await axios.post(
-                `${this.apiEndpoint}/services/aigc/text-generation/generation`,
-                {
-                    model: this.model,
-                    input: {
-                        messages: [
-                            { role: 'system', content: '你是一位专业的雅思教育专家。' },
-                            { role: 'user', content: prompt }
-                        ]
-                    }
-                },
-                {
-                    headers: {
-                        'Authorization': `Bearer ${this.apiKey}`,
-                        'Content-Type': 'application/json'
-                    }
-                }
-            );
-
-            return response.data.output.text;
+            const result = await this.minimax.generate(prompt, {
+                jsonMode: options.json || false,
+                maxTokens: options.maxTokens || 2000,
+                retryCount: 3
+            });
+            
+            return options.json ? result : result.content;
         } catch (error) {
-            console.error('AI API 调用失败:', error.message);
-            throw error;
+            console.error('[AI-Service] MiniMax 调用失败:', error.message);
+            console.log('[AI-Service] 🔄 降级到模拟响应...');
+            return this._getMockResponse(prompt, options);
         }
     }
 
