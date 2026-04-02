@@ -1,0 +1,365 @@
+/* pages/plan/plan.wxss */
+.container {
+  padding: 20rpx;
+  padding-bottom: 40rpx;
+}
+
+/* 计划状态卡片 */
+.plan-status {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 24rpx;
+  padding: 30rpx;
+  margin-bottom: 30rpx;
+  box-shadow: 0 8rpx 32rpx rgba(102, 126, 234, 0.3);
+}
+
+.status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.status-title {
+  font-size: 36rpx;
+  font-weight: bold;
+}
+
+.status-badge {
+  padding: 8rpx 20rpx;
+  border-radius: 50rpx;
+  font-size: 24rpx;
+  background: rgba(255,255,255,0.2);
+}
+
+.status-badge.active {
+  background: #4caf50;
+}
+
+.status-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30rpx;
+  margin-bottom: 20rpx;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.info-label {
+  font-size: 24rpx;
+  opacity: 0.8;
+}
+
+.info-value {
+  font-size: 28rpx;
+  font-weight: bold;
+}
+
+.info-value.highlight {
+  color: #ffeb3b;
+}
+
+/* 进度条 */
+.progress-bar {
+  height: 12rpx;
+  background: rgba(255,255,255,0.2);
+  border-radius: 6rpx;
+  overflow: hidden;
+  margin-bottom: 12rpx;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ffeb3b, #ffc107);
+  border-radius: 6rpx;
+  transition: width 0.3s;
+}
+
+.progress-text {
+  font-size: 24rpx;
+  text-align: right;
+  opacity: 0.9;
+}
+
+/* 无计划状态 */
+.no-plan {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 100rpx 40rpx;
+  background: white;
+  border-radius: 24rpx;
+  margin-bottom: 30rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.08);
+}
+
+.no-plan-icon {
+  font-size: 120rpx;
+  margin-bottom: 30rpx;
+}
+
+.no-plan-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 16rpx;
+}
+
+.no-plan-desc {
+  font-size: 28rpx;
+  color: #999;
+  margin-bottom: 40rpx;
+  text-align: center;
+}
+
+.btn-create {
+  width: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 50rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+  padding: 28rpx 0;
+  box-shadow: 0 8rpx 20rpx rgba(102, 126, 234, 0.4);
+}
+
+/* 今日任务 */
+.today-section {
+  background: white;
+  border-radius: 24rpx;
+  padding: 30rpx;
+  margin-bottom: 30rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.08);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.section-date {
+  font-size: 26rpx;
+  color: #999;
+}
+
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.task-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 20rpx;
+  background: #f8f9fa;
+  border-radius: 16rpx;
+  transition: all 0.3s;
+}
+
+.task-item.completed {
+  background: #e8f5e9;
+  opacity: 0.7;
+}
+
+.task-checkbox {
+  margin-right: 20rpx;
+  flex-shrink: 0;
+}
+
+.checkbox-icon {
+  font-size: 40rpx;
+}
+
+.task-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.task-type {
+  font-size: 24rpx;
+  font-weight: bold;
+  color: #667eea;
+}
+
+.task-type-reading { color: #2196f3; }
+.task-type-listening { color: #9c27b0; }
+.task-type-writing { color: #ff5722; }
+.task-type-speaking { color: #4caf50; }
+.task-type-vocabulary { color: #ff9800; }
+.task-type-review { color: #00bcd4; }
+.task-type-mock_test { color: #e91e63; }
+
+.task-desc {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.task-duration {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.task-summary {
+  margin-top: 20rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #e0e0e0;
+  text-align: right;
+  font-size: 26rpx;
+  color: #666;
+}
+
+/* 快速入口 */
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20rpx;
+}
+
+.action-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24rpx 16rpx;
+  background: white;
+  border-radius: 20rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.08);
+  transition: all 0.3s;
+}
+
+.action-item:active {
+  transform: scale(0.95);
+}
+
+.action-icon {
+  font-size: 48rpx;
+  margin-bottom: 12rpx;
+}
+
+.action-text {
+  font-size: 24rpx;
+  color: #666;
+}
+
+/* 弹窗 */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 24rpx;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30rpx;
+  border-bottom: 1rpx solid #e0e0e0;
+}
+
+.modal-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.modal-close {
+  font-size: 40rpx;
+  color: #999;
+  padding: 0 10rpx;
+}
+
+.modal-body {
+  padding: 30rpx;
+}
+
+.form-item {
+  margin-bottom: 30rpx;
+}
+
+.form-label {
+  display: block;
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 16rpx;
+  font-weight: 500;
+}
+
+.picker {
+  padding: 20rpx;
+  background: #f8f9fa;
+  border-radius: 12rpx;
+  font-size: 28rpx;
+  color: #333;
+}
+
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  font-size: 28rpx;
+  color: #333;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 20rpx;
+  padding: 30rpx;
+  border-top: 1rpx solid #e0e0e0;
+}
+
+.btn-cancel,
+.btn-confirm {
+  flex: 1;
+  padding: 24rpx 0;
+  border-radius: 50rpx;
+  font-size: 30rpx;
+  font-weight: bold;
+}
+
+.btn-cancel {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.btn-confirm {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+}

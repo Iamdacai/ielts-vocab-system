@@ -1,0 +1,137 @@
+<!-- pages/plan/plan.wxml -->
+<view class="container">
+  <!-- 顶部状态卡片 -->
+  <view class="plan-status" wx:if="{{plan}}">
+    <view class="status-header">
+      <text class="status-title">📋 {{plan.plan_name}}</text>
+      <text class="status-badge {{plan.status}}">{{plan.status === 'active' ? '进行中' : plan.status}}</text>
+    </view>
+    <view class="status-info">
+      <view class="info-item">
+        <text class="info-label">考试日期</text>
+        <text class="info-value">{{plan.exam_date}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">目标分数</text>
+        <text class="info-value">{{plan.target_score}}分</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">当前水平</text>
+        <text class="info-value">{{plan.current_score}}分</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">剩余天数</text>
+        <text class="info-value highlight">{{remainingDays}}天</text>
+      </view>
+    </view>
+    <view class="progress-bar">
+      <view class="progress-fill" style="width: {{completionRate}}%"></view>
+    </view>
+    <view class="progress-text">总进度：{{completionRate}}%</view>
+  </view>
+
+  <!-- 无计划状态 -->
+  <view class="no-plan" wx:else>
+    <text class="no-plan-icon">🎯</text>
+    <text class="no-plan-title">暂无学习计划</text>
+    <text class="no-plan-desc">创建专属学习计划，让备考更高效</text>
+    <button class="btn-create" bindtap="createPlan">✨ 创建学习计划</button>
+  </view>
+
+  <!-- 今日任务 -->
+  <view class="today-section" wx:if="{{plan}}">
+    <view class="section-header">
+      <text class="section-title">📅 今日任务</text>
+      <text class="section-date">{{today}}</text>
+    </view>
+    <view class="task-list">
+      <view 
+        class="task-item {{task.status}}" 
+        wx:for="{{todayTasks}}" 
+        wx:key="id"
+        bindtap="completeTask"
+        data-id="{{task.id}}">
+        <view class="task-checkbox">
+          <text class="checkbox-icon">{{task.status === 'completed' ? '✅' : '⬜'}}</text>
+        </view>
+        <view class="task-content">
+          <text class="task-type task-type-{{task.task_type}}">{{taskTypeText(task.task_type)}}</text>
+          <text class="task-desc">{{task.task_content}}</text>
+          <text class="task-duration" wx:if="{{task.estimated_duration}}">⏱️ {{task.estimated_duration}}分钟</text>
+        </view>
+      </view>
+    </view>
+    <view class="task-summary" wx:if="{{todayTasks.length > 0}}">
+      <text>已完成：{{completedCount}}/{{todayTasks.length}}</text>
+    </view>
+  </view>
+
+  <!-- 快速入口 -->
+  <view class="quick-actions">
+    <view class="action-item" bindtap="goToDiagnostic">
+      <text class="action-icon">📊</text>
+      <text class="action-text">水平诊断</text>
+    </view>
+    <view class="action-item" bindtap="goToProgress">
+      <text class="action-icon">📈</text>
+      <text class="action-text">进度追踪</text>
+    </view>
+    <view class="action-item" bindtap="adjustPlan">
+      <text class="action-icon">⚙️</text>
+      <text class="action-text">调整计划</text>
+    </view>
+    <view class="action-item" bindtap="viewCalendar">
+      <text class="action-icon">📆</text>
+      <text class="action-text">查看日历</text>
+    </view>
+  </view>
+</view>
+
+<!-- 创建计划弹窗 -->
+<view class="modal" wx:if="{{showCreateModal}}">
+  <view class="modal-content">
+    <view class="modal-header">
+      <text class="modal-title">创建学习计划</text>
+      <text class="modal-close" bindtap="closeModal">✕</text>
+    </view>
+    <view class="modal-body">
+      <view class="form-item">
+        <text class="form-label">考试日期 *</text>
+        <picker mode="date" value="{{examDate}}" bindchange="onDateChange">
+          <view class="picker">{{examDate || '选择考试日期'}}</view>
+        </picker>
+      </view>
+      <view class="form-item">
+        <text class="form-label">目标分数 *</text>
+        <picker mode="selector" range="{{scoreOptions}}" value="{{targetScoreIndex}}" bindchange="onTargetScoreChange">
+          <view class="picker">{{scoreOptions[targetScoreIndex]}}</view>
+        </picker>
+      </view>
+      <view class="form-item">
+        <text class="form-label">当前水平</text>
+        <picker mode="selector" range="{{scoreOptions}}" value="{{currentScoreIndex}}" bindchange="onCurrentScoreChange">
+          <view class="picker">{{scoreOptions[currentScoreIndex] || '选择当前水平'}}</view>
+        </picker>
+      </view>
+      <view class="form-item">
+        <text class="form-label">每日学习时长</text>
+        <picker mode="selector" range="{{timeOptions}}" value="{{timeIndex}}" bindchange="onTimeChange">
+          <view class="picker">{{timeOptions[timeIndex]}}</view>
+        </picker>
+      </view>
+      <view class="form-item">
+        <text class="form-label">薄弱项（多选）</text>
+        <view class="checkbox-group">
+          <label class="checkbox-item" wx:for="{{weakSkills}}" wx:key="*this">
+            <checkbox checked="{{item.selected}}" color="#667eea"/>
+            <text>{{item.name}}</text>
+          </label>
+        </view>
+      </view>
+    </view>
+    <view class="modal-footer">
+      <button class="btn-cancel" bindtap="closeModal">取消</button>
+      <button class="btn-confirm" bindtap="confirmCreate">创建计划</button>
+    </view>
+  </view>
+</view>
