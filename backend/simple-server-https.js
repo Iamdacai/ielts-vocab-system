@@ -81,6 +81,15 @@ app.use('/api/audio/vocabulary', express.static(path.join(__dirname, '../vocabul
   }
 }));
 
+// 🆕 剑桥雅思听力音频静态服务
+app.use('/api/audio/listening', express.static(path.join(__dirname, '../audio/listening'), {
+  setHeaders: (res, path) => {
+    res.setHeader('Content-Type', 'audio/mpeg');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Accept-Ranges', 'bytes');
+  }
+}));
+
 // 🆕 发音音频动态路由（支持从有道 TTS 获取）
 
 app.get('/api/pronunciation/word-audio/:word', async (req, res) => {
