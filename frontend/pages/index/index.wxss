@@ -353,6 +353,9 @@
   text-align: center;
   border: 1rpx solid rgba(167, 139, 250, 0.3);
   transition: all 0.3s;
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
 }
 
 .practice-item:active {

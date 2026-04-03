@@ -316,28 +316,56 @@ Page({
    * 🎧 跳转到听力练习页
    */
   goToListening() {
-    wx.navigateTo({ url: '/pages/listening/listening' });
+    console.log('🎧 点击听力练习');
+    wx.navigateTo({ 
+      url: '/pages/listening/listening',
+      fail: (err) => {
+        console.error('跳转失败:', err)
+        wx.showToast({ title: '页面不存在', icon: 'none' })
+      }
+    });
   },
 
   /**
    * 📖 跳转到阅读练习页
    */
   goToReading() {
-    wx.navigateTo({ url: '/pages/reading/reading' });
+    console.log('📖 点击阅读练习');
+    wx.navigateTo({ 
+      url: '/pages/reading/reading',
+      fail: (err) => {
+        console.error('跳转失败:', err)
+        wx.showToast({ title: '页面不存在', icon: 'none' })
+      }
+    });
   },
 
   /**
    * ✍️ 跳转到写作练习页
    */
   goToWritingPractice() {
-    wx.navigateTo({ url: '/pages/writing-practice/writing-practice' });
+    console.log('✍️ 点击写作练习');
+    wx.navigateTo({ 
+      url: '/pages/writing-practice/writing-practice',
+      fail: (err) => {
+        console.error('跳转失败:', err)
+        wx.showToast({ title: '页面不存在', icon: 'none' })
+      }
+    });
   },
 
   /**
    * 📅 跳转到学习计划页
    */
   goToPlan() {
-    wx.navigateTo({ url: '/pages/plan/plan' });
+    console.log('📅 点击学习计划');
+    wx.navigateTo({ 
+      url: '/pages/plan/plan',
+      fail: (err) => {
+        console.error('跳转失败:', err)
+        wx.showToast({ title: '页面不存在', icon: 'none' })
+      }
+    });
   },
 
   /**
