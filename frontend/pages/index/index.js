@@ -310,5 +310,54 @@ Page({
    */
   goToWriting() {
     wx.navigateTo({ url: '/pages/writing/writing' });
+  },
+
+  /**
+   * 🎧 跳转到听力练习页
+   */
+  goToListening() {
+    wx.navigateTo({ url: '/pages/listening/listening' });
+  },
+
+  /**
+   * 📖 跳转到阅读练习页
+   */
+  goToReading() {
+    wx.navigateTo({ url: '/pages/reading/reading' });
+  },
+
+  /**
+   * ✍️ 跳转到写作练习页
+   */
+  goToWritingPractice() {
+    wx.navigateTo({ url: '/pages/writing-practice/writing-practice' });
+  },
+
+  /**
+   * 📅 跳转到学习计划页
+   */
+  goToPlan() {
+    wx.navigateTo({ url: '/pages/plan/plan' });
+  },
+
+  /**
+   * ❌ 跳转到错题本页
+   */
+  goToMistakes() {
+    wx.navigateTo({ url: '/pages/mistakes/index' });
+  },
+
+  /**
+   * 🏆 跳转到成就页
+   */
+  goToAchievements() {
+    wx.navigateTo({ url: '/pages/achievements/achievements' });
+  },
+
+  /**
+   * 🔊 跳转到发音练习页
+   */
+  goToPronunciation() {
+    wx.navigateTo({ url: '/pages/pronunciation/pronunciation' });
   }
 });

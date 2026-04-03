@@ -100,7 +100,34 @@
       </view>
     </view>
 
-    <!-- 🤖 AI 功能专区 -->
+    <!-- 🎯 专项练习专区 -->
+    <view class="card practice-section">
+      <view class="card-title">🎯 专项练习</view>
+      <view class="practice-grid">
+        <view class="practice-item" bindtap="goToListening">
+          <view class="practice-icon">🎧</view>
+          <view class="practice-name">听力练习</view>
+          <view class="practice-desc">剑桥 1-20 真题</view>
+        </view>
+        <view class="practice-item" bindtap="goToReading">
+          <view class="practice-icon">📖</view>
+          <view class="practice-name">阅读练习</view>
+          <view class="practice-desc">真题 + AI 解析</view>
+        </view>
+        <view class="practice-item" bindtap="goToWritingPractice">
+          <view class="practice-icon">✍️</view>
+          <view class="practice-name">写作练习</view>
+          <view class="practice-desc">AI 智能批改</view>
+        </view>
+        <view class="practice-item" bindtap="goToPlan">
+          <view class="practice-icon">📅</view>
+          <view class="practice-name">学习计划</view>
+          <view class="practice-desc">个性化规划</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 🤖 AI 智能陪练 -->
     <view class="card ai-section">
       <view class="card-title">🤖 AI 智能陪练</view>
       <view class="ai-feature-grid">
@@ -118,6 +145,29 @@
           <view class="ai-feature-icon">✍️</view>
           <view class="ai-feature-name">写作批改</view>
           <view class="ai-feature-desc">四维评分系统</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 📚 学习工具 -->
+    <view class="card tools-section">
+      <view class="card-title">📚 学习工具</view>
+      <view class="tools-grid">
+        <view class="tool-item" bindtap="goToMistakes">
+          <view class="tool-icon">❌</view>
+          <view class="tool-name">错题本</view>
+        </view>
+        <view class="tool-item" bindtap="goToAchievements">
+          <view class="tool-icon">🏆</view>
+          <view class="tool-name">成就</view>
+        </view>
+        <view class="tool-item" bindtap="goToPronunciation">
+          <view class="tool-icon">🔊</view>
+          <view class="tool-name">发音练习</view>
+        </view>
+        <view class="tool-item" bindtap="goToProfile">
+          <view class="tool-icon">👤</view>
+          <view class="tool-name">个人中心</view>
         </view>
       </view>
     </view>
