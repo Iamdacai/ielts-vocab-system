@@ -4,13 +4,19 @@
     "pages/learning/learning",
     "pages/review/review",
     "pages/config/config",
+    "pages/listening/listening",
+    "pages/reading/reading",
+    "pages/writing/writing",
+    "pages/writing-practice/writing-practice",
+    "pages/plan/plan",
+    "pages/speaking/speaking",
     "pages/pronunciation/pronunciation",
     "pages/login/login",
     "pages/profile/profile",
     "pages/admin/index",
     "pages/ai-interests/ai-interests",
-    "pages/speaking/speaking",
-    "pages/writing/writing"
+    "pages/achievements/achievements",
+    "pages/mistakes/index"
   ],
   "window": {
     "backgroundTextStyle": "light",
