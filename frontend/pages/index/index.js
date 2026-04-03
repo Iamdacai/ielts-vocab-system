@@ -361,3 +361,5 @@ Page({
     wx.navigateTo({ url: '/pages/pronunciation/pronunciation' });
   }
 });
+
+// 2026-04-03 更新：添加专项练习导航函数
