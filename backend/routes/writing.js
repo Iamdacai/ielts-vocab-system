@@ -11,13 +11,13 @@ const path = require('path');
 const dbPath = path.join(__dirname, '../ielts_vocab.db');
 const db = new sqlite3.Database(dbPath);
 
-const authMiddleware = require('../auth-middleware');
+const { authenticateToken } = require('../auth-middleware');
 
 /**
  * GET /api/writing/tasks
  * 获取写作任务列表
  */
-router.get('/tasks', authMiddleware, async (req, res) => {
+router.get('/tasks', authenticateToken, async (req, res) => {
     try {
         const { taskType, category } = req.query;
         
@@ -57,7 +57,7 @@ router.get('/tasks', authMiddleware, async (req, res) => {
  * POST /api/writing/submit
  * 提交作文
  */
-router.post('/submit', authMiddleware, async (req, res) => {
+router.post('/submit', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
         const { taskId, essayText, timeSpent } = req.body;
@@ -104,7 +104,7 @@ router.post('/submit', authMiddleware, async (req, res) => {
  * GET /api/writing/feedback/:submissionId
  * 获取 AI 批改反馈
  */
-router.get('/feedback/:submissionId', authMiddleware, async (req, res) => {
+router.get('/feedback/:submissionId', authenticateToken, async (req, res) => {
     try {
         const submissionId = req.params.submissionId;
         const userId = req.user.id;
@@ -159,7 +159,7 @@ router.get('/feedback/:submissionId', authMiddleware, async (req, res) => {
  * GET /api/writing/history
  * 获取历史作文
  */
-router.get('/history', authMiddleware, async (req, res) => {
+router.get('/history', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
         const { limit = 10, offset = 0 } = req.query;
@@ -197,7 +197,7 @@ router.get('/history', authMiddleware, async (req, res) => {
  * GET /api/writing/progress
  * 获取写作进步曲线
  */
-router.get('/progress', authMiddleware, async (req, res) => {
+router.get('/progress', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.id;
         
