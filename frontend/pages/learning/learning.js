@@ -46,7 +46,7 @@ Page({
     aiLoading: false,
     showExamples: false,  // 🆕 控制例句区域显示/隐藏
     
-    // 🆕 中文释义显示控制
+    // 🆕 中文释义显示控制（点击学习按钮后显示）
     showChinese: false    // 默认隐藏中文释义
   },
 
@@ -777,15 +777,6 @@ Page({
   },
 
   /**
-   * 🆕 切换中文释义显示
-   */
-  toggleChinese() {
-    const showChinese = !this.data.showChinese;
-    console.log('[中文释义] 切换显示:', showChinese);
-    this.setData({ showChinese });
-  },
-
-  /**
    * 🆕 加载 AI 例句
    */
   loadAIExamples(word, wordId) {
@@ -946,7 +937,7 @@ Page({
    * 处理认识
    */
   handleKnow() {
-    this.recordResult('know', 75);
+    this.showChineseAndProceed('know', 75);
   },
 
   /**
@@ -962,14 +953,35 @@ Page({
    * 处理困难
    */
   handleHard() {
-    this.recordResult('hard', 50);
+    this.showChineseAndProceed('hard', 50);
   },
 
   /**
    * 处理忘记
    */
   handleForgot() {
-    this.recordResult('forgot', 25);
+    this.showChineseAndProceed('forgot', 25);
+  },
+
+  /**
+   * 🆕 先显示中文释义，延迟后记录结果并跳到下一个词
+   */
+  showChineseAndProceed(result, masteryScore) {
+    const { currentWord } = this.data;
+    if (!currentWord) return;
+    
+    // 如果词本身有中文释义，先显示出来作为反馈
+    if (currentWord.translation_cn) {
+      this.setData({ showChinese: true });
+      
+      // 延迟 1.5 秒让用户看完中文释义，再记录结果并跳到下一个词
+      setTimeout(() => {
+        this.recordResult(result, masteryScore);
+      }, 1500);
+    } else {
+      // 没有中文释义，直接跳下一个
+      this.recordResult(result, masteryScore);
+    }
   },
 
   /**
