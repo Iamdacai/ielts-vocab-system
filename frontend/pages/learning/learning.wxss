@@ -196,6 +196,15 @@
   border-left: 4rpx solid #f59e0b;
 }
 
+/* 🆕 释义隐藏提示 */
+.translation-hint {
+  text-align: center;
+  padding: 20rpx;
+  color: #6b7280;
+  font-size: 26rpx;
+  margin-top: 12rpx;
+}
+
 /* 🆕 例句列表项 */
 .example-item {
   background: rgba(255, 255, 255, 0.05);

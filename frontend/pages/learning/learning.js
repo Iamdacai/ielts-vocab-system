@@ -964,22 +964,22 @@ Page({
   },
 
   /**
-   * 🆕 先显示中文释义，延迟后记录结果并跳到下一个词
+   * 🆕 先显示释义（中英文），延迟后记录结果并跳到下一个词
    */
   showChineseAndProceed(result, masteryScore) {
     const { currentWord } = this.data;
     if (!currentWord) return;
     
-    // 如果词本身有中文释义，先显示出来作为反馈
-    if (currentWord.translation_cn) {
+    // Show translations if any exist (both English and Chinese)
+    if (currentWord.translation || currentWord.translation_cn) {
       this.setData({ showChinese: true });
       
-      // 延迟 1.5 秒让用户看完中文释义，再记录结果并跳到下一个词
+      // Delay 1.5s to let user read the translations, then record and move on
       setTimeout(() => {
         this.recordResult(result, masteryScore);
       }, 1500);
     } else {
-      // 没有中文释义，直接跳下一个
+      // No translations, just proceed
       this.recordResult(result, masteryScore);
     }
   },
