@@ -102,11 +102,20 @@
     <!-- 释义 -->
     <view class="translation-section">
       <view class="translation-title">📖 释义</view>
-      <!-- 🆕 中文释义（从词库取） -->
-      <view wx:if="{{currentWord.translation_cn}}" class="translation-cn">{{currentWord.translation_cn}}</view>
-      <!-- 🆕 英文释义（从词库取） -->
+      
+      <!-- 英文释义（始终显示） -->
       <view wx:if="{{currentWord.translation}}" class="translation-text">{{currentWord.translation}}</view>
+      
+      <!-- 🆕 中文释义（默认隐藏，点击按钮后显示） -->
+      <view wx:if="{{showChinese && currentWord.translation_cn}}" class="translation-cn">{{currentWord.translation_cn}}</view>
+      
       <view wx:if="{{currentWord.pos}}" class="pos-tag">{{currentWord.pos}}</view>
+      
+      <!-- 🆕 查看/收起中文释义按钮 -->
+      <view class="toggle-chinese-button" bindtap="toggleChinese">
+        <text wx:if="{{!showChinese}}">👁️ 查看中文释义</text>
+        <text wx:else>🙈 收起中文释义</text>
+      </view>
     </view>
 
     <!-- 🆕 更多例句按钮 -->

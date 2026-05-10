@@ -44,7 +44,10 @@ Page({
     aiExplanation: '',
     fromCache: false,
     aiLoading: false,
-    showExamples: false  // 🆕 控制例句区域显示/隐藏
+    showExamples: false,  // 🆕 控制例句区域显示/隐藏
+    
+    // 🆕 中文释义显示控制
+    showChinese: false    // 默认隐藏中文释义
   },
 
   onLoad() {
@@ -346,7 +349,10 @@ Page({
         // 🆕 重置 AI 例句状态
         aiExamples: [],
         aiExplanation: '',
-        fromCache: false
+        fromCache: false,
+        // 🆕 重置中文释义显示
+        showChinese: false,
+        showExamples: false
       });
       
       // 🆕 加载 AI 例句
@@ -768,6 +774,15 @@ Page({
     if (showExamples && this.data.currentWord && (!this.data.aiExamples || this.data.aiExamples.length === 0)) {
       this.loadAIExamples(this.data.currentWord.word, this.data.currentWord.id);
     }
+  },
+
+  /**
+   * 🆕 切换中文释义显示
+   */
+  toggleChinese() {
+    const showChinese = !this.data.showChinese;
+    console.log('[中文释义] 切换显示:', showChinese);
+    this.setData({ showChinese });
   },
 
   /**
