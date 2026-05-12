@@ -103,11 +103,6 @@
     <view class="translation-section">
       <view class="translation-title">📖 释义</view>
       
-      <!-- 🆕 默认隐藏释义，点击学习按钮后显示 -->
-      <view wx:if="{{!showChinese}}" class="translation-hint">
-        <text>🙈 点击按钮查看释义</text>
-      </view>
-      
       <view wx:if="{{showChinese}}">
         <!-- 英文释义 -->
         <view wx:if="{{currentWord.translation}}" class="translation-text">{{currentWord.translation}}</view>
